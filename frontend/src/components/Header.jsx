@@ -1,6 +1,13 @@
 import React from "react";
+import { useCart } from "../context/CartContext";
 
 function Header() {
+  const { cartItems } = useCart();
+  const cartItemCount = cartItems.reduce(
+    (count, item) => count + item.quantity,
+    0
+  );
+
   return (
     <header className="bg-red-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
@@ -51,8 +58,8 @@ function Header() {
             </svg>
             <span>Account</span>
           </div>
-          {/* Cart Icon */}
-          <div className="flex items-center flex-col text-sm">
+          {/* Cart Icon with item count */}
+          <div className="flex items-center flex-col text-sm relative">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -67,6 +74,11 @@ function Header() {
                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
+            {cartItemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
             <span>Cart</span>
           </div>
         </div>

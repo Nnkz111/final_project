@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useCart } from "../context/CartContext"; // Import useCart hook
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addToCart } = useCart(); // Use the useCart hook
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -90,7 +92,10 @@ function ProductDetails() {
               ${product.price}
             </p>
             {/* Add to Cart Button */}
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300">
+            <button
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300"
+              onClick={() => addToCart(product)}
+            >
               Add to Cart
             </button>
           </div>

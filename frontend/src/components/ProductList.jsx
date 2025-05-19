@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -28,12 +30,18 @@ function ProductList() {
   }, []); // Empty dependency array means this effect runs once on mount
 
   if (loading) {
-    return <div className="text-center">Loading products...</div>;
+    return (
+      <div className="text-center text-gray-600 text-lg mt-8">
+        Loading products...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-500">Error: {error.message}</div>
+      <div className="text-center text-red-600 text-lg mt-8">
+        Error: {error.message}
+      </div>
     );
   }
 
@@ -46,9 +54,7 @@ function ProductList() {
         {products.map((product) => (
           <Link key={product.id} to={`/products/${product.id}`}>
             <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105 cursor-pointer">
-              {/* Product Image Area */}
               <div className="w-full h-48 overflow-hidden">
-                {/* Use product.image_url when available */}
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -62,7 +68,6 @@ function ProductList() {
                 )}
               </div>
 
-              {/* Product Details Area */}
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
                   {product.name}
@@ -77,8 +82,14 @@ function ProductList() {
                   <p className="text-green-600 font-bold text-xl">
                     ${product.price}
                   </p>
-                  {/* Add to Cart Button Placeholder */}
-                  <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">
+                  <button
+                    className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart(product);
+                    }}
+                  >
                     Add to Cart
                   </button>
                 </div>
