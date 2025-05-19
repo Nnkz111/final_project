@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 
 function Login() {
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext); // Use useContext to get the login function
   const navigate = useNavigate(); // Initialize useNavigate
@@ -12,7 +12,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Remove axios call as it will be handled by AuthContext
-    const result = await login(email, password);
+    const result = await login(emailOrUsername, password);
     if (result.success) {
       alert("Login successful!");
       navigate("/"); // Redirect to homepage on success
@@ -27,15 +27,15 @@ function Login() {
       <form onSubmit={handleSubmit}>
         <div className="mt-4">
           <div>
-            <label className="block" htmlFor="email">
-              Email
+            <label className="block" htmlFor="emailOrUsername">
+              Email or Username
             </label>
             <input
-              type="email"
-              placeholder="Email"
+              type="text"
+              placeholder="Email or Username"
               className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={emailOrUsername}
+              onChange={(e) => setEmailOrUsername(e.target.value)}
               required
             />
           </div>

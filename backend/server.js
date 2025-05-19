@@ -321,18 +321,21 @@ app.post("/api/auth/register", async (req, res) => {
 
 // Login user
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
 
   // Basic validation
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required" });
+  if ((!email && !username) || !password) {
+    return res
+      .status(400)
+      .json({ error: "Email or username, and password are required" });
   }
 
   try {
-    // Find the user by email
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    // Find the user by email or username
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1 OR username = $2",
+      [email, username]
+    );
     const user = result.rows[0];
 
     if (!user) {
@@ -355,7 +358,12 @@ app.post("/api/auth/login", async (req, res) => {
 
     res.status(200).json({
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        is_admin: user.is_admin,
+      },
     }); // Return token and basic user info
   } catch (err) {
     console.error("Error logging in user:", err);

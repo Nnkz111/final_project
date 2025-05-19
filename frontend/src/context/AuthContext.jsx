@@ -20,14 +20,14 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (emailOrUsername, password) => {
     try {
+      const payload = emailOrUsername.includes("@")
+        ? { email: emailOrUsername, password }
+        : { username: emailOrUsername, password };
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
-        }
+        payload
       );
       const { token: receivedToken, user: userInfo } = response.data;
       setToken(receivedToken);

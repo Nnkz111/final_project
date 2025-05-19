@@ -70,7 +70,7 @@ function Header() {
                   d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
                 />
               </svg>
-              <span>Account</span>
+              <span>{user.username}</span>
               <button onClick={handleLogout} className="text-xs mt-1">
                 Logout
               </button>
