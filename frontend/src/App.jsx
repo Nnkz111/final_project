@@ -2,13 +2,13 @@ import React from "react";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ProductList from "./components/ProductList";
-import "./App.css"; // Make sure to import the CSS
+import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 function App() {
   return (
-    <div className="App">
+    <div className="min-h-screen bg-gray-100">
       <Header />
-      <div className="container">
+      <div className="container mx-auto flex">
         <Sidebar />
         <ProductList />
       </div>

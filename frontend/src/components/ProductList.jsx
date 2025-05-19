@@ -2,8 +2,8 @@ import React from "react";
 
 function ProductList() {
   return (
-    <main>
-      <h2>Products</h2>
+    <main className="flex-1 p-4">
+      <h2 className="text-xl font-bold mb-4">Products</h2>
       {/* Fetch and display product data here */}
     </main>
   );
