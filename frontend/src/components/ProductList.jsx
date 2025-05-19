@@ -43,22 +43,44 @@ function ProductList() {
         {products.map((product) => (
           <div
             key={product.id}
-            className="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105"
+            className="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105 cursor-pointer"
           >
-            {/* Placeholder for product image - you'll add this later */}
-            <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-              No Image
+            {/* Product Image Area */}
+            <div className="w-full h-48 overflow-hidden">
+              {/* Use product.image_url when available */}
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                  No Image Available
+                </div>
+              )}
             </div>
 
+            {/* Product Details Area */}
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">
+              <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
                 {product.name}
               </h3>
-              {/* <p className="text-gray-600 text-sm mb-2">{product.description}</p> Uncomment when you have descriptions */}
-              <p className="text-green-600 font-bold text-xl">
-                ${product.price}
-              </p>
-              {/* Add 'Add to Cart' button or other actions here */}
+              {product.description && (
+                <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                  {product.description}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between">
+                <p className="text-green-600 font-bold text-xl">
+                  ${product.price}
+                </p>
+                {/* Add to Cart Button Placeholder */}
+                <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">
+                  Add to Cart
+                </button>
+              </div>
             </div>
           </div>
         ))}
