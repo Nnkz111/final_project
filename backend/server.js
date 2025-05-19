@@ -2,6 +2,8 @@
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
+const multer = require("multer"); // Import multer
+const path = require("path"); // Import path module
 
 // Create an Express application
 const app = express();
@@ -11,6 +13,9 @@ app.use(cors());
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
+// Serve static files from the 'uploads' directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Define the port to run the server on
 const port = process.env.PORT || 5000;
@@ -32,6 +37,22 @@ pool.connect((err, client, release) => {
   console.log("Database connected successfully!");
   release();
 });
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Save uploaded files to the 'uploads' directory
+  },
+  filename: function (req, file, cb) {
+    // Use the original file extension
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Define a basic route
 app.get("/", (req, res) => {
@@ -64,6 +85,30 @@ app.get("/api/products/:id", async (req, res) => {
     }
   } catch (err) {
     console.error(`Error fetching product with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Add a new product with image upload
+app.post("/api/products", upload.single("productImage"), async (req, res) => {
+  const { name, description, price, stock_quantity } = req.body;
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the uploaded image path
+
+  // Basic validation
+  if (!name || !price || !stock_quantity) {
+    return res
+      .status(400)
+      .json({ error: "Name, price, and stock_quantity are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO products (name, description, price, stock_quantity, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [name, description, price, stock_quantity, imageUrl]
+    );
+    res.status(201).json(result.rows[0]); // Return the newly created product
+  } catch (err) {
+    console.error("Error adding new product:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
