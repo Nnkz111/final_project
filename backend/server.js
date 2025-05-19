@@ -115,6 +115,18 @@ app.post("/api/products", upload.single("productImage"), async (req, res) => {
   }
 });
 
+// Category routes
+// Endpoint to get all categories
+app.get("/api/categories", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM categories");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching categories:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Cart routes
 // Get cart items for a user
 app.get("/api/cart/:userId", authenticateToken, async (req, res) => {

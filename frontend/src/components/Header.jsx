@@ -24,7 +24,7 @@ function Header() {
     <header className="bg-red-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo Area - adjusted size and margin */}
-        <div className="text-3xl font-bold mr-6">OLAA</div>
+        <div className="text-3xl font-bold mr-6">MR.IT</div>
 
         {/* Search Bar Area - more refined styling */}
         <div className="flex-grow mx-4 flex items-center bg-white rounded-md overflow-hidden">
