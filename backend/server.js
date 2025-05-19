@@ -1,9 +1,13 @@
 // Import the express library
 const express = require("express");
 const { Pool } = require("pg");
+const cors = require("cors");
 
 // Create an Express application
 const app = express();
+
+// Use cors middleware to allow cross-origin requests
+app.use(cors());
 
 // Middleware to parse JSON requests
 app.use(express.json());
