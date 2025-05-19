@@ -119,11 +119,18 @@ app.post("/api/products", upload.single("productImage"), async (req, res) => {
 // Get cart items for a user
 app.get("/api/cart/:userId", authenticateToken, async (req, res) => {
   const { userId } = req.params;
+  const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
+
+  // Ensure the authenticated user is requesting their own cart
+  if (parseInt(userId) !== authenticatedUserId) {
+    return res.sendStatus(403); // Forbidden
+  }
+
   try {
-    // Join cart_items with products to get product details
+    // Use the authenticated user ID for the database query
     const result = await pool.query(
       "SELECT ci.id, ci.product_id, ci.quantity, p.name, p.price, p.image_url FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.user_id = $1",
-      [userId]
+      [authenticatedUserId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -135,10 +142,18 @@ app.get("/api/cart/:userId", authenticateToken, async (req, res) => {
 // Get total item count for a user's cart
 app.get("/api/cart/count/:userId", authenticateToken, async (req, res) => {
   const { userId } = req.params;
+  const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
+
+  // Ensure the authenticated user is requesting their own cart count
+  if (parseInt(userId) !== authenticatedUserId) {
+    return res.sendStatus(403); // Forbidden
+  }
+
   try {
+    // Use the authenticated user ID for the database query
     const result = await pool.query(
       "SELECT SUM(quantity) AS total_quantity FROM cart_items WHERE user_id = $1",
-      [userId]
+      [authenticatedUserId]
     );
     // The result might be null if the cart is empty, return 0 in that case
     const totalQuantity = result.rows[0].total_quantity || 0;
@@ -151,37 +166,47 @@ app.get("/api/cart/count/:userId", authenticateToken, async (req, res) => {
 
 // Add or update an item in the user's cart
 app.post("/api/cart/add", authenticateToken, async (req, res) => {
-  const { userId, productId, quantity = 1 } = req.body; // Default quantity to 1 if not provided
+  const { productId, quantity = 1 } = req.body; // Remove userId from body
+  const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
 
-  if (!userId || !productId) {
-    return res.status(400).json({ error: "userId and productId are required" });
+  // No need to check userId in body against authenticatedUserId here,
+  // as we will directly use authenticatedUserId for the database operation.
+  // Basic validation for productId and quantity remains.
+
+  if (!productId) {
+    // Only check productId and quantity
+    return res.status(400).json({ error: "productId is required" });
   }
+  // Quantity validation is already present
 
   try {
-    // Check if the item already exists for the user
+    // Check if the item already exists for the authenticated user
     const existingItem = await pool.query(
       "SELECT * FROM cart_items WHERE user_id = $1 AND product_id = $2",
-      [userId, productId]
+      [authenticatedUserId, productId]
     );
 
     if (existingItem.rows.length > 0) {
-      // If item exists, update the quantity
+      // If item exists, update the quantity for the authenticated user
       const updatedQuantity = existingItem.rows[0].quantity + quantity;
       await pool.query(
         "UPDATE cart_items SET quantity = $1 WHERE user_id = $2 AND product_id = $3",
-        [updatedQuantity, userId, productId]
+        [updatedQuantity, authenticatedUserId, productId]
       );
       res.status(200).json({ message: "Cart item quantity updated" });
     } else {
-      // If item doesn't exist, insert a new item
+      // If item doesn't exist, insert a new item for the authenticated user
       await pool.query(
         "INSERT INTO cart_items (user_id, product_id, quantity) VALUES ($1, $2, $3)",
-        [userId, productId, quantity]
+        [authenticatedUserId, productId, quantity]
       );
       res.status(201).json({ message: "Product added to cart" });
     }
   } catch (err) {
-    console.error(`Error adding/updating cart item for user ${userId}:`, err);
+    console.error(
+      `Error adding/updating cart item for user ${authenticatedUserId}:`,
+      err
+    );
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -192,7 +217,25 @@ app.delete(
   authenticateToken,
   async (req, res) => {
     const { cartItemId } = req.params;
+    const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
+
     try {
+      // First, get the user_id of the cart item to ensure the authenticated user owns it
+      const cartItemResult = await pool.query(
+        "SELECT user_id FROM cart_items WHERE id = $1",
+        [cartItemId]
+      );
+      if (cartItemResult.rows.length === 0) {
+        return res.status(404).json({ error: "Cart item not found" });
+      }
+      const cartItemUserId = cartItemResult.rows[0].user_id;
+
+      // Ensure the authenticated user owns the cart item they are trying to remove
+      if (cartItemUserId !== authenticatedUserId) {
+        return res.sendStatus(403); // Forbidden
+      }
+
+      // Delete the cart item since the user is authorized
       const result = await pool.query(
         "DELETE FROM cart_items WHERE id = $1 RETURNING id",
         [cartItemId]
@@ -200,7 +243,11 @@ app.delete(
       if (result.rows.length > 0) {
         res.status(200).json({ message: "Cart item removed" });
       } else {
-        res.status(404).json({ error: "Cart item not found" });
+        // This case should ideally not be reached if the previous check passed,
+        // but included for robustness.
+        res
+          .status(404)
+          .json({ error: "Cart item not found after authorization check" });
       }
     } catch (err) {
       console.error(`Error removing cart item ${cartItemId}:`, err);
@@ -213,6 +260,7 @@ app.delete(
 app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
   const { cartItemId } = req.params;
   const { quantity } = req.body;
+  const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
 
   if (quantity === undefined || quantity <= 0) {
     return res
@@ -221,6 +269,22 @@ app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
   }
 
   try {
+    // First, get the user_id of the cart item to ensure the authenticated user owns it
+    const cartItemResult = await pool.query(
+      "SELECT user_id FROM cart_items WHERE id = $1",
+      [cartItemId]
+    );
+    if (cartItemResult.rows.length === 0) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+    const cartItemUserId = cartItemResult.rows[0].user_id;
+
+    // Ensure the authenticated user owns the cart item they are trying to update
+    if (cartItemUserId !== authenticatedUserId) {
+      return res.sendStatus(403); // Forbidden
+    }
+
+    // Update the cart item quantity since the user is authorized
     const result = await pool.query(
       "UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id",
       [quantity, cartItemId]
@@ -229,7 +293,11 @@ app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
     if (result.rows.length > 0) {
       res.status(200).json({ message: "Cart item quantity updated" });
     } else {
-      res.status(404).json({ error: "Cart item not found" });
+      // This case should ideally not be reached if the previous check passed,
+      // but included for robustness.
+      res
+        .status(404)
+        .json({ error: "Cart item not found after authorization check" });
     }
   } catch (err) {
     console.error(`Error updating cart item ${cartItemId} quantity:`, err);
@@ -242,7 +310,8 @@ app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
 // Example: app.get('/api/products', async (req, res) => { ... });
 
 // Secret key for JWT (should be stored securely, e.g., in environment variables)
-const jwtSecret = "your_jwt_secret_key"; // TODO: Replace with a strong, secure key
+const jwtSecret =
+  "ac4032c29c623d530ef35a38f4d05b736a88ba9aa7d43f5a9d179eced08260f764855cb16fa77b5ed611396a70ccbad5ad61628ea6c9a37244c73900f2216c55909e9b4833400ed637dd6d787b99b3d8f5b0e4c2408dec7e9883b2012d75444626bc8a8c4d74cae0a3f169cb9817894f5c5872baeb9514ba42cd030909313d49"; // TODO: Replace with a strong, secure key
 
 // Middleware to authenticate token
 function authenticateToken(req, res, next) {

@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import AuthContext from "../context/AuthContext";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { refreshCartCount } = useCart();
+  const { user, token } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -31,7 +33,11 @@ function ProductList() {
 
   // Function to handle adding a product to the persistent cart
   const handleAddToCart = async (product) => {
-    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    if (!user || !token) {
+      alert("Please log in to add items to the cart.");
+      return;
+    }
+    const userId = user.id;
     const productId = product.id;
     const quantity = 1; // Adding one quantity at a time from this button
 
@@ -40,6 +46,7 @@ function ProductList() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ userId, productId, quantity }),
       });

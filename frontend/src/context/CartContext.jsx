@@ -9,7 +9,7 @@ const CartContext = createContext(null);
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartItemCount, setCartItemCount] = useState(0);
-  const { user, token } = useContext(AuthContext);
+  const { user, token, isLoading: isAuthLoading } = useContext(AuthContext);
 
   const API_URL = "http://localhost:5000/api";
 
@@ -57,8 +57,10 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart data when the component mounts or user/token changes
   useEffect(() => {
-    refreshCart();
-  }, [user, token]);
+    if (!isAuthLoading) {
+      refreshCart();
+    }
+  }, [user, token, isAuthLoading]);
 
   // Functions to add, update, or remove items (will also need token)
   const addItemToCart = async (productId, quantity = 1) => {
@@ -66,7 +68,7 @@ export const CartProvider = ({ children }) => {
     try {
       await axios.post(
         `${API_URL}/cart/add`,
-        { userId: user.id, productId, quantity },
+        { productId, quantity },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -116,7 +118,7 @@ export const CartProvider = ({ children }) => {
         removeCartItem,
       }}
     >
-      {children}
+      {!isAuthLoading && children}
     </CartContext.Provider>
   );
 };

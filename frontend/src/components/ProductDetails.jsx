@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 // We will no longer directly use useCart to modify cart state here,
 // but might use it later to refresh cart data after adding.
 // import { useCart } from '../context/CartContext';
+import AuthContext from "../context/AuthContext"; // Import AuthContext
+import { useCart } from "../context/CartContext"; // Import useCart hook
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
+  const { refreshCart } = useCart(); // Get refreshCart from CartContext
   // const { addToCart } = useCart(); // Not directly used for state modification anymore
 
   useEffect(() => {
@@ -37,7 +41,13 @@ function ProductDetails() {
 
   // Function to handle adding a product to the persistent cart
   const handleAddToCart = async () => {
-    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    if (!user || !token) {
+      // Prevent adding if not logged in
+      alert("Please log in to add items to the cart."); // Optional: inform user
+      return;
+    }
+    // userId is no longer needed in the request body as the backend gets it from the token
+    // const userId = user.id;
     const productId = product.id;
     const quantity = 1; // Adding one quantity at a time from this button
 
@@ -46,8 +56,9 @@ function ProductDetails() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Add Authorization header
         },
-        body: JSON.stringify({ userId, productId, quantity }),
+        body: JSON.stringify({ productId, quantity }), // Remove userId from body
       });
 
       if (!response.ok) {
@@ -57,7 +68,7 @@ function ProductDetails() {
       // Optional: Provide user feedback (e.g., a small notification)
       console.log("Product added to cart!");
       // Optional: Refresh the cart data in the header/cart page after adding
-      // You might trigger a context update or refetch here later.
+      refreshCart(); // Refresh the cart data after adding
     } catch (error) {
       console.error("Error adding product to cart:", error);
       // Optional: Display an error message to the user

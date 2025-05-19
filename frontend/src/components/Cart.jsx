@@ -1,18 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useCart } from "../context/CartContext"; // Import useCart hook
+import AuthContext from "../context/AuthContext"; // Import AuthContext
 
 function Cart() {
   // const { cartItems } = useCart(); // Not getting items from context anymore
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { refreshCartCount } = useCart(); // Get refreshCartCount from context
+  // Get necessary functions from useCart context
+  const { refreshCart, removeCartItem, updateCartItemQuantity } = useCart();
+  const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
 
   // Function to fetch cart items from the backend
   const fetchCartItems = async () => {
-    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    if (!user || !token) {
+      // Also check for token
+      setCartItems([]);
+      setLoading(false); // Stop loading if no user or token
+      return;
+    }
+    const userId = user.id; // Use user.id from context
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`);
+      const response = await fetch(`http://localhost:5000/api/cart/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Add Authorization header
+        },
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -33,31 +46,17 @@ function Cart() {
 
   useEffect(() => {
     fetchCartItems();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, [user, token]); // Add token to dependency array
 
   // Function to handle removing an item from the cart
   const handleRemoveItem = async (cartItemId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/remove/${cartItemId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // After successful removal, refetch the cart items to update the UI AND refresh header count
-      fetchCartItems();
-      refreshCartCount();
-
-      console.log("Cart item removed!");
-    } catch (error) {
-      console.error(`Error removing cart item ${cartItemId}:`, error);
-      // Optional: Display an error message to the user
-    }
+    // Use the removeCartItem function from CartContext
+    await removeCartItem(cartItemId);
+    // After successful removal, refetch the cart items to update the UI
+    fetchCartItems();
+    // refreshCartCount is called within removeCartItem in CartContext
+    console.log("Cart item removed!");
+    // Optional: Display user feedback
   };
 
   // Function to handle updating item quantity in the cart
@@ -68,31 +67,13 @@ function Cart() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/update/${cartItemId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ quantity: newQuantity }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // After successful update, refetch the cart items to update the UI AND refresh header count
-      fetchCartItems();
-      refreshCartCount();
-
-      console.log("Cart item quantity updated!");
-    } catch (error) {
-      console.error(`Error updating cart item ${cartItemId} quantity:`, error);
-      // Optional: Display an error message to the user
-    }
+    // Use the updateCartItemQuantity function from CartContext
+    await updateCartItemQuantity(cartItemId, newQuantity);
+    // After successful update, refetch the cart items to update the UI
+    fetchCartItems();
+    // refreshCartCount is called within updateCartItemQuantity in CartContext
+    console.log("Cart item quantity updated!");
+    // Optional: Display user feedback
   };
 
   if (loading) {
