@@ -1,9 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext"; // Import useCart hook
+import AuthContext from "../context/AuthContext"; // Import AuthContext
 
 function Header() {
   const { cartItemCount, refreshCartCount } = useCart(); // Get count and refresh function from context
+  const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
 
   // Fetch cart count when the component mounts (initial load)
   useEffect(() => {
@@ -13,6 +15,10 @@ function Header() {
     // Example: If you had a user login/logout in the header and needed to refresh count:
     // if (userStatusChanged) { refreshCartCount(); }
   }, []); // Empty dependency array means this effect runs once on mount
+
+  const handleLogout = () => {
+    logout(); // Call the logout function from AuthContext
+  };
 
   return (
     <header className="bg-red-600 text-white p-4 shadow-md">
@@ -46,24 +52,72 @@ function Header() {
 
         {/* User/Cart Icons Area - using flex and spacing */}
         <div className="flex items-center space-x-6 ml-6">
-          {/* User Icon - Corrected SVG path */}
-          <div className="flex items-center flex-col text-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <span>Account</span>
-          </div>
+          {/* User Icon or Login/Register Links */}
+          {user ? (
+            // If user is logged in, show Account and Logout button
+            <div className="flex items-center flex-col text-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+              <span>Account</span>
+              <button onClick={handleLogout} className="text-xs mt-1">
+                Logout
+              </button>
+            </div>
+          ) : (
+            // If user is not logged in, show Login and Register links
+            <>
+              <Link to="/login" className="flex items-center flex-col text-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <span>Login</span>
+              </Link>
+              <Link
+                to="/register"
+                className="flex items-center flex-col text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <span>Register</span>
+              </Link>
+            </>
+          )}
+
           {/* Cart Icon with item count - Wrapped with Link */}
           <Link
             to="/cart"

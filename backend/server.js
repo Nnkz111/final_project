@@ -4,6 +4,8 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const multer = require("multer"); // Import multer
 const path = require("path"); // Import path module
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // Create an Express application
 const app = express();
@@ -115,7 +117,7 @@ app.post("/api/products", upload.single("productImage"), async (req, res) => {
 
 // Cart routes
 // Get cart items for a user
-app.get("/api/cart/:userId", async (req, res) => {
+app.get("/api/cart/:userId", authenticateToken, async (req, res) => {
   const { userId } = req.params;
   try {
     // Join cart_items with products to get product details
@@ -131,7 +133,7 @@ app.get("/api/cart/:userId", async (req, res) => {
 });
 
 // Get total item count for a user's cart
-app.get("/api/cart/count/:userId", async (req, res) => {
+app.get("/api/cart/count/:userId", authenticateToken, async (req, res) => {
   const { userId } = req.params;
   try {
     const result = await pool.query(
@@ -148,7 +150,7 @@ app.get("/api/cart/count/:userId", async (req, res) => {
 });
 
 // Add or update an item in the user's cart
-app.post("/api/cart/add", async (req, res) => {
+app.post("/api/cart/add", authenticateToken, async (req, res) => {
   const { userId, productId, quantity = 1 } = req.body; // Default quantity to 1 if not provided
 
   if (!userId || !productId) {
@@ -185,26 +187,30 @@ app.post("/api/cart/add", async (req, res) => {
 });
 
 // Remove an item from the user's cart
-app.delete("/api/cart/remove/:cartItemId", async (req, res) => {
-  const { cartItemId } = req.params;
-  try {
-    const result = await pool.query(
-      "DELETE FROM cart_items WHERE id = $1 RETURNING id",
-      [cartItemId]
-    );
-    if (result.rows.length > 0) {
-      res.status(200).json({ message: "Cart item removed" });
-    } else {
-      res.status(404).json({ error: "Cart item not found" });
+app.delete(
+  "/api/cart/remove/:cartItemId",
+  authenticateToken,
+  async (req, res) => {
+    const { cartItemId } = req.params;
+    try {
+      const result = await pool.query(
+        "DELETE FROM cart_items WHERE id = $1 RETURNING id",
+        [cartItemId]
+      );
+      if (result.rows.length > 0) {
+        res.status(200).json({ message: "Cart item removed" });
+      } else {
+        res.status(404).json({ error: "Cart item not found" });
+      }
+    } catch (err) {
+      console.error(`Error removing cart item ${cartItemId}:`, err);
+      res.status(500).json({ error: "Internal server error" });
     }
-  } catch (err) {
-    console.error(`Error removing cart item ${cartItemId}:`, err);
-    res.status(500).json({ error: "Internal server error" });
   }
-});
+);
 
 // Update the quantity of a cart item
-app.put("/api/cart/update/:cartItemId", async (req, res) => {
+app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
   const { cartItemId } = req.params;
   const { quantity } = req.body;
 
@@ -234,6 +240,128 @@ app.put("/api/cart/update/:cartItemId", async (req, res) => {
 // Placeholder for product routes
 // We will add product-specific endpoints here later
 // Example: app.get('/api/products', async (req, res) => { ... });
+
+// Secret key for JWT (should be stored securely, e.g., in environment variables)
+const jwtSecret = "your_jwt_secret_key"; // TODO: Replace with a strong, secure key
+
+// Middleware to authenticate token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Get token from 'Bearer TOKEN' format
+
+  if (token == null) {
+    return res.sendStatus(401); // If there is no token, return unauthorized
+  }
+
+  jwt.verify(token, jwtSecret, (err, user) => {
+    if (err) {
+      return res.sendStatus(403); // If token is invalid, return forbidden
+    }
+    req.user = user; // Attach user information to the request
+    next(); // Proceed to the next middleware or route handler
+  });
+}
+
+// User Authentication Routes
+
+// Register a new user
+app.post("/api/auth/register", async (req, res) => {
+  const { email, password, username } = req.body; // Assuming username is also provided
+
+  // Basic validation
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    // Check if user already exists
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    if (existingUser.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "User with this email already exists" });
+    }
+
+    // Hash the password
+    const saltRounds = 10; // Cost factor for hashing
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Insert the new user into the database
+    const result = await pool.query(
+      "INSERT INTO users (email, password_hash, username, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, email, username, is_admin",
+      [email, passwordHash, username, false] // Include is_admin in the insert statement and values
+    );
+
+    const newUser = result.rows[0];
+
+    // Create a JWT token
+    const token = jwt.sign(
+      { userId: newUser.id, email: newUser.email, is_admin: newUser.is_admin }, // Include is_admin in the token payload
+      jwtSecret,
+      { expiresIn: "1h" }
+    ); // Token expires in 1 hour
+
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+        is_admin: newUser.is_admin, // Include is_admin in the returned user object
+      },
+    }); // Return token and basic user info
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Login user
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  // Basic validation
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    // Find the user by email
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    const user = result.rows[0];
+
+    if (!user) {
+      // User not found
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Compare the provided password with the stored hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      // Passwords do not match
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Passwords match, create a JWT token
+    const token = jwt.sign({ userId: user.id, email: user.email }, jwtSecret, {
+      expiresIn: "1h",
+    }); // Token expires in 1 hour
+
+    res.status(200).json({
+      token,
+      user: { id: user.id, email: user.email, username: user.username },
+    }); // Return token and basic user info
+  } catch (err) {
+    console.error("Error logging in user:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Start the server
 app.listen(port, () => {

@@ -1,61 +1,120 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import axios from "axios";
+import AuthContext from "./AuthContext";
 
 // Create the Cart Context
-const CartContext = createContext();
+const CartContext = createContext(null);
 
 // Create a Cart Provider component
 export const CartProvider = ({ children }) => {
-  // We will now manage the cart item count here, fetched from the backend
+  const [cartItems, setCartItems] = useState([]);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const { user, token } = useContext(AuthContext);
 
-  // Function to fetch the latest cart count from the backend
-  const fetchCartCount = async () => {
-    const userId = 1; // *** Replace with actual user ID from authentication later ***
+  const API_URL = "http://localhost:5000/api";
+
+  // Function to fetch cart items for the logged-in user
+  const fetchCartItems = async () => {
+    if (!user) {
+      setCartItems([]);
+      return;
+    }
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/count/${userId}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setCartItemCount(data.count);
+      const response = await axios.get(`${API_URL}/cart/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCartItems(response.data);
     } catch (error) {
-      console.error(`Error fetching cart count for user ${userId}:`, error);
-      setCartItemCount(0); // Set count to 0 on error
+      console.error(`Error fetching cart for user ${user.id}:`, error);
     }
   };
 
-  // Fetch count when the provider mounts
-  useEffect(() => {
+  // Function to fetch total item count for the logged-in user's cart
+  const fetchCartCount = async () => {
+    if (!user) {
+      setCartItemCount(0);
+      return;
+    }
+    try {
+      const response = await axios.get(`${API_URL}/cart/count/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCartItemCount(response.data.count);
+    } catch (error) {
+      console.error(`Error fetching cart count for user ${user.id}:`, error);
+    }
+  };
+
+  // Function to refresh cart data (items and count)
+  const refreshCart = () => {
+    fetchCartItems();
     fetchCartCount();
-  }, []);
+  };
 
-  // Function to add an item to the cart
-  const addToCart = (product) => {
-    // Check if the item is already in the cart
-    const existingItem = cartItems.find((item) => item.id === product.id);
+  // Fetch cart data when the component mounts or user/token changes
+  useEffect(() => {
+    refreshCart();
+  }, [user, token]);
 
-    if (existingItem) {
-      // If item exists, update the quantity
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+  // Functions to add, update, or remove items (will also need token)
+  const addItemToCart = async (productId, quantity = 1) => {
+    if (!user || !token) return;
+    try {
+      await axios.post(
+        `${API_URL}/cart/add`,
+        { userId: user.id, productId, quantity },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-    } else {
-      // If item doesn't exist, add it with quantity 1
-      setCartItems([...cartItems, { ...product, quantity: 1 }]);
+      refreshCart();
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
     }
   };
 
-  // You can add other cart functions here, like removeFromCart, updateQuantity, clearCart, etc.
+  const updateCartItemQuantity = async (cartItemId, quantity) => {
+    if (!user || !token) return;
+    try {
+      await axios.put(
+        `${API_URL}/cart/update/${cartItemId}`,
+        { quantity },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      refreshCart();
+    } catch (error) {
+      console.error("Error updating cart item quantity:", error);
+    }
+  };
+
+  const removeCartItem = async (cartItemId) => {
+    if (!user || !token) return;
+    try {
+      await axios.delete(`${API_URL}/cart/remove/${cartItemId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      refreshCart();
+    } catch (error) {
+      console.error("Error removing cart item:", error);
+    }
+  };
 
   return (
     <CartContext.Provider
-      value={{ cartItemCount, refreshCartCount: fetchCartCount }}
+      value={{
+        cartItems,
+        cartItemCount,
+        refreshCart,
+        addItemToCart,
+        updateCartItemQuantity,
+        removeCartItem,
+      }}
     >
       {children}
     </CartContext.Provider>
@@ -63,10 +122,4 @@ export const CartProvider = ({ children }) => {
 };
 
 // Custom hook to use the Cart Context
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
-};
+export const useCart = () => useContext(CartContext);
