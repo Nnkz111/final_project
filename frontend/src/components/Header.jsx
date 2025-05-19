@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 function Header() {
@@ -58,8 +59,11 @@ function Header() {
             </svg>
             <span>Account</span>
           </div>
-          {/* Cart Icon with item count */}
-          <div className="flex items-center flex-col text-sm relative">
+          {/* Cart Icon with item count - Wrapped with Link */}
+          <Link
+            to="/cart"
+            className="flex items-center flex-col text-sm relative"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -80,7 +84,7 @@ function Header() {
               </span>
             )}
             <span>Cart</span>
-          </div>
+          </Link>
         </div>
       </div>
     </header>

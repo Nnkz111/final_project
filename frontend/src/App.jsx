@@ -4,6 +4,7 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ProductList from "./components/ProductList";
 import ProductDetails from "./components/ProductDetails";
+import Cart from "./components/Cart";
 import { CartProvider } from "./context/CartContext";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -18,6 +19,7 @@ function App() {
             <Routes>
               <Route path="/" element={<ProductList />} />
               <Route path="/products/:id" element={<ProductDetails />} />
+              <Route path="/cart" element={<Cart />} />
             </Routes>
           </div>
         </div>

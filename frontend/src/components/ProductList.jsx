@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+// We will no longer directly use useCart to modify cart state here,
+// but might use it later to refresh cart data after adding.
+// import { useCart } from '../context/CartContext';
 
 function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { addToCart } = useCart();
+  // const { addToCart } = useCart(); // Not directly used for state modification anymore
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -28,6 +30,35 @@ function ProductList() {
 
     fetchProducts();
   }, []); // Empty dependency array means this effect runs once on mount
+
+  // Function to handle adding a product to the persistent cart
+  const handleAddToCart = async (product) => {
+    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    const productId = product.id;
+    const quantity = 1; // Adding one quantity at a time from this button
+
+    try {
+      const response = await fetch("http://localhost:5000/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Optional: Provide user feedback (e.g., a small notification)
+      console.log("Product added to cart!");
+      // Optional: Refresh the cart data in the header/cart page after adding
+      // You might trigger a context update or refetch here later.
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      // Optional: Display an error message to the user
+    }
+  };
 
   if (loading) {
     return (
@@ -87,7 +118,7 @@ function ProductList() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      addToCart(product);
+                      handleAddToCart(product); // Call the new async handler
                     }}
                   >
                     Add to Cart

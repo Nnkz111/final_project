@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useCart } from "../context/CartContext"; // Import useCart hook
+// We will no longer directly use useCart to modify cart state here,
+// but might use it later to refresh cart data after adding.
+// import { useCart } from '../context/CartContext';
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { addToCart } = useCart(); // Use the useCart hook
+  // const { addToCart } = useCart(); // Not directly used for state modification anymore
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -32,6 +34,35 @@ function ProductDetails() {
 
     fetchProduct();
   }, [id]); // Re-run effect if the ID changes
+
+  // Function to handle adding a product to the persistent cart
+  const handleAddToCart = async () => {
+    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    const productId = product.id;
+    const quantity = 1; // Adding one quantity at a time from this button
+
+    try {
+      const response = await fetch("http://localhost:5000/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Optional: Provide user feedback (e.g., a small notification)
+      console.log("Product added to cart!");
+      // Optional: Refresh the cart data in the header/cart page after adding
+      // You might trigger a context update or refetch here later.
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      // Optional: Display an error message to the user
+    }
+  };
 
   if (loading) {
     return (
@@ -94,7 +125,7 @@ function ProductDetails() {
             {/* Add to Cart Button */}
             <button
               className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300"
-              onClick={() => addToCart(product)}
+              onClick={handleAddToCart}
             >
               Add to Cart
             </button>
