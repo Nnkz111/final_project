@@ -1,11 +1,35 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
 // Create the Cart Context
 const CartContext = createContext();
 
 // Create a Cart Provider component
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  // We will now manage the cart item count here, fetched from the backend
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  // Function to fetch the latest cart count from the backend
+  const fetchCartCount = async () => {
+    const userId = 1; // *** Replace with actual user ID from authentication later ***
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/cart/count/${userId}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setCartItemCount(data.count);
+    } catch (error) {
+      console.error(`Error fetching cart count for user ${userId}:`, error);
+      setCartItemCount(0); // Set count to 0 on error
+    }
+  };
+
+  // Fetch count when the provider mounts
+  useEffect(() => {
+    fetchCartCount();
+  }, []);
 
   // Function to add an item to the cart
   const addToCart = (product) => {
@@ -30,7 +54,9 @@ export const CartProvider = ({ children }) => {
   // You can add other cart functions here, like removeFromCart, updateQuantity, clearCart, etc.
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart }}>
+    <CartContext.Provider
+      value={{ cartItemCount, refreshCartCount: fetchCartCount }}
+    >
       {children}
     </CartContext.Provider>
   );

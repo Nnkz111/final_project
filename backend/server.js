@@ -85,6 +85,23 @@ app.get("/api/cart/:userId", async (req, res) => {
   }
 });
 
+// Get total item count for a user's cart
+app.get("/api/cart/count/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT SUM(quantity) AS total_quantity FROM cart_items WHERE user_id = $1",
+      [userId]
+    );
+    // The result might be null if the cart is empty, return 0 in that case
+    const totalQuantity = result.rows[0].total_quantity || 0;
+    res.json({ count: parseInt(totalQuantity, 10) }); // Ensure count is an integer
+  } catch (err) {
+    console.error(`Error fetching cart count for user ${userId}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Add or update an item in the user's cart
 app.post("/api/cart/add", async (req, res) => {
   const { userId, productId, quantity = 1 } = req.body; // Default quantity to 1 if not provided
@@ -118,6 +135,53 @@ app.post("/api/cart/add", async (req, res) => {
     }
   } catch (err) {
     console.error(`Error adding/updating cart item for user ${userId}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Remove an item from the user's cart
+app.delete("/api/cart/remove/:cartItemId", async (req, res) => {
+  const { cartItemId } = req.params;
+  try {
+    const result = await pool.query(
+      "DELETE FROM cart_items WHERE id = $1 RETURNING id",
+      [cartItemId]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Cart item removed" });
+    } else {
+      res.status(404).json({ error: "Cart item not found" });
+    }
+  } catch (err) {
+    console.error(`Error removing cart item ${cartItemId}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update the quantity of a cart item
+app.put("/api/cart/update/:cartItemId", async (req, res) => {
+  const { cartItemId } = req.params;
+  const { quantity } = req.body;
+
+  if (quantity === undefined || quantity <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Valid quantity (greater than 0) is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id",
+      [quantity, cartItemId]
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Cart item quantity updated" });
+    } else {
+      res.status(404).json({ error: "Cart item not found" });
+    }
+  } catch (err) {
+    console.error(`Error updating cart item ${cartItemId} quantity:`, err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

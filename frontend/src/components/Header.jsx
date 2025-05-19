@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+import { useCart } from "../context/CartContext"; // Import useCart hook
 
 function Header() {
-  const { cartItems } = useCart();
-  const cartItemCount = cartItems.reduce(
-    (count, item) => count + item.quantity,
-    0
-  );
+  const { cartItemCount, refreshCartCount } = useCart(); // Get count and refresh function from context
+
+  // Fetch cart count when the component mounts (initial load)
+  useEffect(() => {
+    // The count is now fetched by the CartProvider, so we don't need to fetch here
+    // We just need to make sure the provider is fetching on mount.
+    // If we needed to refetch based on something in the header, we would call refreshCartCount()
+    // Example: If you had a user login/logout in the header and needed to refresh count:
+    // if (userStatusChanged) { refreshCartCount(); }
+  }, []); // Empty dependency array means this effect runs once on mount
 
   return (
     <header className="bg-red-600 text-white p-4 shadow-md">
@@ -41,7 +46,7 @@ function Header() {
 
         {/* User/Cart Icons Area - using flex and spacing */}
         <div className="flex items-center space-x-6 ml-6">
-          {/* User Icon */}
+          {/* User Icon - Corrected SVG path */}
           <div className="flex items-center flex-col text-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +59,7 @@ function Header() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
             <span>Account</span>

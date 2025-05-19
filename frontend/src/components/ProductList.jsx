@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-// We will no longer directly use useCart to modify cart state here,
-// but might use it later to refresh cart data after adding.
-// import { useCart } from '../context/CartContext';
+import { useCart } from "../context/CartContext";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const { addToCart } = useCart(); // Not directly used for state modification anymore
+  const { refreshCartCount } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -50,10 +48,10 @@ function ProductList() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Optional: Provide user feedback (e.g., a small notification)
+      // After successfully adding to cart, refresh the header count
+      refreshCartCount();
+
       console.log("Product added to cart!");
-      // Optional: Refresh the cart data in the header/cart page after adding
-      // You might trigger a context update or refetch here later.
     } catch (error) {
       console.error("Error adding product to cart:", error);
       // Optional: Display an error message to the user
@@ -118,7 +116,7 @@ function ProductList() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleAddToCart(product); // Call the new async handler
+                      handleAddToCart(product);
                     }}
                   >
                     Add to Cart
