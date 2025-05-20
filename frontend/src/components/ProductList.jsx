@@ -93,7 +93,7 @@ function ProductList() {
               <div className="w-full h-48 overflow-hidden">
                 {product.image_url ? (
                   <img
-                    src={product.image_url}
+                    src={`http://localhost:5000${product.image_url}`}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />

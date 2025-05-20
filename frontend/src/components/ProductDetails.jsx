@@ -107,7 +107,7 @@ function ProductDetails() {
         <div className="w-full md:w-1/2 lg:w-1/3 overflow-hidden rounded-lg shadow-md">
           {product.image_url ? (
             <img
-              src={product.image_url}
+              src={`http://localhost:5000${product.image_url}`}
               alt={product.name}
               className="w-full h-full object-cover"
             />
