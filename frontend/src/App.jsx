@@ -9,48 +9,69 @@ import AddProductForm from "./components/AddProductForm";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLogin from "./components/AdminLogin";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import { CategoryProvider } from "./context/CategoryContext";
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import AdminDashboard from "./components/AdminDashboard";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <CategoryProvider>
-          <div className="min-h-screen bg-gray-100">
-            <Header />
-            <div className="container mx-auto flex">
-              <Sidebar />
-              <div className="flex-1 p-4">
-                <Routes>
-                  <Route path="/" element={<ProductList />} />
-                  <Route path="/products/:id" element={<ProductDetails />} />
-                  <Route
-                    path="/cart"
-                    element={
-                      <ProtectedRoute>
-                        <Cart />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/add-product"
-                    element={
-                      <ProtectedRoute adminOnly={true}>
-                        <AddProductForm />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                </Routes>
+      <AdminAuthProvider>
+        <CartProvider>
+          <CategoryProvider>
+            <div className="min-h-screen bg-gray-100">
+              <Header />
+              <div className="container mx-auto flex">
+                <Sidebar />
+                <div className="flex-1 p-4">
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={
+                        <ProtectedRoute customerOnly={true}>
+                          <ProductList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/products/:id" element={<ProductDetails />} />
+                    <Route
+                      path="/cart"
+                      element={
+                        <ProtectedRoute customerOnly={true}>
+                          <Cart />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/add-product"
+                      element={
+                        <ProtectedRoute adminOnly={true}>
+                          <AddProductForm />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute adminOnly={true}>
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </div>
               </div>
             </div>
-          </div>
-        </CategoryProvider>
-      </CartProvider>
+          </CategoryProvider>
+        </CartProvider>
+      </AdminAuthProvider>
     </AuthProvider>
   );
 }

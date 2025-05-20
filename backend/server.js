@@ -433,9 +433,11 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     // Passwords match, create a JWT token
-    const token = jwt.sign({ userId: user.id, email: user.email }, jwtSecret, {
-      expiresIn: "1h",
-    }); // Token expires in 1 hour
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, is_admin: user.is_admin }, // Include is_admin here
+      jwtSecret,
+      { expiresIn: "1h" }
+    );
 
     res.status(200).json({
       token,
@@ -443,7 +445,7 @@ app.post("/api/auth/login", async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        is_admin: user.is_admin,
+        is_admin: user.is_admin, // And include it here
       },
     }); // Return token and basic user info
   } catch (err) {

@@ -1,28 +1,28 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext"; // Use AuthContext
+import AdminAuthContext from "../context/AdminAuthContext"; // Use AdminAuthContext
 
-function Login() {
+function AdminLogin() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useContext(AuthContext); // Use login from AuthContext
+  // Use the adminLogin function from AdminAuthContext
+  const { adminLogin } = useContext(AdminAuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await login(emailOrUsername, password);
+    const result = await adminLogin(emailOrUsername, password);
     if (result.success) {
-      alert("Login successful!");
-      navigate("/"); // Always redirect customer to homepage
+      alert("Admin Login successful!");
+      navigate("/admin"); // Always redirect admin to admin dashboard
     } else {
-      alert(`Login failed: ${result.error}`);
+      alert(`Admin Login failed: ${result.error}`);
     }
   };
 
   return (
     <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg">
-      <h3 className="text-2xl font-bold text-center">Customer Login</h3>{" "}
-      {/* Updated title */}
+      <h3 className="text-2xl font-bold text-center">Admin Login</h3>
       <form onSubmit={handleSubmit}>
         <div className="mt-4">
           <div>
@@ -56,7 +56,7 @@ function Login() {
               type="submit"
               className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-900"
             >
-              Login as Customer {/* Updated button text */}
+              Login as Admin
             </button>
           </div>
         </div>
@@ -65,4 +65,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default AdminLogin;

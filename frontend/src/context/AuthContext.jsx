@@ -8,14 +8,21 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // To check for token in localStorage on initial load
 
-  // Check for token in localStorage on component mount
+  // Check for customer token in localStorage on component mount
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("customerToken"); // Use customerToken
+    const storedUser = localStorage.getItem("customerUser"); // Use customerUser
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      // Optionally, verify the token with the backend here if needed
+      // Ensure the stored user is NOT an admin
+      const parsedUser = JSON.parse(storedUser);
+      if (!parsedUser.is_admin) {
+        setToken(storedToken);
+        setUser(parsedUser);
+      } else {
+        // If an admin token/user was somehow stored here, clear it
+        localStorage.removeItem("customerToken");
+        localStorage.removeItem("customerUser");
+      }
     }
     setIsLoading(false);
   }, []);
@@ -30,14 +37,31 @@ export const AuthProvider = ({ children }) => {
         payload
       );
       const { token: receivedToken, user: userInfo } = response.data;
+
+      // Ensure the logged-in user is NOT an admin for this context
+      if (userInfo.is_admin) {
+        return {
+          success: false,
+          error: "Access Denied: Admin accounts cannot login here.",
+        };
+      }
+
       setToken(receivedToken);
       setUser(userInfo);
-      localStorage.setItem("token", receivedToken);
-      localStorage.setItem("user", JSON.stringify(userInfo));
-      return { success: true };
+      localStorage.setItem("customerToken", receivedToken); // Use customerToken
+      localStorage.setItem("customerUser", JSON.stringify(userInfo)); // Use customerUser
+      return { success: true, isAdmin: userInfo.is_admin };
     } catch (error) {
-      console.error("Login error:", error.response.data);
-      return { success: false, error: error.response.data.error };
+      console.error(
+        "Customer Login error:",
+        error.response?.data?.error || error.message
+      );
+      return {
+        success: false,
+        error:
+          error.response?.data?.error ||
+          "An error occurred during customer login.",
+      };
     }
   };
 
@@ -63,8 +87,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("customerToken"); // Use customerToken
+    localStorage.removeItem("customerUser"); // Use customerUser
   };
 
   // Provide loading state as well

@@ -1,26 +1,34 @@
 import React, { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
+import AdminAuthContext from "../context/AdminAuthContext";
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({
+  children,
+  adminOnly = false,
+  customerOnly = false,
+}) => {
   const { user, isLoading } = useContext(AuthContext);
+  const { adminUser, isLoadingAdmin } = useContext(AdminAuthContext);
 
-  if (isLoading) {
-    return <div>Loading authentication...</div>; // Show a loading indicator while checking auth state
+  if (isLoading || isLoadingAdmin) {
+    return <div>Loading authentication...</div>;
   }
 
-  if (!user) {
-    // User is not authenticated, redirect to login page
-    return <Navigate to="/login" replace />;
+  if (adminOnly) {
+    if (!adminUser) {
+      return <Navigate to="/admin/login" replace />;
+    }
+    return children;
   }
 
-  if (adminOnly && (!user.is_admin || user.is_admin === false)) {
-    // User is authenticated but not an admin, redirect to homepage or show an access denied message
-    alert("Access Denied: Admin privileges required.");
-    return <Navigate to="/" replace />;
+  if (customerOnly) {
+    if (!user) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
   }
 
-  // User is authenticated (and admin if adminOnly is true), render the children
   return children;
 };
 
