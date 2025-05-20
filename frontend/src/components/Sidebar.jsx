@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCategories } from "../context/CategoryContext"; // Import useCategories hook
+import CategoryItem from "./CategoryItem"; // Import CategoryItem component
 
 function Sidebar() {
-  const { categories, loading, error } = useCategories(); // Get categories, loading, and error from context
+  const { hierarchicalCategories, loading, error } = useCategories(); // Get hierarchical categories from context
 
   if (loading) {
     return (
@@ -23,16 +24,13 @@ function Sidebar() {
   }
 
   return (
-    <aside className="w-64 p-6 bg-white shadow-md rounded-lg mr-6">
+    <aside className="relative w-64 p-6 bg-white shadow-md rounded-lg mr-6">
       <h2 className="text-xl font-bold mb-4 text-gray-800">Categories</h2>
       <nav>
         <ul>
-          {categories.map((category) => (
-            <li key={category.id} className="mb-2">
-              <a href="#" className="text-gray-600 hover:text-red-600">
-                {category.name}
-              </a>
-            </li>
+          {/* Render top-level categories using CategoryItem */}
+          {hierarchicalCategories.map((category) => (
+            <CategoryItem key={category.id} category={category} />
           ))}
         </ul>
       </nav>
