@@ -17,6 +17,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminLogin from "./components/AdminLogin";
 import AdminProductManagement from "./components/AdminProductManagement";
+import AdminCategoryManagement from "./components/AdminCategoryManagement";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -98,6 +99,10 @@ function App() {
                   element={<div>Admin Analytics Page</div>}
                 />
                 <Route path="products" element={<AdminProductManagement />} />
+                <Route
+                  path="categories"
+                  element={<AdminCategoryManagement />}
+                />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
                 {/* Fallback for unknown routes within admin area - could be a 404 */}
                 <Route path="*" element={<div>Admin Page Not Found</div>} />

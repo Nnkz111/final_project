@@ -216,10 +216,38 @@ app.put(
 // Endpoint to get all categories
 app.get("/api/categories", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM categories");
+    const result = await pool.query(
+      "SELECT id, name, parent_id FROM categories"
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching categories:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to add a new category (Admin only)
+app.post("/api/categories", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { name, parent_id } = req.body;
+
+  // Basic validation
+  if (!name) {
+    return res.status(400).json({ error: "Category name is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO categories (name, parent_id) VALUES ($1, $2) RETURNING id, name, parent_id",
+      [name, parent_id || null] // Use null for parent_id if not provided
+    );
+    res.status(201).json(result.rows[0]); // Return the newly created category
+  } catch (err) {
+    console.error("Error adding new category:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -479,7 +507,7 @@ app.post("/api/auth/register", async (req, res) => {
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, is_admin: newUser.is_admin }, // Include is_admin in the token payload
       jwtSecret,
-      { expiresIn: "1h" }
+      { expiresIn: "2d" }
     ); // Token expires in 1 hour
 
     res.status(201).json({
@@ -533,7 +561,7 @@ app.post("/api/auth/login", async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email, is_admin: user.is_admin }, // Include is_admin here
       jwtSecret,
-      { expiresIn: "1h" }
+      { expiresIn: "2d" }
     );
 
     res.status(200).json({
