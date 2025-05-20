@@ -252,6 +252,64 @@ app.post("/api/categories", authenticateToken, async (req, res) => {
   }
 });
 
+// Endpoint to update a category by ID (Admin only)
+app.put("/api/categories/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // Category ID from URL
+  const { name, parent_id } = req.body; // Updated data
+
+  // Basic validation
+  if (!name) {
+    return res.status(400).json({ error: "Category name is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE categories SET name = $1, parent_id = $2 WHERE id = $3 RETURNING id, name, parent_id",
+      [name, parent_id || null, id] // Use null for parent_id if not provided
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]); // Return the updated category
+    } else {
+      res.status(404).json({ error: "Category not found" });
+    }
+  } catch (err) {
+    console.error(`Error updating category with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to delete a category by ID (Admin only)
+app.delete("/api/categories/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // Category ID from URL
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM categories WHERE id = $1 RETURNING id",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Category deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Category not found" });
+    }
+  } catch (err) {
+    console.error(`Error deleting category with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Cart routes
 // Get cart items for a user
 app.get("/api/cart/:userId", authenticateToken, async (req, res) => {
