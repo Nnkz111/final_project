@@ -57,10 +57,15 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart data when the component mounts or user/token changes
   useEffect(() => {
-    if (!isAuthLoading) {
+    // Only fetch cart data if a customer user is logged in and auth is not loading
+    if (!isAuthLoading && user && user.id) {
       refreshCart();
+    } else if (!isAuthLoading && !user) {
+      // If auth is not loading and no user, clear cart state
+      setCartItems([]);
+      setCartItemCount(0);
     }
-  }, [user, token, isAuthLoading]);
+  }, [user, token, isAuthLoading]); // Dependencies
 
   // Functions to add, update, or remove items (will also need token)
   const addItemToCart = async (productId, quantity = 1) => {

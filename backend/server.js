@@ -115,6 +115,103 @@ app.post("/api/products", upload.single("productImage"), async (req, res) => {
   }
 });
 
+// DELETE endpoint to remove a product by ID
+app.delete("/api/products/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // Get the product ID from the URL
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM products WHERE id = $1 RETURNING id",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Product deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Product not found" });
+    }
+  } catch (err) {
+    console.error(`Error deleting product with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// PUT endpoint to update a product by ID with optional image upload
+app.put(
+  "/api/products/:id",
+  authenticateToken,
+  upload.single("productImage"),
+  async (req, res) => {
+    // Check if the authenticated user is an admin
+    if (!req.user || !req.user.is_admin) {
+      return res.sendStatus(403); // Forbidden if not an admin
+    }
+
+    const { id } = req.params; // Get the product ID from the URL
+    const { name, description, price, stock_quantity } = req.body;
+    const imageUrl = req.file
+      ? `/uploads/${req.file.filename}`
+      : req.body.image_url; // Use new image or existing image URL
+
+    // Basic validation (ensure at least one field to update is provided)
+    if (!name && !description && !price && !stock_quantity && !imageUrl) {
+      return res.status(400).json({ error: "No update data provided." });
+    }
+
+    try {
+      // Build the SET clause for the SQL query dynamically based on provided fields
+      const updateFields = [];
+      const queryParams = [id]; // Start with product ID
+      let paramIndex = 2; // Start index for other parameters
+
+      if (name) {
+        updateFields.push(`name = $${paramIndex++}`);
+        queryParams.push(name);
+      }
+      if (description !== undefined) {
+        updateFields.push(`description = $${paramIndex++}`);
+        queryParams.push(description);
+      } // Allow description to be set to null/empty
+      if (price) {
+        updateFields.push(`price = $${paramIndex++}`);
+        queryParams.push(price);
+      }
+      if (stock_quantity !== undefined) {
+        updateFields.push(`stock_quantity = $${paramIndex++}`);
+        queryParams.push(stock_quantity);
+      } // Allow stock to be set to 0
+      if (imageUrl !== undefined) {
+        updateFields.push(`image_url = $${paramIndex++}`);
+        queryParams.push(imageUrl);
+      } // Allow image_url to be set to null
+
+      if (updateFields.length === 0) {
+        return res.status(400).json({ error: "No valid fields to update." });
+      }
+
+      const query = `UPDATE products SET ${updateFields.join(
+        ", "
+      )} WHERE id = $1 RETURNING *`;
+
+      const result = await pool.query(query, queryParams);
+
+      if (result.rows.length > 0) {
+        res.status(200).json(result.rows[0]); // Return the updated product
+      } else {
+        res.status(404).json({ error: "Product not found" });
+      }
+    } catch (err) {
+      console.error(`Error updating product with ID ${id}:`, err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // Category routes
 // Endpoint to get all categories
 app.get("/api/categories", async (req, res) => {

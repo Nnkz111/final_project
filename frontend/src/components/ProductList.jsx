@@ -7,7 +7,7 @@ function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { refreshCartCount } = useCart();
+  const { refreshCart } = useCart();
   const { user, token } = useContext(AuthContext);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ function ProductList() {
       }
 
       // After successfully adding to cart, refresh the header count
-      refreshCartCount();
+      refreshCart();
 
       console.log("Product added to cart!");
     } catch (error) {

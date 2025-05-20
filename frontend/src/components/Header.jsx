@@ -4,20 +4,13 @@ import { useCart } from "../context/CartContext"; // Import useCart hook
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 
 function Header() {
-  const { cartItemCount, refreshCartCount } = useCart(); // Get count and refresh function from context
+  const { cartItemCount } = useCart(); // Get count from context
   const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
 
-  // Fetch cart count when the component mounts (initial load)
-  useEffect(() => {
-    // The count is now fetched by the CartProvider, so we don't need to fetch here
-    // We just need to make sure the provider is fetching on mount.
-    // If we needed to refetch based on something in the header, we would call refreshCartCount()
-    // Example: If you had a user login/logout in the header and needed to refresh count:
-    // if (userStatusChanged) { refreshCartCount(); }
-  }, []); // Empty dependency array means this effect runs once on mount
+  // No need to manually fetch or refresh here due to useEffect in CartContext
 
   const handleLogout = () => {
-    logout(); // Call the logout function from AuthContext
+    logout(); // Call the customer logout function from AuthContext
   };
 
   return (
@@ -52,9 +45,8 @@ function Header() {
 
         {/* User/Cart Icons Area - using flex and spacing */}
         <div className="flex items-center space-x-6 ml-6">
-          {/* User Icon or Login/Register Links */}
           {user ? (
-            // If user is logged in, show Account and Logout button
+            // If customer user is logged in, show Account and Logout button
             <div className="flex items-center flex-col text-sm">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -76,7 +68,7 @@ function Header() {
               </button>
             </div>
           ) : (
-            // If user is not logged in, show Login and Register links
+            // If no customer user is logged in, show Login and Register links
             <>
               <Link to="/login" className="flex items-center flex-col text-sm">
                 <svg
@@ -118,32 +110,34 @@ function Header() {
             </>
           )}
 
-          {/* Cart Icon with item count - Wrapped with Link */}
-          <Link
-            to="/cart"
-            className="flex items-center flex-col text-sm relative"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {/* Cart Icon with item count - ONLY show if customer is logged in */}
+          {user && ( // Conditionally render cart icon if user is logged in (customer)
+            <Link
+              to="/cart"
+              className="flex items-center flex-col text-sm relative"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            {cartItemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemCount}
-              </span>
-            )}
-            <span>Cart</span>
-          </Link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              {cartItemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+              <span>Cart</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
