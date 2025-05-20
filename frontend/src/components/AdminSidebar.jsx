@@ -97,44 +97,6 @@ function AdminSidebar() {
           Products
         </Link>
         <Link
-          to="/admin/offers"
-          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-          Offers
-        </Link>
-        <Link
-          to="/admin/inventory"
-          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7V5a2 2 0 012-2h2m4 0h4a2 2 0 012 2v2"
-            ></path>
-          </svg>
-          Inventory
-        </Link>
-        <Link
           to="/admin/orders"
           className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
         >
@@ -196,50 +158,6 @@ function AdminSidebar() {
             ></path>
           </svg>
           Customer
-        </Link>
-        <Link
-          to="/admin/newsletter"
-          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 4v4a2 2 0 002 2h14a2 2 0 002-2v-4M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 4v4a2 2 0 002 2h14a2 2 0 002-2v-4m-18 0l7.89 5.26a2 2 0 002.22 0L21 8"
-            ></path>
-          </svg>
-          Newsletter
-        </Link>
-        <Link
-          to="/admin/settings"
-          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            ></path>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            ></path>
-          </svg>
-          Settings
         </Link>
       </nav>
       {/* Admin Logout Button (at the bottom) */}
