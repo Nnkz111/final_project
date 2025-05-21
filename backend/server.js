@@ -707,6 +707,11 @@ app.post(
            VALUES ($1, $2, $3, $4)`,
             [orderId, item.product_id || item.id, item.quantity, item.price]
           );
+          // Deduct stock
+          await client.query(
+            `UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2`,
+            [item.quantity, item.product_id || item.id]
+          );
         }
         // Calculate total and update order
         const totalResult = await client.query(
@@ -834,6 +839,104 @@ app.put("/api/orders/:id/status", async (req, res) => {
   } catch (err) {
     console.error("Error updating order status:", err);
     res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// Admin dashboard stats endpoint
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    const totalOrdersResult = await pool.query("SELECT COUNT(*) FROM orders");
+    const totalSalesResult = await pool.query(
+      "SELECT COALESCE(SUM(total::numeric), 0) FROM orders WHERE status = 'completed'"
+    );
+    const totalCustomersResult = await pool.query("SELECT COUNT(*) FROM users");
+    const totalProductsResult = await pool.query(
+      "SELECT COUNT(*) FROM products"
+    );
+    res.json({
+      totalOrders: parseInt(totalOrdersResult.rows[0].count, 10),
+      totalSales: parseFloat(totalSalesResult.rows[0].coalesce),
+      totalCustomers: parseInt(totalCustomersResult.rows[0].count, 10),
+      totalProducts: parseInt(totalProductsResult.rows[0].count, 10),
+    });
+  } catch (err) {
+    console.error("Error fetching admin stats:", err);
+    res.status(500).json({ error: "Failed to fetch admin stats" });
+  }
+});
+
+// Sales analytics endpoint (sales per period for completed orders)
+app.get("/api/admin/sales-analytics", async (req, res) => {
+  try {
+    const group = req.query.group || "month";
+    const start = req.query.start;
+    const end = req.query.end;
+    const status = req.query.status || "completed";
+    const paymentType = req.query.payment_type;
+
+    const tz = "Asia/Bangkok"; // Set your local timezone
+    let groupBy;
+    if (group === "day") {
+      groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY-MM-DD')`;
+    } else if (group === "week") {
+      groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'IYYY-IW')`;
+    } else if (group === "year") {
+      groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY')`;
+    } else {
+      groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY-MM')`;
+    }
+
+    let whereClauses = ["status = $1"];
+    let params = [status];
+    let paramIndex = 2;
+    if (start) {
+      whereClauses.push(`created_at >= $${paramIndex++}`);
+      params.push(start);
+    }
+    if (end) {
+      whereClauses.push(`created_at <= $${paramIndex++}`);
+      params.push(end);
+    }
+    if (paymentType) {
+      whereClauses.push(`payment_type = $${paramIndex++}`);
+      params.push(paymentType);
+    }
+    const where = whereClauses.length
+      ? `WHERE ${whereClauses.join(" AND ")}`
+      : "";
+
+    const result = await pool.query(
+      `SELECT ${groupBy} AS period, COALESCE(SUM(total::numeric), 0) AS total
+       FROM orders
+       ${where}
+       GROUP BY period
+       ORDER BY period`,
+      params
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching sales analytics:", err);
+    res.status(500).json({ error: "Failed to fetch sales analytics" });
+  }
+});
+
+// Top selling products endpoint
+app.get("/api/admin/top-selling-products", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.id, p.name, SUM(oi.quantity) AS total_quantity, SUM(oi.quantity * oi.price) AS total_sales
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+      GROUP BY p.id, p.name
+      ORDER BY total_quantity DESC
+      LIMIT 5
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching top selling products:", err);
+    res.status(500).json({ error: "Failed to fetch top selling products" });
   }
 });
 

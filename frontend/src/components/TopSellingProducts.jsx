@@ -1,59 +1,65 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 function TopSellingProducts() {
-  // Dummy data for top selling products based on the image
-  const topProducts = [
-    {
-      name: "Air Jordan 8",
-      quantity: "752 Pcs",
-      image: "/placeholder-shoe.png",
-    },
-    {
-      name: "Air Jordan 5",
-      quantity: "752 Pcs",
-      image: "/placeholder-shoe2.png",
-    },
-    {
-      name: "Air Jordan 13",
-      quantity: "752 Pcs",
-      image: "/placeholder-shoe3.png",
-    },
-    {
-      name: "Nike Air Max",
-      quantity: "752 Pcs",
-      image: "/placeholder-shoe4.png",
-    },
-    // Add more products as needed
-  ];
+  const [topProducts, setTopProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(
+          "http://localhost:5000/api/admin/top-selling-products"
+        );
+        if (!res.ok) throw new Error("Failed to fetch top selling products");
+        const data = await res.json();
+        setTopProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTopProducts();
+  }, []);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mt-6">
-      {" "}
-      {/* Section container */}
-      <h3 className="text-lg font-semibold text-gray-800">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
         Top Selling Products
       </h3>
-      {/* Products Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
-        {" "}
-        {/* Responsive grid for products */}
-        {topProducts.map((product, index) => (
-          <div key={index} className="flex flex-col items-center text-center">
-            {" "}
-            {/* Product card */}
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-24 h-24 object-cover rounded-md"
-            />{" "}
-            {/* Placeholder image */}
-            <p className="text-sm font-medium text-gray-800 mt-2 truncate w-full">
-              {product.name}
-            </p>
-            <p className="text-xs text-gray-600">{product.quantity}</p>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-gray-500">Loading...</div>
+      ) : error ? (
+        <div className="text-red-500">{error}</div>
+      ) : topProducts.length === 0 ? (
+        <div className="text-gray-500">No data available.</div>
+      ) : (
+        <ul className="divide-y divide-gray-200">
+          {topProducts.map((product, idx) => (
+            <li
+              key={product.id}
+              className="flex items-center justify-between py-3 px-2"
+            >
+              <span className="font-medium text-gray-800">
+                {idx + 1}. {product.name}
+              </span>
+              <span className="text-gray-600 text-sm">
+                {product.total_quantity} sold
+              </span>
+              <span className="text-green-700 font-semibold">
+                $
+                {parseFloat(product.total_sales).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
