@@ -1,3 +1,4 @@
+// This is a test comment to trigger a refresh
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -82,14 +83,14 @@ function ProductList() {
   }
 
   return (
-    <main className="flex-1 p-4">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <main className="flex-1 p-6">
+      <h2 className="text-2xl font-bold mb-8 text-gray-800 border-b pb-2">
         Featured Products
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {products.map((product) => (
           <Link key={product.id} to={`/products/${product.id}`}>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105 cursor-pointer">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 hover:shadow-xl cursor-pointer h-full flex flex-col">
               <div className="w-full h-48 overflow-hidden">
                 {product.image_url ? (
                   <img
@@ -104,30 +105,16 @@ function ProductList() {
                 )}
               </div>
 
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+              <div className="p-4 flex flex-col">
+                <h3 className="text-base font-semibold text-gray-900 mb-2 truncate">
                   {product.name}
                 </h3>
-                {product.description && (
-                  <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                    {product.description}
-                  </p>
-                )}
 
-                <div className="flex items-center justify-between">
-                  <p className="text-green-600 font-bold text-xl">
-                    ${product.price}
+                <div className="flex items-center justify-between mt-auto">
+                  <p className="text-red-600 font-bold text-lg">
+                    ${parseFloat(product.price).toFixed(2)}
                   </p>
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                  >
-                    Add to Cart
-                  </button>
+                  {/* Removed Add to Cart button to match image design */}
                 </div>
               </div>
             </div>

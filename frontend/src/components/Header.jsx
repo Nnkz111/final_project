@@ -14,7 +14,7 @@ function Header() {
   };
 
   return (
-    <header className="bg-red-600 text-white p-4 shadow-md">
+    <header className="bg-black text-white p-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo Area - adjusted size and margin */}
         <div className="text-3xl font-bold mr-6">MR.IT</div>

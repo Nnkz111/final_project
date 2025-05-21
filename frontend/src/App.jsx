@@ -18,21 +18,23 @@ import AdminDashboard from "./components/AdminDashboard";
 import AdminLogin from "./components/AdminLogin";
 import AdminProductManagement from "./components/AdminProductManagement";
 import AdminCategoryManagement from "./components/AdminCategoryManagement";
+import HeroSlider from "./components/HeroSlider";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
 const CustomerLayout = () => (
-  <div className="min-h-screen bg-gray-100">
+  <div className="min-h-screen bg-gray-100 flex flex-col">
     {" "}
     {/* Customer layout container */}
     <Header />
-    <div className="container mx-auto flex">
+    {/* Sidebar and HeroSlider in the same row/section */}
+    <div className="container mx-auto flex flex-row items-stretch">
       <Sidebar />
-      <div className="flex-1 p-4">
-        {" "}
-        {/* Main content area for customer */}
-        <Outlet /> {/* Renders the matched child route component */}
-      </div>
+      <HeroSlider />
+    </div>
+    {/* Product list and other content below */}
+    <div className="container mx-auto flex-1 p-4">
+      <Outlet />
     </div>
   </div>
 );
