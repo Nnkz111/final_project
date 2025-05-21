@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import AuthContext from "../context/AuthContext"; // Import AuthContext
@@ -6,6 +6,7 @@ import AuthContext from "../context/AuthContext"; // Import AuthContext
 function Header() {
   const { cartItemCount } = useCart(); // Get count from context
   const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // No need to manually fetch or refresh here due to useEffect in CartContext
 
@@ -51,26 +52,69 @@ function Header() {
         {/* User/Cart Icons Area - using flex and spacing */}
         <div className="flex items-center space-x-6 ml-6">
           {user ? (
-            // If customer user is logged in, show Account and Logout button
-            <div className="flex items-center flex-col text-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-              <span>{user.username}</span>
-              <button onClick={handleLogout} className="text-xs mt-1">
-                Logout
+            // If customer user is logged in, show Account dropdown
+            <div
+              className="relative group flex items-center"
+              onMouseEnter={() => setProfileOpen(true)}
+              onMouseLeave={() => setProfileOpen(false)}
+            >
+              <button className="flex items-center gap-2 focus:outline-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <span>{user.username}</span>
+                <svg
+                  className="h-4 w-4 ml-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
               </button>
+              {/* Dropdown menu */}
+              <div
+                className={`absolute right-0 mt-20 w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-50 transition-all duration-200 origin-top-right ${
+                  profileOpen
+                    ? "opacity-100 scale-100 pointer-events-auto"
+                    : "opacity-0 scale-95 pointer-events-none"
+                }`}
+              >
+                <Link
+                  to="#"
+                  className="block px-4 py-3 hover:bg-gray-100 rounded-t-lg transition"
+                >
+                  Profile
+                </Link>
+                <Link
+                  to="/my-orders"
+                  className="block px-4 py-3 hover:bg-gray-100 transition"
+                >
+                  My Orders
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-3 hover:bg-gray-100 rounded-b-lg transition text-red-600"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           ) : (
             // If no customer user is logged in, show Login and Register links

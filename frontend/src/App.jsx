@@ -22,6 +22,7 @@ import HeroSlider from "./components/HeroSlider";
 import Checkout from "./components/Checkout";
 import OrderConfirmation from "./components/OrderConfirmation";
 import MyOrders from "./components/MyOrders";
+import AdminOrderManagement from "./components/AdminOrderManagement";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -147,6 +148,7 @@ function App() {
                   path="categories"
                   element={<AdminCategoryManagement />}
                 />
+                <Route path="orders" element={<AdminOrderManagement />} />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
                 {/* Fallback for unknown routes within admin area - could be a 404 */}
                 <Route path="*" element={<div>Admin Page Not Found</div>} />

@@ -667,7 +667,9 @@ app.post(
       const items = JSON.parse(req.body.items);
       const shipping = JSON.parse(req.body.shipping);
       const payment_type = req.body.payment_type;
-      const payment_proof = req.file ? `/uploads/${req.file.filename}` : null;
+      const payment_proof = req.file
+        ? `/uploads/payment_proof/${req.file.filename}`
+        : null;
 
       if (
         !userId ||
@@ -706,6 +708,16 @@ app.post(
             [orderId, item.product_id || item.id, item.quantity, item.price]
           );
         }
+        // Calculate total and update order
+        const totalResult = await client.query(
+          `SELECT COALESCE(SUM(price * quantity), 0) AS total FROM order_items WHERE order_id = $1`,
+          [orderId]
+        );
+        const total = totalResult.rows[0].total;
+        await client.query(`UPDATE orders SET total = $1 WHERE id = $2`, [
+          total,
+          orderId,
+        ]);
         await client.query("COMMIT");
         res.status(201).json({ message: "Order placed successfully", orderId });
       } catch (err) {
@@ -743,6 +755,23 @@ app.get("/api/orders/:id", async (req, res) => {
       [id]
     );
     order.items = itemsResult.rows;
+    // If total is missing or 0, calculate it from items
+    if (
+      !order.total ||
+      isNaN(parseFloat(order.total)) ||
+      parseFloat(order.total) === 0
+    ) {
+      order.total = order.items
+        .reduce(
+          (sum, item) => sum + Number(item.price) * Number(item.quantity),
+          0
+        )
+        .toFixed(2);
+    }
+    // Ensure payment_proof is a relative path
+    if (order.payment_proof && !order.payment_proof.startsWith("/uploads/")) {
+      order.payment_proof = `/uploads/payment_proof/${order.payment_proof}`;
+    }
     res.json(order);
   } catch (err) {
     console.error("Error fetching order details:", err);
@@ -771,6 +800,40 @@ app.get("/api/orders/user/:userId", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Error fetching user orders:", err);
     res.status(500).json({ error: "Failed to fetch user orders" });
+  }
+});
+
+// Get all orders (admin)
+app.get("/api/orders", async (req, res) => {
+  try {
+    const ordersResult = await pool.query(
+      `SELECT o.*, u.username, 
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
+        (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
+       FROM orders o
+       LEFT JOIN users u ON o.user_id = u.id
+       ORDER BY o.created_at DESC`
+    );
+    res.json(ordersResult.rows);
+  } catch (err) {
+    console.error("Error fetching all orders:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// Update order status (admin)
+app.put("/api/orders/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    await pool.query("UPDATE orders SET status = $1 WHERE id = $2", [
+      status,
+      id,
+    ]);
+    res.json({ message: "Order status updated" });
+  } catch (err) {
+    console.error("Error updating order status:", err);
+    res.status(500).json({ error: "Failed to update order status" });
   }
 });
 
