@@ -940,6 +940,24 @@ app.get("/api/admin/top-selling-products", async (req, res) => {
   }
 });
 
+// Customer management endpoint
+app.get("/api/admin/customers", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.username, u.email, u.created_at,
+        (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
+        (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent
+      FROM users u
+      WHERE u.is_admin = false
+      ORDER BY u.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching customers:", err);
+    res.status(500).json({ error: "Failed to fetch customers" });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
