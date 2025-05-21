@@ -93,95 +93,132 @@ function Cart() {
   }
 
   return (
-    <div className="container mx-auto mt-8 p-6 bg-white rounded-lg shadow-xl">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Shopping Cart</h2>
-      {cartItems.length === 0 ? (
-        <p className="text-gray-600">Your cart is empty.</p>
-      ) : (
-        <div className="space-y-4">
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex items-center border-b pb-4">
-              {/* Product Image */}
-              <div className="w-16 h-16 rounded-md mr-4 overflow-hidden">
-                {item.image_url ? (
-                  <img
-                    src={`http://localhost:5000${item.image_url}`}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                    No Image
+    <div className="container mx-auto mt-8 p-4 md:p-8 bg-white rounded-lg shadow-xl flex flex-col md:flex-row gap-8">
+      {/* Cart Items Section */}
+      <div className="flex-1">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Shopping Cart</h2>
+        {cartItems.length === 0 ? (
+          <p className="text-gray-600">Your cart is empty.</p>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {cartItems.map((item, idx) => (
+              <div
+                key={item.id}
+                className="flex flex-col md:flex-row items-center bg-gray-50 rounded-xl shadow-sm p-4 gap-4 relative border border-gray-100"
+              >
+                {/* Product Image */}
+                <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-200">
+                  {item.image_url ? (
+                    <img
+                      src={`http://localhost:5000${item.image_url}`}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                      No Image
+                    </div>
+                  )}
+                </div>
+                {/* Product Info & Controls */}
+                <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1 line-clamp-2">
+                      {item.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-1">
+                      <span className="font-bold text-green-700 text-base">
+                        ${item.price.toFixed(2)}
+                      </span>{" "}
+                      <span className="text-xs"></span>
+                    </p>
                   </div>
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold hover:bg-gray-300 focus:ring-2 focus:ring-green-400 transition"
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity - 1)
+                      }
+                      disabled={item.quantity <= 1}
+                      aria-label="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      min="1"
+                      className="w-12 text-center border border-gray-300 rounded focus:ring-2 focus:ring-green-400 outline-none"
+                      onChange={(e) =>
+                        handleUpdateQuantity(
+                          item.id,
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                    />
+                    <button
+                      className="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold hover:bg-gray-300 focus:ring-2 focus:ring-green-400 transition"
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity + 1)
+                      }
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {/* Item Total */}
+                  <div className="text-lg font-bold text-green-600 min-w-[80px] text-right">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                  {/* Remove Button */}
+                  <button
+                    className="ml-2 text-red-500 hover:bg-red-100 rounded-full p-2 transition flex items-center justify-center focus:ring-2 focus:ring-red-400"
+                    onClick={() => handleRemoveItem(item.id)}
+                    aria-label="Remove item"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {/* Divider for all but last item */}
+                {idx !== cartItems.length - 1 && (
+                  <div className="absolute left-0 right-0 bottom-[-12px] h-[1px] bg-gray-200 hidden md:block" />
                 )}
               </div>
-              <div className="flex-1 grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {item.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    ${item.price.toFixed(2)} each
-                  </p>
-                </div>
-                <div className="flex items-center justify-end">
-                  {/* Quantity Controls */}
-                  <button
-                    className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-l hover:bg-gray-300"
-                    onClick={() =>
-                      handleUpdateQuantity(item.id, item.quantity - 1)
-                    }
-                    disabled={item.quantity <= 1} // Disable decrement if quantity is 1
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    min="1"
-                    className="w-12 text-center border-t border-b border-gray-200 outline-none"
-                    onChange={(e) =>
-                      handleUpdateQuantity(
-                        item.id,
-                        parseInt(e.target.value, 10)
-                      )
-                    }
-                  />
-                  <button
-                    className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-r hover:bg-gray-300"
-                    onClick={() =>
-                      handleUpdateQuantity(item.id, item.quantity + 1)
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="text-lg font-bold text-green-600 ml-4">
-                ${(item.price * item.quantity).toFixed(2)}
-              </div>
-              {/* Remove Button */}
-              <button
-                className="text-red-600 hover:text-red-800 ml-4"
-                onClick={() => handleRemoveItem(item.id)}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          {/* Cart Total */}
-          <div className="flex justify-end items-center border-t pt-4 mt-4">
-            <div className="text-xl font-bold text-gray-800 mr-4">Total:</div>
-            <div className="text-xl font-bold text-green-600">
-              $
-              {cartItems
-                .reduce((total, item) => total + item.price * item.quantity, 0)
-                .toFixed(2)}
-            </div>
+            ))}
           </div>
-          {/* Checkout Button - Placeholder for now */}
-          <div className="flex justify-end mt-4">
-            <button className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300">
+        )}
+      </div>
+      {/* Cart Summary Section (sticky on desktop) */}
+      {cartItems.length > 0 && (
+        <div className="w-full md:w-80 md:sticky md:top-24 self-start">
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <div className="text-xl font-bold text-gray-800">Total:</div>
+              <div className="text-xl font-bold text-green-600">
+                $
+                {cartItems
+                  .reduce(
+                    (total, item) => total + item.price * item.quantity,
+                    0
+                  )
+                  .toFixed(2)}
+              </div>
+            </div>
+            <button className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md">
               Proceed to Checkout
             </button>
           </div>

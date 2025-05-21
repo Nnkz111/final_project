@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ProductList from "./components/ProductList";
@@ -22,22 +22,28 @@ import HeroSlider from "./components/HeroSlider";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
-const CustomerLayout = () => (
-  <div className="min-h-screen bg-gray-100 flex flex-col">
-    {" "}
-    {/* Customer layout container */}
-    <Header />
-    {/* Sidebar and HeroSlider in the same row/section */}
-    <div className="container mx-auto flex flex-row items-stretch">
-      <Sidebar />
-      <HeroSlider />
+const CustomerLayout = () => {
+  const location = useLocation();
+  const isProductDetail = location.pathname.startsWith("/products/");
+  const isCart = location.pathname.startsWith("/cart");
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {" "}
+      {/* Customer layout container */}
+      <Header />
+      {/* Sidebar and HeroSlider in the same row/section */}
+      <div className="container mx-auto flex flex-row items-stretch">
+        {/* Only show Sidebar and HeroSlider if not on product detail or cart page */}
+        {!isProductDetail && !isCart && <Sidebar />}
+        {!isProductDetail && !isCart && <HeroSlider />}
+      </div>
+      {/* Product list and other content below */}
+      <div className="container mx-auto flex-1 p-4">
+        <Outlet />
+      </div>
     </div>
-    {/* Product list and other content below */}
-    <div className="container mx-auto flex-1 p-4">
-      <Outlet />
-    </div>
-  </div>
-);
+  );
+};
 
 const AdminAreaLayout = () => (
   <ProtectedRoute adminOnly={true}>
