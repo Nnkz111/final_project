@@ -112,6 +112,18 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const clearCart = async () => {
+    if (!user || !token) return;
+    try {
+      await axios.delete(`${API_URL}/cart/clear`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      refreshCart();
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -121,6 +133,7 @@ export const CartProvider = ({ children }) => {
         addItemToCart,
         updateCartItemQuantity,
         removeCartItem,
+        clearCart,
       }}
     >
       {!isAuthLoading && children}

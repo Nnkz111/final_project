@@ -19,6 +19,9 @@ import AdminLogin from "./components/AdminLogin";
 import AdminProductManagement from "./components/AdminProductManagement";
 import AdminCategoryManagement from "./components/AdminCategoryManagement";
 import HeroSlider from "./components/HeroSlider";
+import Checkout from "./components/Checkout";
+import OrderConfirmation from "./components/OrderConfirmation";
+import MyOrders from "./components/MyOrders";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -26,6 +29,11 @@ const CustomerLayout = () => {
   const location = useLocation();
   const isProductDetail = location.pathname.startsWith("/products/");
   const isCart = location.pathname.startsWith("/cart");
+  const isCheckout = location.pathname.startsWith("/checkout");
+  const isOrderConfirmation = location.pathname.startsWith(
+    "/order-confirmation"
+  );
+  const isMyOrders = location.pathname.startsWith("/my-orders");
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {" "}
@@ -33,9 +41,17 @@ const CustomerLayout = () => {
       <Header />
       {/* Sidebar and HeroSlider in the same row/section */}
       <div className="container mx-auto flex flex-row items-stretch">
-        {/* Only show Sidebar and HeroSlider if not on product detail or cart page */}
-        {!isProductDetail && !isCart && <Sidebar />}
-        {!isProductDetail && !isCart && <HeroSlider />}
+        {/* Only show Sidebar and HeroSlider if not on product detail, cart, checkout, order confirmation, or my-orders page */}
+        {!isProductDetail &&
+          !isCart &&
+          !isCheckout &&
+          !isOrderConfirmation &&
+          !isMyOrders && <Sidebar />}
+        {!isProductDetail &&
+          !isCart &&
+          !isCheckout &&
+          !isOrderConfirmation &&
+          !isMyOrders && <HeroSlider />}
       </div>
       {/* Product list and other content below */}
       <div className="container mx-auto flex-1 p-4">
@@ -88,6 +104,26 @@ function App() {
                   element={
                     <ProtectedRoute customerOnly={true}>
                       <Cart />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="checkout"
+                  element={
+                    <ProtectedRoute customerOnly={true}>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="order-confirmation"
+                  element={<OrderConfirmation />}
+                />
+                <Route
+                  path="my-orders"
+                  element={
+                    <ProtectedRoute customerOnly={true}>
+                      <MyOrders />
                     </ProtectedRoute>
                   }
                 />

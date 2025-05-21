@@ -43,10 +43,14 @@ pool.connect((err, client, release) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Save uploaded files to the 'uploads' directory
+    // If uploading payment proof, store in uploads/payment_proof
+    if (req.originalUrl.startsWith("/api/orders")) {
+      cb(null, "uploads/payment_proof/");
+    } else {
+      cb(null, "uploads/");
+    }
   },
   filename: function (req, file, cb) {
-    // Use the original file extension
     cb(
       null,
       file.fieldname + "-" + Date.now() + path.extname(file.originalname)
@@ -500,6 +504,20 @@ app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
   }
 });
 
+// Clear all items from the user's cart
+app.delete("/api/cart/clear", authenticateToken, async (req, res) => {
+  const authenticatedUserId = req.user.userId;
+  try {
+    await pool.query("DELETE FROM cart_items WHERE user_id = $1", [
+      authenticatedUserId,
+    ]);
+    res.status(200).json({ message: "Cart cleared" });
+  } catch (err) {
+    console.error(`Error clearing cart for user ${authenticatedUserId}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Placeholder for product routes
 // We will add product-specific endpoints here later
 // Example: app.get('/api/products', async (req, res) => { ... });
@@ -634,6 +652,125 @@ app.post("/api/auth/login", async (req, res) => {
   } catch (err) {
     console.error("Error logging in user:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Place this after cart routes, before app.listen
+const uploadOrderProof = multer({ storage: storage });
+app.post(
+  "/api/orders",
+  uploadOrderProof.single("payment_proof"),
+  async (req, res) => {
+    try {
+      // Parse fields from FormData
+      const userId = req.body.userId;
+      const items = JSON.parse(req.body.items);
+      const shipping = JSON.parse(req.body.shipping);
+      const payment_type = req.body.payment_type;
+      const payment_proof = req.file ? `/uploads/${req.file.filename}` : null;
+
+      if (
+        !userId ||
+        !items ||
+        !Array.isArray(items) ||
+        items.length === 0 ||
+        !shipping
+      ) {
+        return res.status(400).json({ error: "Missing order data" });
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // Insert order
+        const orderResult = await client.query(
+          `INSERT INTO orders (user_id, shipping_name, shipping_address, shipping_phone, shipping_email, status, payment_type, payment_proof, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING id`,
+          [
+            userId,
+            shipping.name,
+            shipping.address,
+            shipping.phone,
+            shipping.email,
+            "pending", // default status
+            payment_type,
+            payment_proof,
+          ]
+        );
+        const orderId = orderResult.rows[0].id;
+        // Insert order items
+        for (const item of items) {
+          await client.query(
+            `INSERT INTO order_items (order_id, product_id, quantity, price)
+           VALUES ($1, $2, $3, $4)`,
+            [orderId, item.product_id || item.id, item.quantity, item.price]
+          );
+        }
+        await client.query("COMMIT");
+        res.status(201).json({ message: "Order placed successfully", orderId });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Error placing order:", err);
+        res.status(500).json({ error: "Failed to place order" });
+      } finally {
+        client.release();
+      }
+    } catch (err) {
+      console.error("Error parsing order data:", err);
+      res.status(500).json({ error: "Failed to parse order data" });
+    }
+  }
+);
+
+// Get order details by order ID (including items and payment proof)
+app.get("/api/orders/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Get order
+    const orderResult = await pool.query(`SELECT * FROM orders WHERE id = $1`, [
+      id,
+    ]);
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const order = orderResult.rows[0];
+    // Get order items with product info
+    const itemsResult = await pool.query(
+      `SELECT oi.id, oi.product_id, oi.quantity, oi.price, p.name
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = $1`,
+      [id]
+    );
+    order.items = itemsResult.rows;
+    res.json(order);
+  } catch (err) {
+    console.error("Error fetching order details:", err);
+    res.status(500).json({ error: "Failed to fetch order details" });
+  }
+});
+
+// Get all orders for a user (with item count and total)
+app.get("/api/orders/user/:userId", authenticateToken, async (req, res) => {
+  const { userId } = req.params;
+  const authenticatedUserId = req.user.userId;
+  if (parseInt(userId) !== authenticatedUserId) {
+    return res.sendStatus(403);
+  }
+  try {
+    const ordersResult = await pool.query(
+      `SELECT o.*, 
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
+        (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
+       FROM orders o
+       WHERE o.user_id = $1
+       ORDER BY o.created_at DESC`,
+      [userId]
+    );
+    res.json(ordersResult.rows);
+  } catch (err) {
+    console.error("Error fetching user orders:", err);
+    res.status(500).json({ error: "Failed to fetch user orders" });
   }
 });
 

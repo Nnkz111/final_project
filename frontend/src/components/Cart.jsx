@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import AuthContext from "../context/AuthContext"; // Import AuthContext
+import { useNavigate } from "react-router-dom";
 
 function Cart() {
   // const { cartItems } = useCart(); // Not getting items from context anymore
@@ -10,6 +11,7 @@ function Cart() {
   // Get necessary functions from useCart context
   const { refreshCart, removeCartItem, updateCartItemQuantity } = useCart();
   const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
+  const navigate = useNavigate();
 
   // Function to fetch cart items from the backend
   const fetchCartItems = async () => {
@@ -93,7 +95,7 @@ function Cart() {
   }
 
   return (
-    <div className="container mx-auto mt-8 p-4 md:p-8 bg-white rounded-lg shadow-xl flex flex-col md:flex-row gap-8">
+    <div className="container mx-auto mt-2 p-4 md:p-8 bg-white rounded-lg shadow-xl flex flex-col md:flex-row gap-8">
       {/* Cart Items Section */}
       <div className="flex-1">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Shopping Cart</h2>
@@ -218,7 +220,10 @@ function Cart() {
                   .toFixed(2)}
               </div>
             </div>
-            <button className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md">
+            <button
+              className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md"
+              onClick={() => navigate("/checkout")}
+            >
               Proceed to Checkout
             </button>
           </div>
