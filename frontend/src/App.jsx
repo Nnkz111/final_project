@@ -24,6 +24,7 @@ import OrderConfirmation from "./components/OrderConfirmation";
 import MyOrders from "./components/MyOrders";
 import AdminOrderManagement from "./components/AdminOrderManagement";
 import AdminCustomerManagement from "./components/AdminCustomerManagement";
+import AdminSalesPage from "./components/AdminSalesPage";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -151,6 +152,7 @@ function App() {
                 />
                 <Route path="orders" element={<AdminOrderManagement />} />
                 <Route path="customers" element={<AdminCustomerManagement />} />
+                <Route path="sales" element={<AdminSalesPage />} />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
                 {/* Fallback for unknown routes within admin area - could be a 404 */}
                 <Route path="*" element={<div>Admin Page Not Found</div>} />

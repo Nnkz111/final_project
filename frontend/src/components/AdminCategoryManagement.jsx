@@ -11,46 +11,110 @@ const buildCategoryTree = (categories, parentId = null) => {
     }));
 };
 
-// Recursive component to render category tree nodes
-const CategoryNode = ({ category, onEdit, onDelete }) => (
-  <li className="mb-2 border-b pb-2 last:border-b-0 flex justify-between items-center">
-    <span>
-      {category.name}
-      {category.parent_id && (
-        <span className="ml-2 text-gray-500 text-sm">
-          (Parent ID: {category.parent_id})
+// Replace CategoryNode with a new version that supports expand/collapse and better visuals
+const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = category.children && category.children.length > 0;
+  // Calculate border and background for nesting
+  const borderColor = [
+    "",
+    "border-green-200 bg-green-50",
+    "border-green-300 bg-green-100",
+    "border-green-400 bg-green-50",
+    "border-green-500 bg-green-100",
+  ];
+  const borderClass =
+    level > 0 ? `${borderColor[level % borderColor.length]} border-l-4` : "";
+  return (
+    <li
+      className={
+        `flex flex-col py-1 ${borderClass}` + (level > 0 ? " pl-4" : "")
+      }
+    >
+      <div className="flex items-center gap-2 group">
+        {hasChildren && (
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="w-6 h-6 flex items-center justify-center text-green-600 hover:bg-green-100 rounded transition"
+            aria-label={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? (
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M6 9l6 6 6-6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M18 15l-6-6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </button>
+        )}
+        <span
+          className={`font-semibold text-gray-800 ${
+            level === 0 ? "text-base" : "text-sm"
+          }`}
+        >
+          {category.name}
         </span>
+        <div className="flex-1" />
+        <button
+          onClick={() => onEdit(category)}
+          className="bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-sm mr-2"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(category.id)}
+          className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
+        >
+          Delete
+        </button>
+      </div>
+      {hasChildren && expanded && (
+        <ul className="mt-1">
+          {category.children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              category={child}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              level={level + 1}
+            />
+          ))}
+        </ul>
       )}
-    </span>
-    {/* Buttons Container */}
-    <div>
-      <button
-        onClick={() => onEdit(category)}
-        className="text-blue-600 hover:text-blue-800 text-sm mr-2"
-      >
-        Edit
-      </button>
-      <button
-        onClick={() => onDelete(category.id)}
-        className="text-red-600 hover:text-red-800 text-sm"
-      >
-        Delete
-      </button>
-    </div>
-    {category.children.length > 0 && (
-      <ul className="ml-6 mt-2 border-l pl-4">
-        {category.children.map((child) => (
-          <CategoryNode
-            key={child.id}
-            category={child}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))}
-      </ul>
-    )}
-  </li>
-);
+    </li>
+  );
+};
+
+// Helper to render nested category options for the select
+const renderCategoryOptions = (cats, level = 0, editingId = null) => {
+  return cats.map((cat) => [
+    <option
+      key={cat.id}
+      value={cat.id}
+      disabled={editingId && cat.id === editingId}
+    >
+      {`${"\u00A0".repeat(level * 4)}${cat.name}`}
+    </option>,
+    cat.children && cat.children.length > 0
+      ? renderCategoryOptions(cat.children, level + 1, editingId)
+      : null,
+  ]);
+};
 
 function AdminCategoryManagement() {
   const [categories, setCategories] = useState([]);
@@ -200,89 +264,82 @@ function AdminCategoryManagement() {
   }
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Category Management
-      </h2>
-
-      {/* Add/Edit Category Form */}
-      <form
-        onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory}
-        className="mb-8 p-4 border rounded-md bg-gray-50"
-      >
-        <h3 className="text-xl font-semibold mb-4 text-gray-700">
-          {editingCategory ? "Edit Category" : "Add New Category"}
-        </h3>
-        <div className="flex flex-col md:flex-row gap-4">
-          <input
-            type="text"
-            placeholder={
-              editingCategory ? "Edit Category Name" : "New Category Name"
-            }
-            value={editingCategory ? editedCategoryName : newCategoryName}
-            onChange={(e) =>
-              editingCategory
-                ? setEditedCategoryName(e.target.value)
-                : setNewCategoryName(e.target.value)
-            }
-            className="border px-3 py-2 rounded-md flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            value={editingCategory ? editedParentCategoryId : parentCategoryId}
-            onChange={(e) =>
-              editingCategory
-                ? setEditedParentCategoryId(e.target.value)
-                : setParentCategoryId(e.target.value)
-            }
-            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Select Parent Category --</option>
-            {categories.map((cat) => (
-              // Prevent selecting the category itself or its descendants as parent during edit
-              <option
-                key={cat.id}
-                value={cat.id}
-                disabled={
-                  editingCategory &&
-                  (cat.id === editingCategory.id ||
-                    isDescendant(categories, cat, editingCategory))
-                }
-              >
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200"
-          >
-            {editingCategory ? "Update Category" : "Add Category"}
-          </button>
-          {editingCategory && (
-            <button
-              type="button"
-              onClick={() => setEditingCategory(null)}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200"
-            >
-              Cancel Edit
-            </button>
-          )}
-        </div>
-      </form>
-
-      {/* Category List (Hierarchical) */}
-      <div>
-        <h3 className="text-xl font-semibold mb-4 text-gray-700">Categories</h3>
-        <ul>
-          {categoryTree.map((category) => (
-            <CategoryNode
-              key={category.id}
-              category={category}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteCategory}
+    <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
+      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
+        <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
+          Category Management
+        </h2>
+        {/* Add/Edit Category Form */}
+        <form
+          onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory}
+          className="mb-8 p-6 border rounded-2xl bg-gray-50 border-green-100"
+        >
+          <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
+            {editingCategory ? "Edit Category" : "Add New Category"}
+          </h3>
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              placeholder={
+                editingCategory ? "Edit Category Name" : "New Category Name"
+              }
+              value={editingCategory ? editedCategoryName : newCategoryName}
+              onChange={(e) =>
+                editingCategory
+                  ? setEditedCategoryName(e.target.value)
+                  : setNewCategoryName(e.target.value)
+              }
+              className="border px-3 py-2 rounded-md flex-1 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-          ))}
-        </ul>
+            <select
+              value={
+                editingCategory ? editedParentCategoryId : parentCategoryId
+              }
+              onChange={(e) =>
+                editingCategory
+                  ? setEditedParentCategoryId(e.target.value)
+                  : setParentCategoryId(e.target.value)
+              }
+              className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">-- Select Parent Category --</option>
+              {renderCategoryOptions(
+                categoryTree,
+                0,
+                editingCategory ? editingCategory.id : null
+              )}
+            </select>
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
+            >
+              {editingCategory ? "Update Category" : "Add Category"}
+            </button>
+            {editingCategory && (
+              <button
+                type="button"
+                onClick={() => setEditingCategory(null)}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 shadow text-center text-sm"
+              >
+                Cancel Edit
+              </button>
+            )}
+          </div>
+        </form>
+        {/* Category List (Hierarchical) */}
+        <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
+          <h3 className="text-lg font-bold text-green-700 mb-4">Categories</h3>
+          <ul>
+            {categoryTree.map((category) => (
+              <CategoryNode
+                key={category.id}
+                category={category}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteCategory}
+              />
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

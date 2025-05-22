@@ -66,11 +66,20 @@ app.get("/", (req, res) => {
 });
 
 // Product routes
-// Endpoint to get all products
+// Endpoint to get all products (with pagination)
 app.get("/api/products", async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const offset = parseInt(req.query.offset, 10) || 0;
   try {
-    const result = await pool.query("SELECT * FROM products");
-    res.json(result.rows);
+    const dataResult = await pool.query(
+      "SELECT * FROM products ORDER BY id DESC LIMIT $1 OFFSET $2",
+      [limit, offset]
+    );
+    const countResult = await pool.query("SELECT COUNT(*) FROM products");
+    res.json({
+      products: dataResult.rows,
+      total: parseInt(countResult.rows[0].count, 10),
+    });
   } catch (err) {
     console.error("Error fetching products:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -97,7 +106,7 @@ app.get("/api/products/:id", async (req, res) => {
 
 // Add a new product with image upload
 app.post("/api/products", upload.single("productImage"), async (req, res) => {
-  const { name, description, price, stock_quantity } = req.body;
+  const { name, description, price, stock_quantity, category_id } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the uploaded image path
 
   // Basic validation
@@ -109,8 +118,8 @@ app.post("/api/products", upload.single("productImage"), async (req, res) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, stock_quantity, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, description, price, stock_quantity, imageUrl]
+      "INSERT INTO products (name, description, price, stock_quantity, image_url, category_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [name, description, price, stock_quantity, imageUrl, category_id || null]
     );
     res.status(201).json(result.rows[0]); // Return the newly created product
   } catch (err) {
@@ -157,13 +166,20 @@ app.put(
     }
 
     const { id } = req.params; // Get the product ID from the URL
-    const { name, description, price, stock_quantity } = req.body;
+    const { name, description, price, stock_quantity, category_id } = req.body;
     const imageUrl = req.file
       ? `/uploads/${req.file.filename}`
       : req.body.image_url; // Use new image or existing image URL
 
     // Basic validation (ensure at least one field to update is provided)
-    if (!name && !description && !price && !stock_quantity && !imageUrl) {
+    if (
+      !name &&
+      !description &&
+      !price &&
+      !stock_quantity &&
+      !imageUrl &&
+      !category_id
+    ) {
       return res.status(400).json({ error: "No update data provided." });
     }
 
@@ -193,6 +209,10 @@ app.put(
         updateFields.push(`image_url = $${paramIndex++}`);
         queryParams.push(imageUrl);
       } // Allow image_url to be set to null
+      if (category_id !== undefined) {
+        updateFields.push(`category_id = $${paramIndex++}`);
+        queryParams.push(category_id || null);
+      }
 
       if (updateFields.length === 0) {
         return res.status(400).json({ error: "No valid fields to update." });
@@ -944,7 +964,7 @@ app.get("/api/admin/top-selling-products", async (req, res) => {
 app.get("/api/admin/customers", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT u.id, u.username, u.email, u.created_at,
+      SELECT u.id, u.username, u.email, u.created_at, u.status,
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
         (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent
       FROM users u
@@ -955,6 +975,46 @@ app.get("/api/admin/customers", async (req, res) => {
   } catch (err) {
     console.error("Error fetching customers:", err);
     res.status(500).json({ error: "Failed to fetch customers" });
+  }
+});
+
+// Add endpoint to update user status
+app.put("/api/admin/customers/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    await pool.query("UPDATE users SET status = $1 WHERE id = $2", [
+      status,
+      id,
+    ]);
+    res.json({ message: "User status updated" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update user status" });
+  }
+});
+
+// Delete an order (admin only)
+app.delete("/api/orders/:id", authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+  const { id } = req.params;
+  try {
+    // Delete order items first (to maintain referential integrity)
+    await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+    // Then delete the order
+    const result = await pool.query(
+      "DELETE FROM orders WHERE id = $1 RETURNING id",
+      [id]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Order deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Order not found" });
+    }
+  } catch (err) {
+    console.error(`Error deleting order with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
