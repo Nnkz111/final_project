@@ -6,6 +6,7 @@ const multer = require("multer"); // Import multer
 const path = require("path"); // Import path module
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const fs = require("fs"); // Import fs module for directory creation
 
 // Create an Express application
 const app = express();
@@ -43,10 +44,19 @@ pool.connect((err, client, release) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // If uploading payment proof, store in uploads/payment_proof
-    if (req.originalUrl.startsWith("/api/orders")) {
+    // Determine destination based on route
+    if (req.originalUrl === "/api/upload") {
+      const categoryUploadDir = path.join(__dirname, "uploads/categories_img");
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(categoryUploadDir)) {
+        fs.mkdirSync(categoryUploadDir, { recursive: true });
+      }
+      cb(null, categoryUploadDir);
+    } else if (req.originalUrl.startsWith("/api/orders")) {
+      // Existing logic for payment proofs
       cb(null, "uploads/payment_proof/");
     } else {
+      // Default destination
       cb(null, "uploads/");
     }
   },
@@ -66,16 +76,42 @@ app.get("/", (req, res) => {
 });
 
 // Product routes
-// Endpoint to get all products (with pagination)
+// Endpoint to get all products (with pagination and category filter)
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
+  const { category_id } = req.query;
   try {
-    const dataResult = await pool.query(
-      "SELECT * FROM products ORDER BY id DESC LIMIT $1 OFFSET $2",
-      [limit, offset]
-    );
-    const countResult = await pool.query("SELECT COUNT(*) FROM products");
+    let dataResult, countResult;
+    if (category_id) {
+      let categoryIds;
+      if (category_id.includes(",")) {
+        categoryIds = category_id.split(",").map((id) => parseInt(id));
+        dataResult = await pool.query(
+          `SELECT * FROM products WHERE category_id = ANY($1) ORDER BY id DESC LIMIT $2 OFFSET $3`,
+          [categoryIds, limit, offset]
+        );
+        countResult = await pool.query(
+          `SELECT COUNT(*) FROM products WHERE category_id = ANY($1)`,
+          [categoryIds]
+        );
+      } else {
+        dataResult = await pool.query(
+          "SELECT * FROM products WHERE category_id = $1 ORDER BY id DESC LIMIT $2 OFFSET $3",
+          [category_id, limit, offset]
+        );
+        countResult = await pool.query(
+          "SELECT COUNT(*) FROM products WHERE category_id = $1",
+          [category_id]
+        );
+      }
+    } else {
+      dataResult = await pool.query(
+        "SELECT * FROM products ORDER BY id DESC LIMIT $1 OFFSET $2",
+        [limit, offset]
+      );
+      countResult = await pool.query("SELECT COUNT(*) FROM products");
+    }
     res.json({
       products: dataResult.rows,
       total: parseInt(countResult.rows[0].count, 10),
@@ -241,7 +277,7 @@ app.put(
 app.get("/api/categories", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, parent_id FROM categories"
+      "SELECT id, name, parent_id, image_url FROM categories"
     );
     res.json(result.rows);
   } catch (err) {
@@ -252,59 +288,53 @@ app.get("/api/categories", async (req, res) => {
 
 // Endpoint to add a new category (Admin only)
 app.post("/api/categories", authenticateToken, async (req, res) => {
-  // Check if the authenticated user is an admin
   if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403); // Forbidden if not an admin
+    return res.status(403).json({ error: "Admin access required" });
   }
 
-  const { name, parent_id } = req.body;
+  const { name, parent_id, image_url } = req.body;
 
-  // Basic validation
   if (!name) {
     return res.status(400).json({ error: "Category name is required" });
   }
 
   try {
     const result = await pool.query(
-      "INSERT INTO categories (name, parent_id) VALUES ($1, $2) RETURNING id, name, parent_id",
-      [name, parent_id || null] // Use null for parent_id if not provided
+      "INSERT INTO categories (name, parent_id, image_url) VALUES ($1, $2, $3) RETURNING id, name, parent_id, image_url",
+      [name, parent_id || null, image_url || null]
     );
-    res.status(201).json(result.rows[0]); // Return the newly created category
+    res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("Error adding new category:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to create category" });
   }
 });
 
 // Endpoint to update a category by ID (Admin only)
 app.put("/api/categories/:id", authenticateToken, async (req, res) => {
-  // Check if the authenticated user is an admin
   if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403); // Forbidden if not an admin
+    return res.status(403).json({ error: "Admin access required" });
   }
 
-  const { id } = req.params; // Category ID from URL
-  const { name, parent_id } = req.body; // Updated data
+  const { id } = req.params;
+  const { name, parent_id, image_url } = req.body;
 
-  // Basic validation
   if (!name) {
     return res.status(400).json({ error: "Category name is required" });
   }
 
   try {
     const result = await pool.query(
-      "UPDATE categories SET name = $1, parent_id = $2 WHERE id = $3 RETURNING id, name, parent_id",
-      [name, parent_id || null, id] // Use null for parent_id if not provided
+      "UPDATE categories SET name = $1, parent_id = $2, image_url = $3 WHERE id = $4 RETURNING id, name, parent_id, image_url",
+      [name, parent_id || null, image_url || null, id]
     );
 
-    if (result.rows.length > 0) {
-      res.status(200).json(result.rows[0]); // Return the updated category
-    } else {
-      res.status(404).json({ error: "Category not found" });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Category not found" });
     }
+
+    res.json(result.rows[0]);
   } catch (err) {
-    console.error(`Error updating category with ID ${id}:`, err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to update category" });
   }
 });
 
@@ -828,8 +858,10 @@ app.get("/api/orders/user/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Get all orders (admin)
+// Get all orders (admin, with pagination)
 app.get("/api/orders", async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const offset = parseInt(req.query.offset, 10) || 0;
   try {
     const ordersResult = await pool.query(
       `SELECT o.*, u.username, 
@@ -837,9 +869,15 @@ app.get("/api/orders", async (req, res) => {
         (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
        FROM orders o
        LEFT JOIN users u ON o.user_id = u.id
-       ORDER BY o.created_at DESC`
+       ORDER BY o.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
-    res.json(ordersResult.rows);
+    const countResult = await pool.query(`SELECT COUNT(*) FROM orders`);
+    res.json({
+      orders: ordersResult.rows,
+      total: parseInt(countResult.rows[0].count, 10),
+    });
   } catch (err) {
     console.error("Error fetching all orders:", err);
     res.status(500).json({ error: "Failed to fetch orders" });
@@ -960,18 +998,30 @@ app.get("/api/admin/top-selling-products", async (req, res) => {
   }
 });
 
-// Customer management endpoint
+// Customer management endpoint (with pagination)
 app.get("/api/admin/customers", async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const offset = parseInt(req.query.offset, 10) || 0;
   try {
-    const result = await pool.query(`
+    const dataResult = await pool.query(
+      `
       SELECT u.id, u.username, u.email, u.created_at, u.status,
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
         (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent
       FROM users u
       WHERE u.is_admin = false
       ORDER BY u.created_at DESC
-    `);
-    res.json(result.rows);
+      LIMIT $1 OFFSET $2
+    `,
+      [limit, offset]
+    );
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM users WHERE is_admin = false`
+    );
+    res.json({
+      customers: dataResult.rows,
+      total: parseInt(countResult.rows[0].count, 10),
+    });
   } catch (err) {
     console.error("Error fetching customers:", err);
     res.status(500).json({ error: "Failed to fetch customers" });
@@ -1017,6 +1067,26 @@ app.delete("/api/orders/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// Category Image Upload Endpoint (Admin only)
+app.post(
+  "/api/upload",
+  authenticateToken,
+  upload.single("image"),
+  (req, res) => {
+    // Check if the authenticated user is an admin
+    if (!req.user || !req.user.is_admin) {
+      return res.sendStatus(403); // Forbidden if not an admin
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Return the relative path as needed
+    res.json({ url: `/uploads/categories_img/${req.file.filename}` });
+  }
+);
 
 // Start the server
 app.listen(port, () => {

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCategories } from "../context/CategoryContext";
+import { Link } from "react-router-dom";
 
 function MegaSidebar() {
   const { hierarchicalCategories, loading } = useCategories();
@@ -44,13 +45,13 @@ function MegaSidebar() {
       <ul className="space-y-1 mt-2">
         {category.children.map((sub) => (
           <li key={sub.id}>
-            <a
-              href={sub.url || "#"}
+            <Link
+              to={`/category/${sub.id}`}
               className="block px-3 py-1.5 rounded-md text-gray-700 hover:bg-gray-100 hover:text-red-600 transition-colors duration-200"
               style={{ fontWeight: level === 2 ? "bold" : "normal" }}
             >
               {sub.name}
-            </a>
+            </Link>
             {renderSubMenu(sub, level + 1)}
           </li>
         ))}
@@ -76,8 +77,8 @@ function MegaSidebar() {
             onMouseLeave={handleMouseLeave}
             className="relative"
           >
-            <a
-              href={cat.url || "#"}
+            <Link
+              to={`/category/${cat.id}`}
               className={`flex items-center gap-2 px-4 py-3 w-full text-left text-gray-700 font-medium transition-colors duration-200 rounded-none border-l-4 ${
                 activeCategory === cat.id
                   ? "bg-red-50 text-red-600 border-red-500"
@@ -87,7 +88,7 @@ function MegaSidebar() {
             >
               {/* You can add an icon here if you want */}
               {cat.name}
-            </a>
+            </Link>
             {cat.children &&
               cat.children.length > 0 &&
               activeCategory === cat.id && (
@@ -99,12 +100,12 @@ function MegaSidebar() {
                 >
                   {cat.children.map((sub) => (
                     <div key={sub.id} className="min-w-[160px]">
-                      <a
-                        href={sub.url || "#"}
+                      <Link
+                        to={`/category/${sub.id}`}
                         className="block mb-2 text-gray-900 font-semibold text-base hover:text-red-600 transition-colors duration-200"
                       >
                         {sub.name}
-                      </a>
+                      </Link>
                       {renderSubMenu(sub, 3)}
                     </div>
                   ))}

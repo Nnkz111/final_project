@@ -118,14 +118,19 @@ const renderCategoryOptions = (cats, level = 0, editingId = null) => {
 
 function AdminCategoryManagement() {
   const [categories, setCategories] = useState([]);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [parentCategoryId, setParentCategoryId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { adminToken } = useContext(AdminAuthContext);
+
+  // State for modal and form
+  const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [editedCategoryName, setEditedCategoryName] = useState("");
-  const [editedParentCategoryId, setEditedParentCategoryId] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [parentCategoryId, setParentCategoryId] = useState("");
+  const [categoryImage, setCategoryImage] = useState(null);
+  const [categoryImageUrl, setCategoryImageUrl] = useState("");
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   // Fetch categories from the backend
   const fetchCategories = async () => {
@@ -148,81 +153,124 @@ function AdminCategoryManagement() {
     fetchCategories();
   }, []);
 
-  // Handle adding a new category
-  const handleAddCategory = async (e) => {
+  // Handle click on Edit button
+  const handleEditClick = (category) => {
+    setEditingCategory(category);
+    setCategoryName(category.name);
+    setParentCategoryId(category.parent_id || "");
+    setCategoryImageUrl(category.image_url || "");
+    const imageUrlForPreview = category.image_url
+      ? `http://localhost:5000${category.image_url}`
+      : "";
+    setPreviewImageUrl(imageUrlForPreview);
+    setCategoryImage(null);
+    setUploading(false);
+    setShowModal(true);
+  };
+
+  // Handle file selection and immediate upload for preview
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCategoryImage(file);
+      setPreviewImageUrl(URL.createObjectURL(file));
+      setCategoryImageUrl("");
+
+      // Upload the image immediately after selection
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+      try {
+        const response = await fetch("http://localhost:5000/api/upload", {
+          method: "POST",
+          body: formData,
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        const data = await response.json();
+        setCategoryImageUrl(data.url);
+      } catch (err) {
+        alert("Image upload failed: " + err.message);
+        setPreviewImageUrl("");
+        setCategoryImage(null);
+        setCategoryImageUrl("");
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      // Clear states if file is deselected
+      setCategoryImage(null);
+      setPreviewImageUrl("");
+      setCategoryImageUrl("");
+    }
+  };
+
+  // Handle removing the image
+  const handleRemoveImage = () => {
+    setCategoryImage(null);
+    setCategoryImageUrl("");
+    setPreviewImageUrl("");
+    // No need to set uploading to false here, as removal is instant
+  };
+
+  // Handle form submission (Add or Edit)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newCategoryName.trim()) return;
+    if (!categoryName.trim()) return;
+
+    // Image upload already happened on file select, categoryImageUrl should hold the backend URL
+
+    const method = editingCategory ? "PUT" : "POST";
+    const url = editingCategory
+      ? `http://localhost:5000/api/categories/${editingCategory.id}`
+      : "http://localhost:5000/api/categories";
 
     try {
-      const response = await fetch("http://localhost:5000/api/categories", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({
-          name: newCategoryName,
-          parent_id: parentCategoryId || null, // Send null if no parent selected
+          name: categoryName,
+          parent_id: parentCategoryId || null,
+          image_url: categoryImageUrl || null, // <--- Use the backend URL from state
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // If backend returns an error, log the response body
+        const errorData = await response.json();
+        console.error("Backend error saving category:", errorData);
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${
+            errorData.error || "Unknown error"
+          }`
+        );
       }
 
-      // Assuming the backend returns the new category
-      // const newCategory = await response.json();
-      setNewCategoryName("");
-      setParentCategoryId("");
-      fetchCategories(); // Refresh the list
+      // Reset form, close modal, and refresh list
+      closeModal();
+      fetchCategories();
     } catch (error) {
-      console.error("Error adding category:", error);
-      // Optional: Display error message to user
+      console.error("Error saving category:", error);
+      alert("Failed to save category: " + error.message); // Show error to user
     }
   };
 
-  // Handle click on Edit button
-  const handleEditClick = (category) => {
-    setEditingCategory(category);
-    setEditedCategoryName(category.name);
-    setEditedParentCategoryId(category.parent_id || ""); // Use empty string for null parent_id
-  };
-
-  // Handle updating a category
-  const handleUpdateCategory = async (e) => {
-    e.preventDefault();
-    if (!editedCategoryName.trim() || !editingCategory) return;
-
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/categories/${editingCategory.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-          body: JSON.stringify({
-            name: editedCategoryName,
-            parent_id: editedParentCategoryId || null,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Assuming the backend returns the updated category
-      // const updatedCategory = await response.json();
-      setEditingCategory(null); // Exit editing mode
-      setEditedCategoryName("");
-      setEditedParentCategoryId("");
-      fetchCategories(); // Refresh the list
-    } catch (error) {
-      console.error("Error updating category:", error);
-      // Optional: Display error message to user
-    }
+  // Close modal and reset state
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingCategory(null);
+    setCategoryName("");
+    setParentCategoryId("");
+    setCategoryImage(null);
+    setCategoryImageUrl("");
+    setPreviewImageUrl("");
+    setUploading(false);
   };
 
   // Handle deleting a category
@@ -269,63 +317,118 @@ function AdminCategoryManagement() {
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
           Category Management
         </h2>
-        {/* Add/Edit Category Form */}
-        <form
-          onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory}
-          className="mb-8 p-6 border rounded-2xl bg-gray-50 border-green-100"
+        {/* Add Category Button */}
+        <button
+          onClick={() => {
+            setEditingCategory(null);
+            setShowModal(true);
+            setCategoryName("");
+            setParentCategoryId("");
+            setCategoryImage(null);
+            setCategoryImageUrl("");
+            setPreviewImageUrl("");
+          }}
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mb-6"
         >
-          <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
-            {editingCategory ? "Edit Category" : "Add New Category"}
-          </h3>
-          <div className="flex flex-col md:flex-row gap-4">
-            <input
-              type="text"
-              placeholder={
-                editingCategory ? "Edit Category Name" : "New Category Name"
-              }
-              value={editingCategory ? editedCategoryName : newCategoryName}
-              onChange={(e) =>
-                editingCategory
-                  ? setEditedCategoryName(e.target.value)
-                  : setNewCategoryName(e.target.value)
-              }
-              className="border px-3 py-2 rounded-md flex-1 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            <select
-              value={
-                editingCategory ? editedParentCategoryId : parentCategoryId
-              }
-              onChange={(e) =>
-                editingCategory
-                  ? setEditedParentCategoryId(e.target.value)
-                  : setParentCategoryId(e.target.value)
-              }
-              className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">-- Select Parent Category --</option>
-              {renderCategoryOptions(
-                categoryTree,
-                0,
-                editingCategory ? editingCategory.id : null
-              )}
-            </select>
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
-            >
-              {editingCategory ? "Update Category" : "Add Category"}
-            </button>
-            {editingCategory && (
+          Add New Category
+        </button>
+
+        {/* Modal for Add/Edit Category */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
               <button
-                type="button"
-                onClick={() => setEditingCategory(null)}
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 shadow text-center text-sm"
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+                onClick={closeModal}
+                aria-label="Close"
               >
-                Cancel Edit
+                &times;
               </button>
-            )}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <h3 className="text-xl font-bold text-green-700 mb-2 text-center">
+                  {editingCategory ? "Edit Category" : "Add New Category"}
+                </h3>
+                <input
+                  type="text"
+                  placeholder={
+                    editingCategory ? "Edit Category Name" : "New Category Name"
+                  }
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                />
+                <select
+                  value={parentCategoryId}
+                  onChange={(e) => setParentCategoryId(e.target.value)}
+                  className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">-- Select Parent Category --</option>
+                  {renderCategoryOptions(
+                    categoryTree,
+                    0,
+                    editingCategory ? editingCategory.id : null
+                  )}
+                </select>
+
+                {/* Image upload field */}
+                <div className="flex flex-col items-center gap-2 border border-dashed border-gray-300 p-4 rounded-md">
+                  <label className="text-gray-700 font-medium text-sm">
+                    Category Image
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="text-sm"
+                    disabled={uploading}
+                  />
+                  {/* Preview and Remove Button */}
+                  {(previewImageUrl || categoryImageUrl) && !uploading && (
+                    <div className="flex flex-col items-center mt-2">
+                      <img
+                        src={
+                          previewImageUrl ||
+                          `http://localhost:5000${categoryImageUrl}`
+                        }
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded shadow border border-green-100 mb-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="text-red-600 text-sm hover:underline"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  )}
+                  {uploading && (
+                    <span className="text-xs text-gray-400">Uploading...</span>
+                  )}
+                </div>
+
+                <div className="flex gap-4 mt-2">
+                  <button
+                    type="submit"
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm flex-1"
+                    disabled={uploading || !categoryName.trim()}
+                  >
+                    {editingCategory ? "Update Category" : "Add Category"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 shadow text-center text-sm flex-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </form>
+        )}
+
         {/* Category List (Hierarchical) */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
           <h3 className="text-lg font-bold text-green-700 mb-4">Categories</h3>

@@ -33,10 +33,13 @@ function AdminOrderManagement() {
     quantity: 1,
   });
   const [customProductId, setCustomProductId] = useState(-1); // For unique negative IDs
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchOrders(page);
+  }, [page]);
 
   useEffect(() => {
     if (showWalkInModal) {
@@ -49,14 +52,19 @@ function AdminOrderManagement() {
     }
   }, [showWalkInModal]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (pageNum = 1) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/orders");
+      const res = await fetch(
+        `http://localhost:5000/api/orders?limit=${pageSize}&offset=${
+          (pageNum - 1) * pageSize
+        }`
+      );
       if (!res.ok) throw new Error("Failed to fetch orders");
       const data = await res.json();
-      setOrders(data);
+      setOrders(data.orders);
+      setTotal(data.total);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -221,6 +229,11 @@ function AdminOrderManagement() {
     setWalkInError("");
   };
 
+  // Pagination controls
+  const totalPages = Math.ceil(total / pageSize);
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+  const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
+
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
@@ -260,98 +273,122 @@ function AdminOrderManagement() {
         ) : filteredOrders.length === 0 ? (
           <div className="text-gray-500 text-center">No orders found.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Order ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    User
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Created
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Items
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Total
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Payment
-                  </th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-green-50 transition">
-                    <td className="px-4 py-3 font-mono">#{order.id}</td>
-                    <td className="px-4 py-3">
-                      {order.username || order.user_id}
-                    </td>
-                    <td className="px-4 py-3 capitalize font-semibold text-green-700">
-                      <select
-                        className="border rounded px-2 py-1 bg-white"
-                        value={editingStatus[order.id] ?? order.status}
-                        onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value)
-                        }
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold disabled:opacity-60"
-                        onClick={() => handleUpdateStatus(order.id)}
-                        disabled={
-                          updating[order.id] ||
-                          (editingStatus[order.id] ?? order.status) ===
-                            order.status
-                        }
-                      >
-                        {updating[order.id] ? "Saving..." : "Save"}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      {order.created_at &&
-                        new Date(order.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">{order.item_count}</td>
-                    <td className="px-4 py-3 font-bold text-green-700">
-                      ${parseFloat(order.total).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 capitalize">
-                      {order.payment_type || "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
-                        onClick={() => openOrderModal(order)}
-                      >
-                        View
-                      </button>
-                      <button
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm ml-2"
-                        onClick={() => handleDeleteOrder(order.id)}
-                        disabled={deleting[order.id]}
-                      >
-                        {deleting[order.id] ? "Deleting..." : "Delete"}
-                      </button>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Order ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      User
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Created
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Items
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Total
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Payment
+                    </th>
+                    <th className="px-4 py-3"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-green-50 transition">
+                      <td className="px-4 py-3 font-mono">#{order.id}</td>
+                      <td className="px-4 py-3">
+                        {order.username || order.user_id}
+                      </td>
+                      <td className="px-4 py-3 capitalize font-semibold text-green-700">
+                        <select
+                          className="border rounded px-2 py-1 bg-white"
+                          value={editingStatus[order.id] ?? order.status}
+                          onChange={(e) =>
+                            handleStatusChange(order.id, e.target.value)
+                          }
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-semibold disabled:opacity-60"
+                          onClick={() => handleUpdateStatus(order.id)}
+                          disabled={
+                            updating[order.id] ||
+                            (editingStatus[order.id] ?? order.status) ===
+                              order.status
+                          }
+                        >
+                          {updating[order.id] ? "Saving..." : "Save"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        {order.created_at &&
+                          new Date(order.created_at).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">{order.item_count}</td>
+                      <td className="px-4 py-3 font-bold text-green-700">
+                        ${parseFloat(order.total).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 capitalize">
+                        {order.payment_type || "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
+                          onClick={() => openOrderModal(order)}
+                        >
+                          View
+                        </button>
+                        <button
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm ml-2"
+                          onClick={() => handleDeleteOrder(order.id)}
+                          disabled={deleting[order.id]}
+                        >
+                          {deleting[order.id] ? "Deleting..." : "Delete"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <button
+                  onClick={handlePrev}
+                  disabled={page === 1}
+                  className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="font-semibold text-green-700">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={handleNext}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
         {/* Walk-in Sale Modal */}
         {showWalkInModal && (

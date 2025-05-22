@@ -25,6 +25,7 @@ import MyOrders from "./components/MyOrders";
 import AdminOrderManagement from "./components/AdminOrderManagement";
 import AdminCustomerManagement from "./components/AdminCustomerManagement";
 import AdminSalesPage from "./components/AdminSalesPage";
+import CategoryPage from "./components/CategoryPage";
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -37,24 +38,27 @@ const CustomerLayout = () => {
     "/order-confirmation"
   );
   const isMyOrders = location.pathname.startsWith("/my-orders");
+  const isCategoryPage = location.pathname.startsWith("/category/");
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {" "}
       {/* Customer layout container */}
-      <Header />
+      <Header isCategoryPage={isCategoryPage} />
       {/* Sidebar and HeroSlider in the same row/section */}
       <div className="container mx-auto flex flex-row items-stretch">
-        {/* Only show Sidebar and HeroSlider if not on product detail, cart, checkout, order confirmation, or my-orders page */}
+        {/* Only show Sidebar and HeroSlider if not on product detail, cart, checkout, order confirmation, my-orders, or category page */}
         {!isProductDetail &&
           !isCart &&
           !isCheckout &&
           !isOrderConfirmation &&
-          !isMyOrders && <Sidebar />}
+          !isMyOrders &&
+          !isCategoryPage && <Sidebar />}
         {!isProductDetail &&
           !isCart &&
           !isCheckout &&
           !isOrderConfirmation &&
-          !isMyOrders && <HeroSlider />}
+          !isMyOrders &&
+          !isCategoryPage && <HeroSlider />}
       </div>
       {/* Product list and other content below */}
       <div className="container mx-auto flex-1 p-4">
@@ -130,6 +134,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="category/:id" element={<CategoryPage />} />
                 {/* Add other customer-specific routes here (e.g., /profile, /orders) */}
                 {/* Fallback for unknown routes within customer area - could be a 404 */}
                 <Route path="*" element={<div>Customer Page Not Found</div>} />

@@ -20,7 +20,7 @@ function ProductList() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setProducts(data);
+        setProducts(data.products || []); // Ensure products is always an array
       } catch (error) {
         setError(error);
         console.error("Error fetching products:", error);
