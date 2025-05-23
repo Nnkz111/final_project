@@ -148,7 +148,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="category/:id" element={<CategoryPage />} />
+                <Route path="category/*" element={<CategoryPage />} />
                 <Route
                   path="profile"
                   element={

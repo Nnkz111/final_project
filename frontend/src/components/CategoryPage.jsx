@@ -8,26 +8,33 @@ function getDescendantCategoryIds(categories, parentId) {
 }
 
 function CategoryPage() {
-  const { id } = useParams();
+  const params = useParams(); // Get all parameters
+  const wildcardPath = params["*"] || ""; // Get the wildcard path string
+  const pathSegments = wildcardPath
+    .split("/")
+    .filter((segment) => segment !== ""); // Split into segments and filter empty ones
+  const currentCategoryId = pathSegments[pathSegments.length - 1]; // The last segment should be the current category ID
+
   const { categories, hierarchicalCategories } = useCategories();
   const [category, setCategory] = useState(null);
   const [children, setChildren] = useState([]);
-  // Removed products state
-  // const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Find the category and its children
+  // Find the category and its children using the extracted currentCategoryId
   useEffect(() => {
     if (!categories.length) {
       setLoading(false);
       return;
     }
 
-    const cat = categories.find((c) => String(c.id) === String(id));
+    const cat = categories.find(
+      (c) => String(c.id) === String(currentCategoryId)
+    );
     setCategory(cat);
 
     const directChildren = categories.filter(
-      (c) => String(c.parent_id) === String(id)
+      (c) => String(c.parent_id) === String(currentCategoryId)
     );
     setChildren(directChildren);
 
@@ -50,7 +57,29 @@ function CategoryPage() {
     //   setProducts([]);
     setLoading(false);
     // }
-  }, [id, categories]); // Depend on id and categories
+
+    // New logic: if no direct children, fetch products for this category ID
+    if (directChildren.length === 0 && cat) {
+      setLoading(true);
+      // Fetch products specifically for this category ID
+      fetch(
+        `http://localhost:5000/api/products?category_id=${currentCategoryId}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          // Assuming the API returns products directly or in a 'products' field
+          setProducts(data.products || data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching products for category:", error);
+          setLoading(false);
+        });
+    } else {
+      setProducts([]); // Clear products if there are children categories
+      setLoading(false);
+    }
+  }, [currentCategoryId, categories]); // Depend on currentCategoryId and categories
 
   // Helper to get category name by id
   const getCategoryName = (catId) => {
