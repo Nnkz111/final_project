@@ -29,6 +29,7 @@ import CategoryPage from "./components/CategoryPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import Breadcrumbs from "./components/Breadcrumbs";
 import CategoryListPage from "./pages/CategoryListPage";
+import ProductListPage from "./pages/ProductListPage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -46,6 +47,7 @@ const CustomerLayout = () => {
   const isProfilePage = location.pathname.startsWith("/profile");
   const isHomePage = location.pathname === "/"; // Check if it's the homepage
   const isCategoryListPage = location.pathname === "/categories"; // Check if it's the category list page
+  const isProductListPage = location.pathname === "/products"; // Check if it's the product list page
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -55,7 +57,7 @@ const CustomerLayout = () => {
       {/* Add Breadcrumbs here, show only if not homepage */}
       {!isHomePage && <Breadcrumbs />}
       {/* Sidebar and HeroSlider in the same row/section */}
-      {/* Exclude sidebar and hero slider on specific pages like product detail, cart, etc., AND the category list page */}
+      {/* Exclude sidebar and hero slider on specific pages like product detail, cart, etc., AND the category list page and product list page */}
       {!isProductDetail &&
         !isCart &&
         !isCheckout &&
@@ -63,7 +65,8 @@ const CustomerLayout = () => {
         !isMyOrders &&
         !isCategoryPage &&
         !isProfilePage &&
-        !isCategoryListPage && ( // Add this condition
+        !isCategoryListPage &&
+        !isProductListPage && ( // Add this condition
           <div className="container mx-auto flex flex-row items-stretch">
             <Sidebar />
             <HeroSlider />
@@ -115,6 +118,7 @@ function App() {
                 />{" "}
                 {/* Root customer page */}
                 <Route path="categories" element={<CategoryListPage />} />
+                <Route path="products" element={<ProductListPage />} />
                 <Route path="products/:id" element={<ProductDetails />} />
                 <Route
                   path="cart"

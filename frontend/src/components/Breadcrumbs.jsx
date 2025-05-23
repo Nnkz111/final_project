@@ -89,14 +89,24 @@ const Breadcrumbs = () => {
         {pathnames.map((name, index) => {
           // Determine the route for the current segment
           let routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
+          const segmentName = name.charAt(0).toUpperCase() + name.slice(1);
+
           // Special case: if the segment is 'category' and it's not the last segment,
           // link it to the category listing page.
           if (name === "category" && index < pathnames.length - 1) {
             routeTo = "/categories"; // Link to the new category list page
           }
+          // Special case: if the segment is 'products' and it's not the last segment,
+          // link it to the product listing page.
+          if (name === "products" && index < pathnames.length - 1) {
+            routeTo = "/products"; // Link to the product list page
+          }
 
           const isLast = index === pathnames.length - 1;
-          const segment = segmentData[index] || { name: name, isLoading: true }; // Fallback while loading
+          const segment = segmentData[index] || {
+            name: segmentName,
+            isLoading: true,
+          }; // Fallback while loading, use capitalized name
 
           return (
             <li key={index} className="flex items-center">
