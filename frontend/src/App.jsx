@@ -108,14 +108,7 @@ function App() {
               <Route path="/" element={<CustomerLayout />}>
                 {" "}
                 {/* Parent route for customer area */}
-                <Route
-                  index
-                  element={
-                    <ProtectedRoute customerOnly={true}>
-                      <ProductList />
-                    </ProtectedRoute>
-                  }
-                />{" "}
+                <Route index element={<ProductList />} />{" "}
                 {/* Root customer page */}
                 <Route path="categories" element={<CategoryListPage />} />
                 <Route path="products" element={<ProductListPage />} />

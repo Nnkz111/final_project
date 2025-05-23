@@ -588,12 +588,16 @@ const jwtSecret =
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Get token from 'Bearer TOKEN' format
+  console.log("Attempting to authenticate token...");
+  console.log("Received Authorization Header:", authHeader);
+  console.log("Extracted Token:", token);
 
   if (token == null) {
     return res.sendStatus(401); // If there is no token, return unauthorized
   }
 
   jwt.verify(token, jwtSecret, (err, user) => {
+    console.log("JWT Verify Result:", { error: err, user: user });
     if (err) {
       return res.sendStatus(403); // If token is invalid, return forbidden
     }
@@ -606,7 +610,7 @@ function authenticateToken(req, res, next) {
 
 // Register a new user
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, username } = req.body; // Assuming username is also provided
+  const { email, password, username, name } = req.body; // Include name
 
   // Basic validation
   if (!email || !password) {
@@ -625,34 +629,56 @@ app.post("/api/auth/register", async (req, res) => {
         .json({ error: "User with this email already exists" });
     }
 
-    // Hash the password
-    const saltRounds = 10; // Cost factor for hashing
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN"); // Start transaction
 
-    // Insert the new user into the database
-    const result = await pool.query(
-      "INSERT INTO users (email, password_hash, username, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, email, username, is_admin",
-      [email, passwordHash, username, false] // Include is_admin in the insert statement and values
-    );
+      // Hash the password
+      const saltRounds = 10; // Cost factor for hashing
+      const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    const newUser = result.rows[0];
+      // Insert the new user into the users table
+      const userResult = await client.query(
+        "INSERT INTO users (email, password_hash, username, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, email, username, is_admin",
+        [email, passwordHash, username, false]
+      );
+      const newUser = userResult.rows[0];
 
-    // Create a JWT token
-    const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email, is_admin: newUser.is_admin }, // Include is_admin in the token payload
-      jwtSecret,
-      { expiresIn: "2d" }
-    ); // Token expires in 1 hour
+      // Insert the customer information into the customers table
+      // Use the newly created user's ID
+      await client.query(
+        "INSERT INTO customers (user_id, name, email) VALUES ($1, $2, $3)",
+        [newUser.id, name || null, email || null] // Store name, allow null if not provided (though form requires it)
+      );
 
-    res.status(201).json({
-      token,
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-        is_admin: newUser.is_admin, // Include is_admin in the returned user object
-      },
-    }); // Return token and basic user info
+      await client.query("COMMIT"); // Commit the transaction
+
+      // Create a JWT token
+      const token = jwt.sign(
+        {
+          userId: newUser.id,
+          email: newUser.email,
+          is_admin: newUser.is_admin,
+        },
+        jwtSecret,
+        { expiresIn: "2d" }
+      );
+
+      res.status(201).json({
+        token,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+          is_admin: newUser.is_admin,
+        },
+      });
+    } catch (err) {
+      await client.query("ROLLBACK"); // Rollback transaction on error
+      throw err; // Re-throw the error to be caught by the outer catch block
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error("Error registering user:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -671,9 +697,20 @@ app.post("/api/auth/login", async (req, res) => {
   }
 
   try {
-    // Find the user by email or username
+    // Find the user by email or username and join with customers table
     const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1 OR username = $2",
+      `SELECT
+         u.id,
+         u.username,
+         u.email,
+         u.password_hash,
+         u.is_admin,
+         c.name AS customer_name,
+         c.phone AS customer_phone,
+         c.address AS customer_address
+       FROM users u
+       LEFT JOIN customers c ON u.id = c.user_id
+       WHERE u.email = $1 OR u.username = $2`,
       [email, username]
     );
     const user = result.rows[0];
@@ -704,7 +741,13 @@ app.post("/api/auth/login", async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        is_admin: user.is_admin, // And include it here
+        is_admin: user.is_admin,
+        customer: {
+          // Include customer object with name, phone, and address
+          name: user.customer_name,
+          phone: user.customer_phone,
+          address: user.customer_address,
+        },
       },
     }); // Return token and basic user info
   } catch (err) {
@@ -1095,6 +1138,211 @@ app.post(
     res.json({ url: `/uploads/categories_img/${req.file.filename}` });
   }
 );
+
+// Get user profile
+app.get("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    // The authenticateToken middleware attaches user info to req.user
+    const userId = req.user.userId;
+
+    // Fetch user data and join with customer data
+    const result = await pool.query(
+      `SELECT
+         u.id,
+         u.username,
+         u.email,
+         u.is_admin,
+         c.name AS customer_name,
+         c.phone AS customer_phone,
+         c.address AS customer_address
+       FROM users u
+       LEFT JOIN customers c ON u.id = c.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    const userProfile = result.rows[0];
+
+    if (!userProfile) {
+      // This should theoretically not happen if authenticateToken succeeds
+      return res.status(404).json({ error: "User profile not found" });
+    }
+
+    // Restructure the response to match frontend expectation (user.customer)
+    const formattedProfile = {
+      id: userProfile.id,
+      username: userProfile.username,
+      email: userProfile.email,
+      is_admin: userProfile.is_admin,
+      customer: {
+        name: userProfile.customer_name,
+        phone: userProfile.customer_phone,
+        address: userProfile.customer_address,
+      },
+    };
+
+    res.json(formattedProfile);
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Add endpoint to update user profile
+app.put("/api/profile", authenticateToken, async (req, res) => {
+  const userId = req.user.userId; // Get user ID from authenticated token
+  const { username, email, name, phone, address } = req.body;
+
+  // Basic validation (at least one field should be provided)
+  if (!username && !email && !name && !phone && !address) {
+    return res.status(400).json({ error: "No update data provided." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Update users table (if username or email are provided)
+    const userUpdateFields = [];
+    const userUpdateParams = [userId];
+    let userParamIndex = 2;
+
+    if (username) {
+      userUpdateFields.push(`username = $${userParamIndex++}`);
+      userUpdateParams.push(username);
+    }
+    if (email) {
+      // Optional: Add email format validation here if not done on frontend
+      // Optional: Check for unique email constraint violation more gracefully
+      userUpdateFields.push(`email = $${userParamIndex++}`);
+      userUpdateParams.push(email);
+    }
+
+    if (userUpdateFields.length > 0) {
+      const userUpdateQuery = `UPDATE users SET ${userUpdateFields.join(
+        ", "
+      )} WHERE id = $1`;
+      await client.query(userUpdateQuery, userUpdateParams);
+    }
+
+    // Handle customers table (insert or update)
+    // Check if customer record exists for this user
+    const customerExistsResult = await client.query(
+      "SELECT id FROM customers WHERE user_id = $1",
+      [userId]
+    );
+    const customerExists = customerExistsResult.rows.length > 0;
+
+    if (customerExists) {
+      // Update existing customer record
+      const customerUpdateFields = [];
+      const customerUpdateParams = [userId];
+      let customerParamIndex = 2;
+
+      if (name !== undefined) {
+        // Use undefined check to allow setting to empty string
+        customerUpdateFields.push(`name = $${customerParamIndex++}`);
+        customerUpdateParams.push(name);
+      }
+      if (phone !== undefined) {
+        customerUpdateFields.push(`phone = $${customerParamIndex++}`);
+        customerUpdateParams.push(phone);
+      }
+      if (address !== undefined) {
+        customerUpdateFields.push(`address = $${customerParamIndex++}`);
+        customerUpdateParams.push(address);
+      }
+
+      // Add email to customer update if provided
+      if (email !== undefined) {
+        customerUpdateFields.push(`email = $${customerParamIndex++}`);
+        customerUpdateParams.push(email);
+      }
+
+      if (customerUpdateFields.length > 0) {
+        const customerUpdateQuery = `UPDATE customers SET ${customerUpdateFields.join(
+          ", "
+        )} WHERE user_id = $1`;
+        await client.query(customerUpdateQuery, customerUpdateParams);
+      }
+    } else {
+      // Create new customer record if it doesn't exist and at least one customer field is provided
+      // Include email in the insert if provided
+      if (name || phone || address || email) {
+        await client.query(
+          "INSERT INTO customers (user_id, name, phone, address, email) VALUES ($1, $2, $3, $4, $5)",
+          [userId, name || null, phone || null, address || null, email || null]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    res.status(200).json({ message: "Profile updated successfully" });
+  } catch (err) {
+    await client.query("ROLLBACK"); // Rollback transaction on error
+    console.error("Error updating user profile:", err);
+    // Check for unique constraint violation on email
+    if (err.code === "23505") {
+      // PostgreSQL unique violation error code
+      return res.status(409).json({ error: "Email already exists" });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release();
+  }
+});
+
+// Add endpoint to change user password
+app.put("/api/change-password", authenticateToken, async (req, res) => {
+  const userId = req.user.userId; // Get user ID from authenticated token
+  const { currentPassword, newPassword } = req.body;
+
+  // Basic validation
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: "Current and new passwords are required" });
+  }
+
+  try {
+    // Fetch the user's current hashed password
+    const result = await pool.query(
+      "SELECT password_hash FROM users WHERE id = $1",
+      [userId]
+    );
+    const user = result.rows[0];
+
+    if (!user) {
+      // This should not happen if authenticateToken works correctly
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Compare the provided current password with the stored hashed password
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password_hash
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid current password" });
+    }
+
+    // Hash the new password
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update the password in the users table
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+      newPasswordHash,
+      userId,
+    ]);
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Error changing password:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Start the server
 app.listen(port, () => {

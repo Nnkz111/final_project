@@ -149,11 +149,22 @@ const Breadcrumbs = () => {
     .split("/")
     .filter((segment) => segment !== "");
 
-  // Check if the path starts with 'category'
-  const isCategoryPath = pathSegments[0] === "category";
-
-  if (isCategoryPath) {
-    // Add the base 'Category' breadcrumb
+  // Explicitly handle /checkout path to include Cart
+  if (location.pathname === "/checkout") {
+    breadcrumbItems.push({
+      name: "Cart",
+      routeTo: "/cart",
+      isLast: false,
+      isLoading: false,
+    });
+    breadcrumbItems.push({
+      name: "Checkout",
+      routeTo: "/checkout",
+      isLast: true,
+      isLoading: false,
+    });
+  } else if (pathSegments[0] === "category") {
+    // Handle paths starting with 'category'
     breadcrumbItems.push({
       name: "Category",
       routeTo: "/categories", // Link to the category list page
@@ -288,13 +299,40 @@ const Breadcrumbs = () => {
         });
       }
     }
-  } else {
-    // Handle other general paths (e.g., /about, /contact)
+  } else if (pathSegments[0] === "cart") {
+    // Handle /cart path
+    breadcrumbItems.push({
+      name: "Cart",
+      routeTo: "/cart",
+      isLast: pathSegments.length === 1, // Is last if only /cart
+      isLoading: false,
+    });
+
+    // Handle any segments after /cart (e.g., /cart/checkout)
+    if (pathSegments.length > 1 && pathSegments[1] === "checkout") {
+      breadcrumbItems.push({
+        name: "Checkout",
+        routeTo: "/cart/checkout", // Link to the checkout page
+        isLast: pathSegments.length === 2, // Is last if only /cart/checkout
+        isLoading: false,
+      });
+    }
+  } else if (pathSegments.length > 0) {
+    // Handle general paths, including cart and checkout
     let cumulativePath = "";
     pathSegments.forEach((name, index) => {
       cumulativePath += `/${name}`;
+      let displayName = name.charAt(0).toUpperCase() + name.slice(1);
+
+      // Customize display name for specific segments if needed
+      if (name === "cart") {
+        displayName = "Cart";
+      } else if (name === "checkout") {
+        displayName = "Checkout";
+      } // Add other custom names here if needed
+
       breadcrumbItems.push({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
+        name: displayName,
         routeTo: cumulativePath,
         isLast: index === pathSegments.length - 1,
         isLoading: false,

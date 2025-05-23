@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +7,9 @@ function Checkout() {
   const { cartItems, clearCart } = useCart();
   const { user } = useContext(AuthContext);
   const [form, setForm] = useState({
-    name: user?.name || "",
-    address: "",
-    phone: "",
+    name: user?.customer?.name || "",
+    address: user?.customer?.address || "",
+    phone: user?.customer?.phone || "",
     email: user?.email || "",
     payment_type: "cod",
     payment_proof: null,
@@ -19,6 +19,19 @@ function Checkout() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const fileInputRef = useRef();
+
+  useEffect(() => {
+    // Update form state if user and customer data are available
+    if (user?.customer) {
+      setForm((prevForm) => ({
+        ...prevForm,
+        name: user.customer.name || "",
+        address: user.customer.address || "",
+        phone: user.customer.phone || "",
+        // email is already handled on initial load and doesn't need to be updated here usually
+      }));
+    }
+  }, [user]); // Depend on the user object
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -59,9 +72,9 @@ function Checkout() {
       const resData = await response.json();
       setSuccess("Order placed successfully!");
       setForm({
-        name: user?.name || "",
-        address: "",
-        phone: "",
+        name: user?.customer?.name || "",
+        address: user?.customer?.address || "",
+        phone: user?.customer?.phone || "",
         email: user?.email || "",
         payment_type: "cod",
         payment_proof: null,
@@ -95,17 +108,29 @@ function Checkout() {
               cartItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                  className="flex items-center bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
                 >
-                  <div>
-                    <div className="font-semibold text-gray-800">
+                  {/* Product Image */}
+                  {item.image_url && (
+                    <div className="w-16 h-16 overflow-hidden rounded-md mr-4 flex-shrink-0">
+                      <img
+                        src={`http://localhost:5000${item.image_url}`}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  {/* Product Info (Name and Quantity) */}
+                  <div className="flex-1 min-w-0 mr-4">
+                    <div className="font-semibold text-gray-800 truncate">
                       {item.name}
                     </div>
                     <div className="text-sm text-gray-500">
                       Qty: {item.quantity}
                     </div>
                   </div>
-                  <div className="text-green-700 font-bold">
+                  {/* Product Price */}
+                  <div className="text-green-700 font-bold flex-shrink-0">
                     ${(item.price * item.quantity).toFixed(2)}
                   </div>
                 </div>

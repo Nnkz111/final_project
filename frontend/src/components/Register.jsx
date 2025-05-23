@@ -7,13 +7,14 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [name, setName] = useState(""); // Add state for name
   const { register } = useContext(AuthContext); // Use useContext to get the register function
   const navigate = useNavigate(); // Initialize useNavigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Remove axios call as it will be handled by AuthContext
-    const result = await register(email, password, username);
+    const result = await register(email, password, username, name); // Pass name to register function
     if (result.success) {
       alert("Registration successful! Please log in.");
       navigate("/login"); // Redirect to login page on success
@@ -37,6 +38,19 @@ function Register() {
               className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block" htmlFor="name">
+              Name
+            </label>
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>

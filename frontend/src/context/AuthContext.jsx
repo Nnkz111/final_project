@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password, username) => {
+  const register = async (email, password, username, name) => {
     try {
       const response = await axios.post(
         "http://localhost:5000/api/auth/register",
@@ -73,6 +73,7 @@ export const AuthProvider = ({ children }) => {
           email,
           password,
           username,
+          name,
         }
       );
       // Optionally, log in the user automatically after successful registration
