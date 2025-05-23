@@ -26,6 +26,10 @@ import AdminOrderManagement from "./components/AdminOrderManagement";
 import AdminCustomerManagement from "./components/AdminCustomerManagement";
 import AdminSalesPage from "./components/AdminSalesPage";
 import CategoryPage from "./components/CategoryPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import Breadcrumbs from "./components/Breadcrumbs";
+import CategoryListPage from "./pages/CategoryListPage";
+
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
 // Create layout components
@@ -39,27 +43,32 @@ const CustomerLayout = () => {
   );
   const isMyOrders = location.pathname.startsWith("/my-orders");
   const isCategoryPage = location.pathname.startsWith("/category/");
+  const isProfilePage = location.pathname.startsWith("/profile");
+  const isHomePage = location.pathname === "/"; // Check if it's the homepage
+  const isCategoryListPage = location.pathname === "/categories"; // Check if it's the category list page
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {" "}
       {/* Customer layout container */}
-      <Header isCategoryPage={isCategoryPage} />
+      <Header showMegaDropdown={!isHomePage} />
+      {/* Add Breadcrumbs here, show only if not homepage */}
+      {!isHomePage && <Breadcrumbs />}
       {/* Sidebar and HeroSlider in the same row/section */}
-      <div className="container mx-auto flex flex-row items-stretch">
-        {/* Only show Sidebar and HeroSlider if not on product detail, cart, checkout, order confirmation, my-orders, or category page */}
-        {!isProductDetail &&
-          !isCart &&
-          !isCheckout &&
-          !isOrderConfirmation &&
-          !isMyOrders &&
-          !isCategoryPage && <Sidebar />}
-        {!isProductDetail &&
-          !isCart &&
-          !isCheckout &&
-          !isOrderConfirmation &&
-          !isMyOrders &&
-          !isCategoryPage && <HeroSlider />}
-      </div>
+      {/* Exclude sidebar and hero slider on specific pages like product detail, cart, etc., AND the category list page */}
+      {!isProductDetail &&
+        !isCart &&
+        !isCheckout &&
+        !isOrderConfirmation &&
+        !isMyOrders &&
+        !isCategoryPage &&
+        !isProfilePage &&
+        !isCategoryListPage && ( // Add this condition
+          <div className="container mx-auto flex flex-row items-stretch">
+            <Sidebar />
+            <HeroSlider />
+          </div>
+        )}
       {/* Product list and other content below */}
       <div className="container mx-auto flex-1 p-4">
         <Outlet />
@@ -105,6 +114,7 @@ function App() {
                   }
                 />{" "}
                 {/* Root customer page */}
+                <Route path="categories" element={<CategoryListPage />} />
                 <Route path="products/:id" element={<ProductDetails />} />
                 <Route
                   path="cart"
@@ -135,8 +145,15 @@ function App() {
                   }
                 />
                 <Route path="category/:id" element={<CategoryPage />} />
-                {/* Add other customer-specific routes here (e.g., /profile, /orders) */}
-                {/* Fallback for unknown routes within customer area - could be a 404 */}
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute customerOnly={true}>
+                      <UserProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Fallback for unknown routes within customer area - will show "Customer Page Not Found" */}
                 <Route path="*" element={<div>Customer Page Not Found</div>} />
               </Route>
 
@@ -159,11 +176,11 @@ function App() {
                 <Route path="customers" element={<AdminCustomerManagement />} />
                 <Route path="sales" element={<AdminSalesPage />} />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
-                {/* Fallback for unknown routes within admin area - could be a 404 */}
+                {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}
                 <Route path="*" element={<div>Admin Page Not Found</div>} />
               </Route>
 
-              {/* Catch-all for unmatched routes outside the defined structures - could be a global 404 */}
+              {/* Catch-all for unmatched routes outside the defined structures - will show "Page Not Found - Global" */}
               <Route path="*" element={<div>Page Not Found - Global</div>} />
             </Routes>
           </CategoryProvider>

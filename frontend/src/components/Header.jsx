@@ -6,7 +6,7 @@ import { useCategories } from "../context/CategoryContext";
 import { useLocation } from "react-router-dom";
 import CategoryMegaDropdown from "./CategoryMegaDropdown";
 
-function Header({ isCategoryPage }) {
+function Header({ showMegaDropdown }) {
   const { cartItemCount } = useCart(); // Get count from context
   const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
   const [profileOpen, setProfileOpen] = useState(false);
@@ -168,28 +168,33 @@ function Header({ isCategoryPage }) {
                     />
                   </svg>
                 </button>
-                {/* Dropdown menu */}
+                {/* Dropdown menu - Increased z-index to appear above category dropdowns */}
                 <div
-                  className={`absolute right-0 mt-20 w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-50 transition-all duration-200 origin-top-right ${
+                  className={`absolute right-0 mt-20 w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
                     profileOpen
                       ? "opacity-100 scale-100 pointer-events-auto"
                       : "opacity-0 scale-95 pointer-events-none"
                   }`}
                 >
                   <Link
-                    to="#"
+                    to="/profile"
                     className="block px-4 py-3 hover:bg-gray-100 rounded-t-lg transition"
+                    onClick={() => setProfileOpen(false)}
                   >
                     Profile
                   </Link>
                   <Link
                     to="/my-orders"
                     className="block px-4 py-3 hover:bg-gray-100 transition"
+                    onClick={() => setProfileOpen(false)}
                   >
                     My Orders
                   </Link>
                   <button
-                    onClick={handleLogout}
+                    onClick={() => {
+                      handleLogout();
+                      setProfileOpen(false);
+                    }}
                     className="block w-full text-left px-4 py-3 hover:bg-gray-100 rounded-b-lg transition text-red-600"
                   >
                     Logout
@@ -273,7 +278,8 @@ function Header({ isCategoryPage }) {
           </div>
         </div>
       </header>
-      {isCategoryPage && <CategoryMegaDropdown />}
+      {/* Conditionally render CategoryMegaDropdown based on showMegaDropdown prop */}
+      {showMegaDropdown && <CategoryMegaDropdown />}
     </>
   );
 }
