@@ -20,10 +20,14 @@ function CategoryPage() {
   const [children, setChildren] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortByPrice, setSortByPrice] = useState(""); // State for sorting option: 'lowToHigh' or 'highToLow'
+
+  // Helper to check if products are being displayed (category has no children)
+  const isDisplayingProducts = children.length === 0;
 
   // Find the category and its children using the extracted currentCategoryId
   useEffect(() => {
-    if (!categories.length) {
+    if (!categories.length || !currentCategoryId) {
       setLoading(false);
       return;
     }
@@ -38,33 +42,16 @@ function CategoryPage() {
     );
     setChildren(directChildren);
 
-    // Removed product fetching logic
-    // if (directChildren.length === 0) {
-    //   setLoading(true);
-    //   const allCategoryIds = getDescendantCategoryIds(categories, id);
-    //   fetch(
-    //     `http://localhost:5000/api/products?category_id=${allCategoryIds.join(
-    //       ","
-    //     )}`
-    //   )
-    //     .then((res) => res.json())
-    //     .then((data) => {
-    //       setProducts(data.products || data);
-    //       setLoading(false);
-    //     })
-    //     .catch(() => setLoading(false));
-    // } else {
-    //   setProducts([]);
-    setLoading(false);
-    // }
-
-    // New logic: if no direct children, fetch products for this category ID
+    // Only fetch products if the current category has no direct children
     if (directChildren.length === 0 && cat) {
       setLoading(true);
-      // Fetch products specifically for this category ID
-      fetch(
-        `http://localhost:5000/api/products?category_id=${currentCategoryId}`
-      )
+      setProducts([]); // Clear previous products
+      let apiUrl = `http://localhost:5000/api/products?category_id=${currentCategoryId}`;
+      if (sortByPrice) {
+        apiUrl += `&sort_by_price=${sortByPrice}`;
+      }
+
+      fetch(apiUrl)
         .then((res) => res.json())
         .then((data) => {
           // Assuming the API returns products directly or in a 'products' field
@@ -76,10 +63,11 @@ function CategoryPage() {
           setLoading(false);
         });
     } else {
-      setProducts([]); // Clear products if there are children categories
+      // If the category has children, do not fetch products and stop loading
+      setProducts([]);
       setLoading(false);
     }
-  }, [currentCategoryId, categories]); // Depend on currentCategoryId and categories
+  }, [currentCategoryId, categories, sortByPrice]); // Depend on currentCategoryId, categories, and sortByPrice
 
   // Helper to get category name by id
   const getCategoryName = (catId) => {
@@ -110,84 +98,111 @@ function CategoryPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Full-width white background container with top/bottom padding and borders */}
-      <div className="w-full bg-white rounded-none shadow-md border-b border-t border-green-100 py-8">
-        {/* Centered content container with max width, horizontal padding, and flex layout */}
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
-          {/* Sidebar Placeholder */}
+    <div className="container mx-auto p-6 bg-white rounded-lg shadow">
+      {/* Category Title matching CategoryListPage structure */}
+      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-4">
+        {category.name}
+      </h1>
+      {/* Flex container for sidebar and main content */}
+      <div className="flex flex-col md:flex-row gap-8 items-start">
+        {/* Sidebar Placeholder */}
+        {isDisplayingProducts && (
           <aside className="hidden md:block w-64 h-fit">
             <div className="text-lg font-bold text-green-700 mb-4">Filters</div>
-            <div className="text-gray-400">(Coming soon)</div>
+            {/* Sort by Price filter */}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                Sort by Price
+              </h3>
+              <select
+                value={sortByPrice}
+                onChange={(e) => setSortByPrice(e.target.value)}
+                className="w-full px-2 py-1 border rounded text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="">None</option>
+                <option value="lowToHigh">Price: Low to High</option>
+                <option value="highToLow">Price: High to Low</option>
+              </select>
+            </div>
+            {/* Other filters can be added here, also conditional if needed */}
           </aside>
-          {/* Main content area - Ensure it grows to fill space */}
-          <main className="flex-1 flex flex-col gap-8">
-            {/* Display Subcategories if they exist, otherwise display the Category details */}
-            {children.length > 0 ? (
-              // Display Subcategories with Images in a Grid
-              <section className="">
-                {/* Removed H2 based on user's accepted changes */}
-                {/* Ensure grid within main content spans available width */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
-                  {children.map((child) => (
-                    <Link
-                      key={child.id}
-                      to={`/category/${child.id}`}
-                      className="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 text-center"
-                    >
-                      {child.image_url && (
-                        <img
-                          src={`http://localhost:5000${child.image_url}`}
-                          alt={child.name}
-                          className="w-full h-40 object-cover"
-                        />
-                      )}
-                      <div className="p-3">
-                        <div className="font-semibold text-base text-gray-800 mt-1">
-                          {child.name}
-                        </div>
+        )}
+        {/* Main content area - Ensure it grows to fill space */}
+        <main className="flex-1 min-w-0 flex flex-col gap-8">
+          {/* Display Subcategories if they exist, otherwise display the Category details and products */}
+          {children.length > 0 ? (
+            // Display Subcategories with Images in a Grid
+            <section className="">
+              {/* Ensure grid within main content spans available width */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                {children.map((child) => (
+                  <Link
+                    key={child.id}
+                    to={`/category/${child.id}`}
+                    className="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 text-center"
+                  >
+                    {child.image_url && (
+                      <img
+                        src={`http://localhost:5000${child.image_url}`}
+                        alt={child.name}
+                        className="w-full h-40 object-cover"
+                      />
+                    )}
+                    <div className="p-3">
+                      <div className="font-semibold text-base text-gray-800 mt-1">
+                        {child.name}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ) : (
-              // Display Category details (only if no direct children)
-              <>
-                {/* Category Title */}
-                <h1 className="text-3xl font-bold text-green-700 mb-2">
-                  {category.name}
-                </h1>
-
-                {/* Category Image */}
-                {category.image_url && (
-                  <div className="w-full flex justify-center mb-4">
-                    <img
-                      src={`http://localhost:5000${category.image_url}`}
-                      alt={`Image for ${category.name}`}
-                      className="w-64 h-64 object-cover rounded-lg shadow-md border border-green-100"
-                    />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : (
+            // Display Category details and products
+            <>
+              {/* Products Section */}
+              <section className="">
+                <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
+                  Products in this Category
+                </h2>
+                {loading ? (
+                  <div className="text-gray-500">Loading products...</div>
+                ) : products.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {products.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/products/${product.id}`}
+                        className="block bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 text-center"
+                      >
+                        {product.image_url && (
+                          <img
+                            src={`http://localhost:5000${product.image_url}`}
+                            alt={product.name}
+                            className="w-full h-40 object-cover"
+                          />
+                        )}
+                        <div className="p-3">
+                          <div className="font-semibold text-base text-gray-800 mt-1">
+                            {product.name}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            ${product.price}{" "}
+                            {/* Assuming product object has a price field */}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500">
+                    No products found in this category.
                   </div>
                 )}
-
-                {/* Removed Products Card section */}
-                {/*
-                <section className="">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
-                     ... Products content ...
-                  </h2>
-                   ... loading/empty/product grid ...
-                </section>
-                */}
-
-                {/* Optional: Message for leaf categories with no products shown */}
-                <div className="text-gray-500">
-                  No products are displayed on this page.
-                </div>
-              </>
-            )}
-          </main>
-        </div>
+              </section>
+            </>
+          )}
+        </main>
       </div>
     </div>
   );

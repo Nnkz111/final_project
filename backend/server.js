@@ -80,7 +80,15 @@ app.get("/", (req, res) => {
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
-  const { category_id } = req.query;
+  const { category_id, sort_by_price } = req.query; // Get sort_by_price from query
+
+  let orderByClause = "ORDER BY id DESC"; // Default sorting
+  if (sort_by_price === "lowToHigh") {
+    orderByClause = "ORDER BY price ASC";
+  } else if (sort_by_price === "highToLow") {
+    orderByClause = "ORDER BY price DESC";
+  }
+
   try {
     let dataResult, countResult;
     if (category_id) {
@@ -88,7 +96,7 @@ app.get("/api/products", async (req, res) => {
       if (category_id.includes(",")) {
         categoryIds = category_id.split(",").map((id) => parseInt(id));
         dataResult = await pool.query(
-          `SELECT * FROM products WHERE category_id = ANY($1) ORDER BY id DESC LIMIT $2 OFFSET $3`,
+          `SELECT * FROM products WHERE category_id = ANY($1) ${orderByClause} LIMIT $2 OFFSET $3`,
           [categoryIds, limit, offset]
         );
         countResult = await pool.query(
@@ -97,7 +105,7 @@ app.get("/api/products", async (req, res) => {
         );
       } else {
         dataResult = await pool.query(
-          "SELECT * FROM products WHERE category_id = $1 ORDER BY id DESC LIMIT $2 OFFSET $3",
+          `SELECT * FROM products WHERE category_id = $1 ${orderByClause} LIMIT $2 OFFSET $3`,
           [category_id, limit, offset]
         );
         countResult = await pool.query(
@@ -107,7 +115,7 @@ app.get("/api/products", async (req, res) => {
       }
     } else {
       dataResult = await pool.query(
-        "SELECT * FROM products ORDER BY id DESC LIMIT $1 OFFSET $2",
+        `SELECT * FROM products ${orderByClause} LIMIT $1 OFFSET $2`,
         [limit, offset]
       );
       countResult = await pool.query("SELECT COUNT(*) FROM products");
