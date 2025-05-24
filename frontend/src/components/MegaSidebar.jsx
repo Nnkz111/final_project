@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useCategories } from "../context/CategoryContext";
 import { Link } from "react-router-dom";
 
-function MegaSidebar() {
+function MegaSidebar({ bannerHeight }) {
   const { hierarchicalCategories, loading } = useCategories();
   const [activeCategory, setActiveCategory] = useState(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
   const timeoutRef = useRef();
+  const sidebarRef = useRef(null);
 
   // Handles hover with delay to prevent flicker
   const handleMouseEnter = (id) => {
@@ -17,26 +18,34 @@ function MegaSidebar() {
     timeoutRef.current = setTimeout(() => setActiveCategory(null), 200);
   };
 
-  // When dropdown is active, match hero banner size and position
+  // When dropdown is active, position it relative to the sidebar
   useEffect(() => {
-    if (activeCategory) {
-      const banner = document.querySelector(".hero-banner");
-      if (banner) {
-        const rect = banner.getBoundingClientRect();
-        setDropdownStyle({
-          position: "fixed",
-          left: rect.left + "px",
-          top: rect.top + "px",
-          width: rect.width + "px",
-          height: rect.height + "px",
-          zIndex: 50,
-          pointerEvents: "auto",
-        });
-      }
+    if (activeCategory && sidebarRef.current) {
+      const sidebarRect = sidebarRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: "fixed",
+        left: sidebarRect.right + "px",
+        top: sidebarRect.top + "px", // Align top with sidebar top
+        width: `calc(92vw - ${sidebarRect.right}px)`, // Calculate width to fill the rest of the viewport
+        height: `${bannerHeight}px`, // Match height of the banner area
+        zIndex: 60,
+        pointerEvents: "auto",
+        backgroundColor: "white", // Ensure background is white
+        boxShadow:
+          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", // Tailwind shadow-xl
+        borderRadius: "0 0.5rem 0.5rem 0", // Rounded corners only on right/bottom
+        border: "1px solid #e5e7eb", // Tailwind border-gray-200
+        display: "flex", // Use flex for inner layout
+        gap: "2rem", // Tailwind gap-8
+        padding: "2rem", // Tailwind p-8
+        transition: "all 0.3s ease-in-out",
+        opacity: 1,
+        animation: "fade-in 0.25s ease",
+      });
     } else {
       setDropdownStyle({});
     }
-  }, [activeCategory]);
+  }, [activeCategory, bannerHeight]);
 
   // Recursive render for submenus (columns)
   const renderSubMenu = (category, level = 2) => {
@@ -47,7 +56,7 @@ function MegaSidebar() {
           <li key={sub.id}>
             <Link
               to={`/category/${sub.id}`}
-              className="block px-3 py-1.5 rounded-md text-gray-700 hover:bg-gray-100 hover:text-red-600 transition-colors duration-200"
+              className="block px-3 py-1.5 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
               style={{ fontWeight: level === 2 ? "bold" : "normal" }}
             >
               {sub.name}
@@ -68,8 +77,11 @@ function MegaSidebar() {
   }
 
   return (
-    <div className="sidebar-menu w-64 bg-white border-r h-full shadow-md">
-      <ul className="py-2">
+    <div
+      className="sidebar-menu w-64 bg-white border-r h-full shadow-md"
+      ref={sidebarRef}
+    >
+      <ul className="py-2 w-64">
         {hierarchicalCategories.map((cat) => (
           <li
             key={cat.id}
@@ -81,8 +93,8 @@ function MegaSidebar() {
               to={`/category/${cat.id}`}
               className={`flex items-center gap-2 px-4 py-3 w-full text-left text-gray-700 font-medium transition-colors duration-200 rounded-none border-l-4 ${
                 activeCategory === cat.id
-                  ? "bg-red-50 text-red-600 border-red-500"
-                  : "hover:bg-gray-100 hover:text-red-600 border-transparent"
+                  ? "bg-blue-50 text-blue-600 border-blue-500"
+                  : "hover:bg-blue-50 hover:text-blue-600 border-transparent"
               }`}
               style={{ fontWeight: 500 }}
             >
@@ -93,7 +105,7 @@ function MegaSidebar() {
               cat.children.length > 0 &&
               activeCategory === cat.id && (
                 <div
-                  className="fixed bg-white shadow-xl rounded-lg border flex gap-8 p-8 transition-all duration-300 ease-in-out opacity-100 animate-fade-in"
+                  className=""
                   style={dropdownStyle}
                   onMouseEnter={() => handleMouseEnter(cat.id)}
                   onMouseLeave={handleMouseLeave}
@@ -102,7 +114,7 @@ function MegaSidebar() {
                     <div key={sub.id} className="min-w-[160px]">
                       <Link
                         to={`/category/${sub.id}`}
-                        className="block mb-2 text-gray-900 font-semibold text-base hover:text-red-600 transition-colors duration-200"
+                        className="block mb-2 text-gray-900 font-semibold text-base hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                       >
                         {sub.name}
                       </Link>

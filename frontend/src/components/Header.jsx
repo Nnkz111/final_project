@@ -178,14 +178,14 @@ function Header({ showMegaDropdown }) {
                 >
                   <Link
                     to="/profile"
-                    className="block px-4 py-3 hover:bg-gray-100 rounded-t-lg transition"
+                    className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition"
                     onClick={() => setProfileOpen(false)}
                   >
                     Profile
                   </Link>
                   <Link
                     to="/my-orders"
-                    className="block px-4 py-3 hover:bg-gray-100 transition"
+                    className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition"
                     onClick={() => setProfileOpen(false)}
                   >
                     My Orders
@@ -195,7 +195,7 @@ function Header({ showMegaDropdown }) {
                       handleLogout();
                       setProfileOpen(false);
                     }}
-                    className="block w-full text-left px-4 py-3 hover:bg-gray-100 rounded-b-lg transition text-red-600"
+                    className="block w-full text-left px-4 py-3 hover:bg-blue-50  rounded-b-lg transition text-red-600"
                   >
                     Logout
                   </button>

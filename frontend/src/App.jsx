@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, Outlet, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -30,6 +30,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import Breadcrumbs from "./components/Breadcrumbs";
 import CategoryListPage from "./pages/CategoryListPage";
 import ProductListPage from "./pages/ProductListPage";
+import MegaSidebar from "./components/MegaSidebar";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -49,6 +50,16 @@ const CustomerLayout = () => {
   const isCategoryListPage = location.pathname === "/categories"; // Check if it's the category list page
   const isProductListPage = location.pathname === "/products"; // Check if it's the product list page
 
+  const [bannerHeight, setBannerHeight] = useState(0); // State to store banner height
+  const bannerContainerRef = useRef(null); // Ref for the banner container
+
+  // Measure banner height after render
+  useEffect(() => {
+    if (bannerContainerRef.current) {
+      setBannerHeight(bannerContainerRef.current.offsetHeight);
+    }
+  }, [isHomePage]); // Re-measure if homepage status changes
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {" "}
@@ -67,9 +78,19 @@ const CustomerLayout = () => {
         !isProfilePage &&
         !isCategoryListPage &&
         !isProductListPage && ( // Add this condition
-          <div className="container mx-auto flex flex-row items-stretch">
-            <Sidebar />
-            <HeroSlider />
+          <div
+            className="container mx-auto flex flex-row items-start relative"
+            ref={bannerContainerRef}
+          >
+            {" "}
+            {/* Use flexbox, align items to start, and add relative positioning */}
+            <MegaSidebar
+              className="w-64 flex-shrink-0"
+              bannerHeight={bannerHeight}
+            />{" "}
+            {/* Use MegaSidebar, fixed width, and prevent shrinking */}
+            <HeroSlider className="flex-grow" />{" "}
+            {/* HeroSlider takes remaining width */}
           </div>
         )}
       {/* Product list and other content below */}

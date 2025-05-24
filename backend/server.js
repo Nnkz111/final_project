@@ -76,6 +76,70 @@ app.get("/", (req, res) => {
 });
 
 // Product routes
+// Add a new endpoint to get new arrival products (public)
+app.get("/api/products/new-arrivals", async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 products
+  try {
+    const result = await pool.query(
+      `
+      SELECT id, name, image_url, price
+      FROM products
+      ORDER BY created_at DESC
+      LIMIT $1
+    `,
+      [limit]
+    ); // Use limit parameter
+    res.json(result.rows);
+  } catch (err) {
+    // console.error("Error fetching new arrival products:", err); // Removed unnecessary error log
+    res.status(500).json({
+      error: "Failed to fetch new arrival products",
+      details: err.message,
+    });
+  }
+});
+
+// Add a new endpoint to get top 5 selling products (public)
+app.get("/api/products/top-selling", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.id, p.name, p.image_url, p.price, SUM(oi.quantity) AS total_quantity // Include image_url and price
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+      GROUP BY p.id, p.name, p.image_url, p.price // Group by all selected product columns
+      ORDER BY total_quantity DESC
+      LIMIT 5
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching top selling products for homepage:", err);
+    res.status(500).json({
+      error: "Failed to fetch top selling products",
+      details: err.message,
+    });
+  }
+});
+
+// Endpoint to get a single product by ID
+app.get("/api/products/:id", async (req, res) => {
+  const { id } = req.params; // Get the product ID from the URL parameters
+  try {
+    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
+      id,
+    ]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]); // Send the first row (the product) as JSON
+    } else {
+      res.status(404).json({ error: "Product not found" }); // Send 404 if no product is found
+    }
+  } catch (err) {
+    console.error(`Error fetching product with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Endpoint to get all products (with pagination and category filter)
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
@@ -126,24 +190,6 @@ app.get("/api/products", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching products:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to get a single product by ID
-app.get("/api/products/:id", async (req, res) => {
-  const { id } = req.params; // Get the product ID from the URL parameters
-  try {
-    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
-      id,
-    ]);
-    if (result.rows.length > 0) {
-      res.json(result.rows[0]); // Send the first row (the product) as JSON
-    } else {
-      res.status(404).json({ error: "Product not found" }); // Send 404 if no product is found
-    }
-  } catch (err) {
-    console.error(`Error fetching product with ID ${id}:`, err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -588,16 +634,16 @@ const jwtSecret =
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Get token from 'Bearer TOKEN' format
-  console.log("Attempting to authenticate token...");
-  console.log("Received Authorization Header:", authHeader);
-  console.log("Extracted Token:", token);
+  // console.log("Attempting to authenticate token..."); // Removed for safety
+  // console.log("Received Authorization Header:", authHeader); // Removed for safety
+  // console.log("Extracted Token:", token); // Removed for safety
 
   if (token == null) {
     return res.sendStatus(401); // If there is no token, return unauthorized
   }
 
   jwt.verify(token, jwtSecret, (err, user) => {
-    console.log("JWT Verify Result:", { error: err, user: user });
+    // console.log("JWT Verify Result:", { error: err, user: user }); // Removed for safety
     if (err) {
       return res.sendStatus(403); // If token is invalid, return forbidden
     }

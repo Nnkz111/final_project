@@ -17,7 +17,7 @@ function CategoryMegaDropdown() {
           <li key={sub.id}>
             <Link
               to={`/category/${sub.id}`}
-              className="text-gray-600 hover:text-green-700 transition-colors block px-2 py-1 rounded hover:bg-green-50 text-sm"
+              className="text-gray-600 hover:text-blue-700 transition-colors block px-2 py-1 rounded hover:bg-blue-50 text-sm"
               onClick={() => setOpen(false)}
             >
               {sub.name}
@@ -68,9 +68,9 @@ function CategoryMegaDropdown() {
                 <li key={cat.id}>
                   <Link
                     to={`/category/${cat.id}`}
-                    className={`flex items-center w-full px-3 py-2 rounded text-left transition font-medium text-gray-700 hover:bg-green-100 hover:text-green-600 ${
+                    className={`flex items-center w-full px-3 py-2 rounded text-left transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-600 ${
                       activeCategory === cat.id
-                        ? "bg-green-50 text-green-600"
+                        ? "bg-blue-50 text-blue-600"
                         : ""
                     }`}
                     onMouseEnter={() => setActiveCategory(cat.id)}
@@ -87,13 +87,6 @@ function CategoryMegaDropdown() {
           <div className="flex-1 p-6 min-h-[420px]">
             {activeCategory ? (
               <>
-                {/* Title of the active top-level category */}
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {
-                    hierarchicalCategories.find((c) => c.id === activeCategory)
-                      ?.name
-                  }
-                </h3>
                 {/* Direct children of the active category (Horizontal Columns) */}
                 <div className="flex flex-row gap-8">
                   {hierarchicalCategories
@@ -103,7 +96,7 @@ function CategoryMegaDropdown() {
                         {/* Link for the direct child (Column Header) */}
                         <Link
                           to={`/category/${directChild.id}`}
-                          className="font-bold text-gray-800 hover:text-green-700 transition-colors block px-2 py-1 rounded hover:bg-green-50"
+                          className="font-bold text-gray-800 hover:text-blue-700 transition-colors block px-2 py-1 rounded hover:bg-blue-50"
                           onClick={() => setOpen(false)}
                         >
                           {directChild.name}
