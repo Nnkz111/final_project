@@ -122,24 +122,6 @@ app.get("/api/products/top-selling", async (req, res) => {
   }
 });
 
-// Endpoint to get a single product by ID
-app.get("/api/products/:id", async (req, res) => {
-  const { id } = req.params; // Get the product ID from the URL parameters
-  try {
-    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
-      id,
-    ]);
-    if (result.rows.length > 0) {
-      res.json(result.rows[0]); // Send the first row (the product) as JSON
-    } else {
-      res.status(404).json({ error: "Product not found" }); // Send 404 if no product is found
-    }
-  } catch (err) {
-    console.error(`Error fetching product with ID ${id}:`, err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // Endpoint to get all products (with pagination and category filter)
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
@@ -190,6 +172,60 @@ app.get("/api/products", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching products:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// New endpoint to search for products
+app.get("/api/products/search", async (req, res) => {
+  const searchTerm = req.query.query; // Get the search term from query parameters
+  const { sort_by_price } = req.query; // Get sort_by_price from query
+
+  if (!searchTerm) {
+    return res
+      .status(400)
+      .json({ error: "Search query parameter is required" });
+  }
+
+  let orderByClause = ""; // Default no specific sorting for search relevance initially
+  if (sort_by_price === "lowToHigh") {
+    orderByClause = "ORDER BY price ASC";
+  } else if (sort_by_price === "highToLow") {
+    orderByClause = "ORDER BY price DESC";
+  }
+
+  try {
+    // Use a case-insensitive search for product name or description
+    const result = await pool.query(
+      `
+      SELECT id, name, description, price, image_url
+      FROM products
+      WHERE name ILIKE $1 OR description ILIKE $1
+      ${orderByClause}
+      `,
+      [`%${searchTerm}%`]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error searching products:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to get a single product by ID
+app.get("/api/products/:id", async (req, res) => {
+  const { id } = req.params; // Get the product ID from the URL parameters
+  try {
+    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
+      id,
+    ]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]); // Send the first row (the product) as JSON
+    } else {
+      res.status(404).json({ error: "Product not found" }); // Send 404 if no product is found
+    }
+  } catch (err) {
+    console.error(`Error fetching product with ID ${id}:`, err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

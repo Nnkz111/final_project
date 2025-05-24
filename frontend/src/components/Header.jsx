@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useCategories } from "../context/CategoryContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import CategoryMegaDropdown from "./CategoryMegaDropdown";
 
 function Header({ showMegaDropdown }) {
@@ -13,11 +13,20 @@ function Header({ showMegaDropdown }) {
   const { hierarchicalCategories, loading } = useCategories();
   const [activeDropdown, setActiveDropdown] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
 
   // No need to manually fetch or refresh here due to useEffect in CartContext
 
   const handleLogout = () => {
     logout(); // Call the customer logout function from AuthContext
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+    }
   };
 
   // Dropdown menu for categories (only on category page)
@@ -111,9 +120,17 @@ function Header({ showMegaDropdown }) {
               type="text"
               placeholder="Search for products..."
               className="w-full p-2 text-gray-800 outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") handleSearch(e);
+              }}
             />
             {/* Search Icon Placeholder */}
-            <button className="px-4 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300">
+            <button
+              className="px-4 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300"
+              onClick={handleSearch}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"

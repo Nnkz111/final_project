@@ -31,6 +31,7 @@ import Breadcrumbs from "./components/Breadcrumbs";
 import CategoryListPage from "./pages/CategoryListPage";
 import ProductListPage from "./pages/ProductListPage";
 import MegaSidebar from "./components/MegaSidebar";
+import SearchResultsPage from "./pages/SearchResultsPage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -77,7 +78,8 @@ const CustomerLayout = () => {
         !isCategoryPage &&
         !isProfilePage &&
         !isCategoryListPage &&
-        !isProductListPage && ( // Add this condition
+        !isProductListPage &&
+        !location.pathname.startsWith("/search") && (
           <div
             className="container mx-auto flex flex-row items-start relative"
             ref={bannerContainerRef}
@@ -134,6 +136,7 @@ function App() {
                 <Route path="categories" element={<CategoryListPage />} />
                 <Route path="products" element={<ProductListPage />} />
                 <Route path="products/:id" element={<ProductDetails />} />
+                <Route path="search" element={<SearchResultsPage />} />
                 <Route
                   path="cart"
                   element={
@@ -174,6 +177,9 @@ function App() {
                 {/* Fallback for unknown routes within customer area - will show "Customer Page Not Found" */}
                 <Route path="*" element={<div>Customer Page Not Found</div>} />
               </Route>
+
+              {/* Top-level route for Search Results */}
+              <Route path="/search" element={<SearchResultsPage />} />
 
               {/* Admin Area Routes using AdminAreaLayout */}
               <Route path="/admin" element={<AdminAreaLayout />}>
