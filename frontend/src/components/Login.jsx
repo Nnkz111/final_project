@@ -8,14 +8,34 @@ function Login() {
   const { login } = useContext(AuthContext); // Use login from AuthContext
   const navigate = useNavigate();
 
+  // State for custom alert modal
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("success"); // 'success' or 'error'
+
+  // Function to close the alert modal
+  const closeAlertModal = () => {
+    setIsAlertModalOpen(false);
+    setAlertMessage("");
+    setAlertType("success"); // Reset to default
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await login(emailOrUsername, password);
     if (result.success) {
-      alert("Login successful!");
-      navigate("/"); // Always redirect customer to homepage
+      setAlertMessage("Login successful!");
+      setAlertType("success");
+      setIsAlertModalOpen(true);
+      // Delay navigation slightly to allow modal to be seen, or navigate directly
+      setTimeout(() => {
+        closeAlertModal();
+        navigate("/"); // Always redirect customer to homepage
+      }, 1500); // Auto-close and navigate after 1.5 seconds
     } else {
-      alert(`Login failed: ${result.error}`);
+      setAlertMessage(`Login failed: ${result.error}`);
+      setAlertType("error");
+      setIsAlertModalOpen(true);
     }
   };
 
@@ -99,6 +119,36 @@ function Login() {
           </p>
         </div>
       </div>
+      {/* Custom Alert Modal */}
+      {isAlertModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+          <div className="relative p-8 bg-white rounded-lg shadow-xl max-w-sm mx-auto">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+              onClick={closeAlertModal}
+            >
+              &times;
+            </button>
+            <div
+              className={`text-center ${
+                alertType === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              <p className="text-lg font-semibold">{alertMessage}</p>
+            </div>
+            {alertType === "error" && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={closeAlertModal}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

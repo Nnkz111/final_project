@@ -17,7 +17,7 @@ const GROUP_OPTIONS = [
 ];
 
 function SalesAnalytic() {
-  const [group, setGroup] = useState("month");
+  const [group, setGroup] = useState("day");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [data, setData] = useState([]);

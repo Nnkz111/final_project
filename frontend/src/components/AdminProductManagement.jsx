@@ -43,15 +43,18 @@ function AdminProductManagement() {
     loading: categoriesLoading,
   } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(""); // New state for category filter
 
-  // Function to fetch products (with pagination)
-  const fetchProducts = async (pageNum = 1) => {
+  // Function to fetch products (with pagination and optional category filter)
+  const fetchProducts = async (pageNum = 1, categoryId = selectedCategory) => {
     setLoading(true);
     try {
+      const categoryQuery = categoryId ? `&category_id=${categoryId}` : "";
+      const searchQuery = searchTerm ? `&query=${searchTerm}` : ""; // Keep search term in fetch
       const response = await axios.get(
         `http://localhost:5000/api/products?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
-        }`
+        }${categoryQuery}${searchQuery}`
       );
       setProducts(response.data.products);
       setTotal(response.data.total);
@@ -63,9 +66,21 @@ function AdminProductManagement() {
     }
   };
 
+  // Fetch products when page, selected category, or search term changes
   useEffect(() => {
-    fetchProducts(page);
-  }, [page]);
+    // Reset page to 1 when category or search term changes
+    if (page !== 1 && (selectedCategory !== "" || searchTerm !== "")) {
+      setPage(1);
+    } else {
+      fetchProducts(page, selectedCategory);
+    }
+  }, [page, selectedCategory, searchTerm]); // Add selectedCategory and searchTerm dependencies
+
+  // Handle category filter change
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+    // No need to call fetchProducts here, useEffect will handle it
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -252,27 +267,11 @@ function AdminProductManagement() {
       setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error deleting product:", err.response?.data || err);
-      setError("Failed to delete product.");
-      // Close confirm modal after action
-      setIsConfirmModalOpen(false);
-      setActionToConfirm(null); // Clear the stored action
+      // setError(err.response?.data?.error || "Failed to delete product."); // Removed for safety
+      setIsConfirmModalOpen(false); // Close confirm modal even on error
+      setActionToConfirm(null); // Clear the stored action even on error
     }
   };
-
-  // Filter products by search term
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Group products by category_id
-  const groupedProducts = {};
-  filteredProducts.forEach((product) => {
-    const catId = product.category_id
-      ? String(product.category_id)
-      : "uncategorized";
-    if (!groupedProducts[catId]) groupedProducts[catId] = [];
-    groupedProducts[catId].push(product);
-  });
 
   // Helper to get category name
   const getCategoryName = (catId) => {
@@ -515,8 +514,8 @@ function AdminProductManagement() {
             </div>
           </div>
         )}
-        {/* Search Input */}
-        <div className="mb-6 flex items-center gap-2">
+        {/* Search Input and Category Filter */}
+        <div className="mb-6 flex flex-col md:flex-row items-center gap-2">
           <input
             type="text"
             placeholder="Search by product name..."
@@ -524,96 +523,105 @@ function AdminProductManagement() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border px-3 py-2 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
+          {/* Category Filter Dropdown */}
+          <select
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">All Categories</option>
+            {renderCategoryOptions(hierarchicalCategories)}
+          </select>
         </div>
         {/* Product List */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
           <h3 className="text-lg font-bold text-green-700 mb-4">
             Product List
           </h3>
-          {Object.keys(groupedProducts).length === 0 ? (
+          {products.length === 0 ? (
             <p className="text-gray-500 text-center">No products found.</p>
           ) : (
-            Object.keys(groupedProducts).map((catId) => (
-              <div key={catId} className="mb-8">
-                <h4 className="text-md font-bold text-green-700 mb-2">
-                  {getCategoryName(catId)}
-                </h4>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
-                        Price
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
-                        Stock
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {groupedProducts[catId].map((product) => (
-                      <tr
-                        key={product.id}
-                        className="hover:bg-green-50 transition"
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
+                    Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
+                    Stock
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
+                    Image
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-green-50 transition">
+                    <td className="px-4 py-3 align-middle">{product.name}</td>
+                    <td className="px-4 py-3 align-middle">{product.price}</td>
+                    <td className="px-4 py-3 align-middle">
+                      {product.stock_quantity}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      {product.image_url ? (
+                        <img
+                          src={`http://localhost:5000${product.image_url}`}
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded-md"
+                        />
+                      ) : (
+                        <span className="text-gray-500 text-sm">No Image</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <button
+                        onClick={() => handleEditClick(product)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-sm mr-2"
                       >
-                        <td className="px-4 py-3 align-middle">
-                          {product.name}
-                        </td>
-                        <td className="px-4 py-3 align-middle">
-                          {product.price}
-                        </td>
-                        <td className="px-4 py-3 align-middle">
-                          {product.stock_quantity}
-                        </td>
-                        <td className="px-4 py-3 align-middle">
-                          <button
-                            onClick={() => handleEditClick(product)}
-                            className="bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-sm mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => confirmDelete(product.id)}
-                            className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
-          )}
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-6">
-              <button
-                onClick={handlePrev}
-                disabled={page === 1}
-                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="font-semibold text-green-700">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={handleNext}
-                disabled={page === totalPages}
-                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => confirmDelete(product.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <button
+              onClick={handlePrev}
+              disabled={page === 1 || loading}
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="font-semibold text-green-700">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={page === totalPages || loading}
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
       {/* Confirmation Modal */}
       <ConfirmationModal

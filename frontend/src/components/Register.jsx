@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate, Link } from "react-router-dom"; // Import useNavigate and Link
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 
 function Register() {
@@ -11,15 +11,35 @@ function Register() {
   const { register } = useContext(AuthContext); // Use useContext to get the register function
   const navigate = useNavigate(); // Initialize useNavigate
 
+  // State for custom alert modal
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("success"); // 'success' or 'error'
+
+  // Function to close the alert modal
+  const closeAlertModal = () => {
+    setIsAlertModalOpen(false);
+    setAlertMessage("");
+    setAlertType("success"); // Reset to default
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Remove axios call as it will be handled by AuthContext
     const result = await register(email, password, username, name); // Pass name to register function
     if (result.success) {
-      // Removed alert, consider using a more modern notification
-      navigate("/login"); // Redirect to login page on success
+      setAlertMessage("Registration successful! Please log in.");
+      setAlertType("success");
+      setIsAlertModalOpen(true);
+      // Delay navigation until after user closes the modal, or automatically after a few seconds
+      setTimeout(() => {
+        closeAlertModal();
+        navigate("/login"); // Redirect to login page on success
+      }, 3000); // Auto-close and navigate after 3 seconds
     } else {
-      alert(`Registration failed: ${result.error}`); // Keep alert for failure for now
+      setAlertMessage(`Registration failed: ${result.error}`);
+      setAlertType("error");
+      setIsAlertModalOpen(true);
     }
   };
 
@@ -127,7 +147,49 @@ function Register() {
             </button>
           </div>
         </form>
+        {/* Link to Login Page */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-700">
+            Already have an account?
+            <Link
+              to="/login"
+              className="text-blue-600 hover:underline ml-1 font-semibold"
+            >
+              Login here
+            </Link>
+          </p>
+        </div>
       </div>
+      {/* Custom Alert Modal */}
+      {isAlertModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+          <div className="relative p-8 bg-white rounded-lg shadow-xl max-w-sm mx-auto">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+              onClick={closeAlertModal}
+            >
+              &times;
+            </button>
+            <div
+              className={`text-center ${
+                alertType === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              <p className="text-lg font-semibold">{alertMessage}</p>
+            </div>
+            {alertType === "error" && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={closeAlertModal}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
