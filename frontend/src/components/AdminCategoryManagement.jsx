@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import AdminAuthContext from "../context/AdminAuthContext";
+import ConfirmationModal from "./ConfirmationModal";
 
 // Helper function to build a category tree
 const buildCategoryTree = (categories, parentId = null) => {
@@ -132,6 +133,11 @@ function AdminCategoryManagement() {
   const [previewImageUrl, setPreviewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  // State for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [actionToConfirm, setActionToConfirm] = useState(null); // Store the action to perform on confirm
+
   // Fetch categories from the backend
   const fetchCategories = async () => {
     try {
@@ -216,8 +222,7 @@ function AdminCategoryManagement() {
   };
 
   // Handle form submission (Add or Edit)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!categoryName.trim()) return;
 
     // Image upload already happened on file select, categoryImageUrl should hold the backend URL
@@ -252,32 +257,31 @@ function AdminCategoryManagement() {
         );
       }
 
-      // Reset form, close modal, and refresh list
-      closeModal();
-      fetchCategories();
+      // Success
+      console.log(
+        `${editingCategory ? "Updated" : "Added"} category:`,
+        response.json()
+      );
+      setShowModal(false); // Close the add/edit modal
+      fetchCategories(); // Refresh the list
+      // Close confirmation modal
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
     } catch (error) {
       console.error("Error saving category:", error);
-      alert("Failed to save category: " + error.message); // Show error to user
+      alert(
+        `Failed to ${editingCategory ? "update" : "add"} category: ` +
+          error.message
+      );
+      // Close confirmation modal even on error
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
     }
   };
 
-  // Close modal and reset state
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingCategory(null);
-    setCategoryName("");
-    setParentCategoryId("");
-    setCategoryImage(null);
-    setCategoryImageUrl("");
-    setPreviewImageUrl("");
-    setUploading(false);
-  };
-
-  // Handle deleting a category
+  // Handle category deletion
   const handleDeleteCategory = async (categoryId) => {
-    if (!window.confirm("Are you sure you want to delete this category?"))
-      return;
-
+    if (!categoryId) return;
     try {
       const response = await fetch(
         `http://localhost:5000/api/categories/${categoryId}`,
@@ -290,18 +294,67 @@ function AdminCategoryManagement() {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        console.error("Backend error deleting category:", errorData);
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${
+            errorData.error || "Unknown error"
+          }`
+        );
       }
 
-      // Assuming successful deletion
       fetchCategories(); // Refresh the list
+      // Close confirmation modal
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
     } catch (error) {
       console.error("Error deleting category:", error);
-      // Optional: Display error message to user
+      alert("Failed to delete category: " + error.message);
+      // Close confirmation modal even on error
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
     }
   };
 
-  const categoryTree = buildCategoryTree(categories);
+  // Functions to trigger confirmation modal
+  const confirmAdd = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setConfirmMessage("Are you sure you want to add this category?");
+    setActionToConfirm(() => handleSubmit); // Store the add submit function
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmEdit = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setConfirmMessage("Are you sure you want to update this category?");
+    setActionToConfirm(() => handleSubmit); // Store the edit submit function
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = (categoryId) => {
+    setConfirmMessage(
+      "Are you sure you want to delete this category? This action cannot be undone."
+    );
+    setActionToConfirm(() => () => handleDeleteCategory(categoryId));
+    setIsConfirmModalOpen(true);
+  };
+
+  // Function to handle confirmation action
+  const handleConfirm = () => {
+    if (actionToConfirm) {
+      actionToConfirm(); // Execute the stored action (add, edit, or delete)
+      // Modal closure is handled within the action functions now
+    }
+  };
+
+  // Function to handle cancellation
+  const handleCancelConfirm = () => {
+    setIsConfirmModalOpen(false);
+    setActionToConfirm(null); // Clear the stored action
+  };
+
+  // Derived state for hierarchical view
+  const hierarchicalCategories = buildCategoryTree(categories);
 
   if (loading) {
     return <div className="p-6">Loading categories...</div>;
@@ -339,12 +392,12 @@ function AdminCategoryManagement() {
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
-                onClick={closeModal}
+                onClick={() => setShowModal(false)}
                 aria-label="Close"
               >
                 &times;
               </button>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <form onSubmit={confirmAdd} className="flex flex-col gap-4">
                 <h3 className="text-xl font-bold text-green-700 mb-2 text-center">
                   {editingCategory ? "Edit Category" : "Add New Category"}
                 </h3>
@@ -365,7 +418,7 @@ function AdminCategoryManagement() {
                 >
                   <option value="">-- Select Parent Category --</option>
                   {renderCategoryOptions(
-                    categoryTree,
+                    hierarchicalCategories,
                     0,
                     editingCategory ? editingCategory.id : null
                   )}
@@ -418,7 +471,7 @@ function AdminCategoryManagement() {
                   </button>
                   <button
                     type="button"
-                    onClick={closeModal}
+                    onClick={() => setShowModal(false)}
                     className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 shadow text-center text-sm flex-1"
                   >
                     Cancel
@@ -432,18 +485,35 @@ function AdminCategoryManagement() {
         {/* Category List (Hierarchical) */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
           <h3 className="text-lg font-bold text-green-700 mb-4">Categories</h3>
-          <ul>
-            {categoryTree.map((category) => (
-              <CategoryNode
-                key={category.id}
-                category={category}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteCategory}
-              />
-            ))}
-          </ul>
+          {error && (
+            <div className="text-red-500 mb-4">Error: {error.message}</div>
+          )}
+          {
+            /* Render category tree */
+            categories.length === 0 && !loading && !error ? (
+              <p className="text-gray-500">No categories found.</p>
+            ) : (
+              <ul className="space-y-1">
+                {hierarchicalCategories.map((category) => (
+                  <CategoryNode
+                    key={category.id}
+                    category={category}
+                    onEdit={handleEditClick}
+                    onDelete={confirmDelete} // Call confirmDelete instead of handleDeleteCategory directly
+                  />
+                ))}
+              </ul>
+            )
+          }
         </div>
       </div>
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        message={confirmMessage}
+        isOpen={isConfirmModalOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancelConfirm}
+      />
     </div>
   );
 }

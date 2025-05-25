@@ -1068,11 +1068,12 @@ app.get("/api/admin/sales-analytics", async (req, res) => {
     const group = req.query.group || "month";
     const start = req.query.start;
     const end = req.query.end;
-    const status = req.query.status || "completed";
-    const paymentType = req.query.payment_type;
+    const status = req.query.status || "completed"; // Status filter was removed from frontend, but keeping backend logic for flexibility
+    const paymentType = req.query.payment_type; // Payment type filter was removed from frontend, but keeping backend logic for flexibility
 
     const tz = "Asia/Bangkok"; // Set your local timezone
     let groupBy;
+    // Correctly handle timestamptz by converting to target timezone before formatting
     if (group === "day") {
       groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY-MM-DD')`;
     } else if (group === "week") {
@@ -1080,24 +1081,42 @@ app.get("/api/admin/sales-analytics", async (req, res) => {
     } else if (group === "year") {
       groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY')`;
     } else {
+      // Default to month
       groupBy = `TO_CHAR(created_at AT TIME ZONE '${tz}', 'YYYY-MM')`;
     }
 
-    let whereClauses = ["status = $1"];
-    let params = [status];
-    let paramIndex = 2;
-    if (start) {
-      whereClauses.push(`created_at >= $${paramIndex++}`);
-      params.push(start);
-    }
-    if (end) {
-      whereClauses.push(`created_at <= $${paramIndex++}`);
-      params.push(end);
+    let whereClauses = [
+      /* Removed status filter */ "status = 'completed'" /* Keeping for now as frontend doesn't send status */,
+    ];
+    let params = [];
+    let paramIndex = 1;
+
+    // Re-add status and payment type to where clauses if provided (though frontend currently doesn't send them)
+    if (status && status !== "completed") {
+      // Only add if status is explicitly sent and not the default
+      whereClauses.push(`status = $${paramIndex++}`);
+      params.push(status);
     }
     if (paymentType) {
       whereClauses.push(`payment_type = $${paramIndex++}`);
       params.push(paymentType);
     }
+
+    // Adjust start and end date filtering to compare against created_at in the target timezone
+    if (start) {
+      whereClauses.push(
+        `created_at AT TIME ZONE '${tz}' >= $${paramIndex++}::date`
+      );
+      params.push(start);
+    }
+    if (end) {
+      // For the end date, filter up to the end of the day
+      whereClauses.push(
+        `created_at AT TIME ZONE '${tz}' < ($${paramIndex++}::date + interval '1 day')`
+      );
+      params.push(end);
+    }
+
     const where = whereClauses.length
       ? `WHERE ${whereClauses.join(" AND ")}`
       : "";
@@ -1146,8 +1165,10 @@ app.get("/api/admin/customers", async (req, res) => {
       `
       SELECT u.id, u.username, u.email, u.created_at, u.status,
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
-        (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent
+        (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent,
+        c.name as customer_name
       FROM users u
+      LEFT JOIN customers c ON u.id = c.user_id
       WHERE u.is_admin = false
       ORDER BY u.created_at DESC
       LIMIT $1 OFFSET $2
@@ -1179,6 +1200,39 @@ app.put("/api/admin/customers/:id/status", async (req, res) => {
     res.json({ message: "User status updated" });
   } catch (err) {
     res.status(500).json({ error: "Failed to update user status" });
+  }
+});
+
+// Endpoint to delete a user by ID (Admin only)
+app.delete("/api/users/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // User ID from URL
+
+  try {
+    // Consider deleting related data (orders, cart items, etc.) first
+    // or ensure your database schema handles cascading deletes.
+    // Example: Delete user's orders (if necessary and not cascading)
+    // await pool.query('DELETE FROM orders WHERE user_id = $1', [id]);
+    // Example: Delete user's cart items (if necessary and not cascading)
+    // await pool.query('DELETE FROM cart_items WHERE user_id = $1', [id]);
+
+    const result = await pool.query(
+      "DELETE FROM users WHERE id = $1 RETURNING id",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "User deleted successfully" });
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (err) {
+    console.error(`Error deleting user with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

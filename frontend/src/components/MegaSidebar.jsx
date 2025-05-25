@@ -27,7 +27,7 @@ function MegaSidebar({ bannerHeight }) {
         left: sidebarRect.right + "px",
         top: sidebarRect.top + "px", // Align top with sidebar top
         width: `calc(92vw - ${sidebarRect.right}px)`, // Calculate width to fill the rest of the viewport
-        height: `${bannerHeight}px`, // Match height of the banner area
+        height: `calc(${bannerHeight}px + 100px)`, // Increase height of the banner area and add 100px
         zIndex: 60,
         pointerEvents: "auto",
         backgroundColor: "white", // Ensure background is white

@@ -15,25 +15,11 @@ const GROUP_OPTIONS = [
   { label: "Month", value: "month" },
   { label: "Year", value: "year" },
 ];
-const STATUS_OPTIONS = [
-  { label: "Completed", value: "completed" },
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Shipped", value: "shipped" },
-  { label: "Cancelled", value: "cancelled" },
-];
-const PAYMENT_OPTIONS = [
-  { label: "All", value: "" },
-  { label: "COD", value: "cod" },
-  { label: "Bank Transfer", value: "bank_transfer" },
-];
 
 function SalesAnalytic() {
   const [group, setGroup] = useState("month");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  const [status, setStatus] = useState("completed");
-  const [paymentType, setPaymentType] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,10 +31,8 @@ function SalesAnalytic() {
       try {
         const params = [
           `group=${group}`,
-          status ? `status=${status}` : "",
           start ? `start=${start}` : "",
           end ? `end=${end}` : "",
-          paymentType ? `payment_type=${paymentType}` : "",
         ]
           .filter(Boolean)
           .join("&");
@@ -65,7 +49,7 @@ function SalesAnalytic() {
       }
     };
     fetchData();
-  }, [group, start, end, status, paymentType]);
+  }, [group, start, end]);
 
   // Calculate total sales for the period
   const totalSales = data.reduce((sum, d) => sum + parseFloat(d.total), 0);
@@ -95,34 +79,6 @@ function SalesAnalytic() {
               onChange={(e) => setGroup(e.target.value)}
             >
               {GROUP_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Status
-            <select
-              className="ml-1 border rounded-md px-2 py-1"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Payment
-            <select
-              className="ml-1 border rounded-md px-2 py-1"
-              value={paymentType}
-              onChange={(e) => setPaymentType(e.target.value)}
-            >
-              {PAYMENT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>

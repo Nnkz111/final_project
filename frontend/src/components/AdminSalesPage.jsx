@@ -7,6 +7,7 @@ function AdminSalesPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingStatus, setEditingStatus] = useState({});
   const { adminToken } = useContext(AdminAuthContext);
 
   useEffect(() => {
@@ -19,10 +20,16 @@ function AdminSalesPage() {
         });
         if (!res.ok) throw new Error("Failed to fetch orders");
         const data = await res.json();
-        setOrders(data.slice(0, 20)); // Show last 20 orders
+        if (data && Array.isArray(data.orders)) {
+          setOrders(data.orders.slice(0, 20));
+        } else if (Array.isArray(data)) {
+          setOrders(data.slice(0, 20));
+        } else {
+          throw new Error("Unexpected data format from orders API");
+        }
+        setLoading(false);
       } catch (err) {
         setError(err.message);
-      } finally {
         setLoading(false);
       }
     };
@@ -71,6 +78,11 @@ function AdminSalesPage() {
     document.body.removeChild(link);
   };
 
+  // Fetch full order details for modal
+  const openOrderModal = async (order) => {
+    // ... existing code ...
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-green-700">
@@ -91,6 +103,24 @@ function AdminSalesPage() {
             Export CSV
           </button>
         </div>
+        {/* Removed Filter Bar */}
+        {/* <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+          <div>
+            <label className="font-semibold mr-2">Filter by Status:</label>
+            <select
+              className="border rounded px-3 py-2"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All</option>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div> */}
         {loading ? (
           <div className="text-gray-500">Loading orders...</div>
         ) : error ? (

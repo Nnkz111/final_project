@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import AdminAuthContext from "../context/AdminAuthContext";
+import ConfirmationModal from "./ConfirmationModal";
 
 const STATUS_OPTIONS = ["pending", "paid", "shipped", "completed", "cancelled"];
 const USER_STATUS_OPTIONS = ["active", "inactive", "banned"];
@@ -17,6 +19,14 @@ function AdminCustomerManagement() {
   const [modalError, setModalError] = useState("");
   const [editingStatus, setEditingStatus] = useState({}); // {orderId: status}
   const [updating, setUpdating] = useState({}); // {orderId: true/false}
+  const [deleting, setDeleting] = useState({}); // To track deletion status for each customer
+
+  // State for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [actionToConfirm, setActionToConfirm] = useState(null); // Store the action to perform on confirm
+
+  const { adminToken } = useContext(AdminAuthContext);
 
   useEffect(() => {
     fetchCustomers(page);
@@ -63,25 +73,56 @@ function AdminCustomerManagement() {
       if (res.ok) {
         data = await res.json();
         // If filtering by user_id is not supported, fallback to filter client-side
-        if (!Array.isArray(data)) data = [];
+        // Check if data is an object with an 'orders' array property
+        if (data && Array.isArray(data.orders)) {
+          data = data.orders.filter((o) => o.user_id === customer.id); // Use data.orders
+        } else if (!Array.isArray(data)) {
+          // If it's not an array and not the expected object format, treat as empty
+          data = [];
+        } // If it's already an array, no change needed
+
         if (!data.length || !data[0].user_id) {
           // fallback: fetch all orders and filter client-side
           const allRes = await fetch("http://localhost:5000/api/orders");
           if (allRes.ok) {
             const allOrders = await allRes.json();
-            data = allOrders.filter((o) => o.user_id === customer.id);
+            // Check if allOrders is an object with an 'orders' array property
+            if (allOrders && Array.isArray(allOrders.orders)) {
+              data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
+            } else if (Array.isArray(allOrders)) {
+              // Fallback if API just returns an array
+              data = allOrders.filter((o) => o.user_id === customer.id);
+            } else {
+              // Unexpected format
+              data = [];
+              console.error("Unexpected data format from /api/orders fallback");
+            }
+          } else {
+            throw new Error("Failed to fetch orders in fallback");
           }
         }
       } else {
+        // Initial fetch by user_id failed, go directly to fallback
         // fallback: fetch all orders and filter client-side
         const allRes = await fetch("http://localhost:5000/api/orders");
         if (allRes.ok) {
           const allOrders = await allRes.json();
-          data = allOrders.filter((o) => o.user_id === customer.id);
+          // Check if allOrders is an object with an 'orders' array property
+          if (allOrders && Array.isArray(allOrders.orders)) {
+            data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
+          } else if (Array.isArray(allOrders)) {
+            // Fallback if API just returns an array
+            data = allOrders.filter((o) => o.user_id === customer.id);
+          } else {
+            // Unexpected format
+            data = [];
+            console.error("Unexpected data format from /api/orders fallback");
+          }
         } else {
-          throw new Error("Failed to fetch orders");
+          throw new Error("Failed to fetch orders in fallback");
         }
       }
+
       setModalOrders(data);
     } catch (err) {
       setModalError(err.message);
@@ -136,9 +177,71 @@ function AdminCustomerManagement() {
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
+  // Handle customer deletion
+  const handleDeleteCustomer = async (customerId, token) => {
+    if (!customerId || !token) return;
+    setDeleting((prev) => ({ ...prev, [customerId]: true }));
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/${customerId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || "Failed to delete customer");
+        } catch {
+          throw new Error(errorText || "Failed to delete customer");
+        }
+      }
+
+      setCustomers((prev) =>
+        prev.filter((customer) => customer.id !== customerId)
+      );
+      console.log("Customer deleted successfully");
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
+    } catch (err) {
+      alert("Failed to delete customer: " + err.message);
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
+    } finally {
+      setDeleting((prev) => ({ ...prev, [customerId]: false }));
+    }
+  };
+
+  // Function to trigger confirmation modal for delete
+  const confirmDelete = (customerId) => {
+    const currentAdminToken = adminToken;
+    setConfirmMessage(
+      "Are you sure you want to delete this customer? This action cannot be undone."
+    );
+    setActionToConfirm(
+      () => () => handleDeleteCustomer(customerId, currentAdminToken)
+    );
+    setIsConfirmModalOpen(true);
+  };
+
+  // Function to handle confirmation action
+  const handleConfirm = () => {
+    if (actionToConfirm) {
+      actionToConfirm();
+    }
+  };
+
+  // Function to handle cancellation
+  const handleCancelConfirm = () => {
+    setIsConfirmModalOpen(false);
+    setActionToConfirm(null);
+  };
+
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
+      <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
           Customer Management
         </h2>
@@ -167,6 +270,9 @@ function AdminCustomerManagement() {
                       ID
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
                       Username
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
@@ -193,6 +299,7 @@ function AdminCustomerManagement() {
                   {filtered.map((c) => (
                     <tr key={c.id} className="hover:bg-green-50 transition">
                       <td className="px-4 py-3 font-mono">{c.id}</td>
+                      <td className="px-4 py-3">{c.customer_name || "-"}</td>
                       <td className="px-4 py-3">{c.username}</td>
                       <td className="px-4 py-3">{c.email}</td>
                       <td className="px-4 py-3">
@@ -200,19 +307,9 @@ function AdminCustomerManagement() {
                           new Date(c.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3">
-                        <select
-                          className="border rounded px-2 py-1 bg-white"
-                          value={c.status || "active"}
-                          onChange={(e) =>
-                            handleUpdateUserStatus(c.id, e.target.value)
-                          }
-                        >
-                          {USER_STATUS_OPTIONS.map((status) => (
-                            <option key={status} value={status}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </option>
-                          ))}
-                        </select>
+                        <span className="capitalize font-semibold text-green-700">
+                          {c.status || "N/A"}
+                        </span>
                       </td>
                       <td className="px-4 py-3">{c.order_count}</td>
                       <td className="px-4 py-3 font-bold text-green-700">
@@ -224,10 +321,17 @@ function AdminCustomerManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mr-2"
                           onClick={() => openOrdersModal(c)}
                         >
                           View
+                        </button>
+                        <button
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm"
+                          onClick={() => confirmDelete(c.id)}
+                          disabled={deleting[c.id]}
+                        >
+                          {deleting[c.id] ? "Deleting..." : "Delete"}
                         </button>
                       </td>
                     </tr>
@@ -364,6 +468,13 @@ function AdminCustomerManagement() {
           </div>
         </div>
       )}
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        message={confirmMessage}
+        isOpen={isConfirmModalOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancelConfirm}
+      />
     </div>
   );
 }

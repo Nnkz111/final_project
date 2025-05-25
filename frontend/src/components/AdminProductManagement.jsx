@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useCategories } from "../context/CategoryContext";
+import ConfirmationModal from "./ConfirmationModal";
 
 function AdminProductManagement() {
   const [products, setProducts] = useState([]);
@@ -27,6 +28,14 @@ function AdminProductManagement() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editError, setEditError] = useState(null);
   const [editSuccess, setEditSuccess] = useState(false);
+
+  // State for modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // State for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [actionToConfirm, setActionToConfirm] = useState(null); // Store the action to perform on confirm
 
   const {
     categories,
@@ -67,9 +76,7 @@ function AdminProductManagement() {
     setNewProduct({ ...newProduct, productImage: e.target.files[0] });
   };
 
-  const handleAddSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleAddSubmit = async () => {
     const formData = new FormData();
     formData.append("name", newProduct.name);
     formData.append("description", newProduct.description);
@@ -102,8 +109,10 @@ function AdminProductManagement() {
         productImage: null,
         category_id: "",
       });
-      setIsAdding(false); // Hide the form after successful add
+      setIsModalOpen(false); // Close the modal after successful add
       fetchProducts(); // Refresh the product list
+      setIsConfirmModalOpen(false); // Close confirm modal after action
+      setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error adding product:", err.response?.data || err);
       setAddError(err.response?.data?.error || "Failed to add product.");
@@ -117,14 +126,13 @@ function AdminProductManagement() {
       productImage: null,
       category_id: product.category_id || "",
     }); // Set product to be edited, clear image for new upload
-    setIsAdding(true); // Show the form
+    setIsModalOpen(true); // Open the modal for editing
     setAddSuccess(false); // Hide add success message
     setAddError(null); // Hide add error message
+    setEditSuccess(false);
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleEditSubmit = async () => {
     if (!editingProduct) return; // Should not happen if button is clicked correctly
 
     const formData = new FormData();
@@ -156,8 +164,10 @@ function AdminProductManagement() {
       setEditSuccess(true);
       setEditError(null);
       setEditingProduct(null); // Clear editing state
-      setIsAdding(false); // Hide the form
+      setIsModalOpen(false); // Close the modal after successful edit
       fetchProducts(); // Refresh the list
+      setIsConfirmModalOpen(false); // Close confirm modal after action
+      setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error updating product:", err.response?.data || err);
       setEditError(err.response?.data?.error || "Failed to update product.");
@@ -167,14 +177,51 @@ function AdminProductManagement() {
 
   const handleCancelEdit = () => {
     setEditingProduct(null);
-    setIsAdding(false);
+    setIsModalOpen(false); // Close modal on cancel
     setAddError(null); // Clear any previous errors
     setEditError(null); // Clear any previous errors
   };
 
+  // Functions to show the confirmation modal
+  const confirmAdd = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setConfirmMessage("Are you sure you want to add this product?");
+    setActionToConfirm(() => handleAddSubmit); // Store the add submit function
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmEdit = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setConfirmMessage("Are you sure you want to update this product?");
+    setActionToConfirm(() => handleEditSubmit); // Store the edit submit function
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = (id) => {
+    setConfirmMessage("Are you sure you want to delete this product?");
+    // Store a function that calls handleDeleteProduct with the specific ID
+    setActionToConfirm(() => () => handleDeleteProduct(id));
+    setIsConfirmModalOpen(true);
+  };
+
+  // Function to handle confirmation action
+  const handleConfirm = () => {
+    if (actionToConfirm) {
+      actionToConfirm(); // Execute the stored action
+      // Modal closure is handled within the action functions now
+    }
+  };
+
+  // Function to handle cancellation
+  const handleCancelConfirm = () => {
+    setIsConfirmModalOpen(false);
+    setActionToConfirm(null); // Clear the stored action
+  };
+
   // Determine which form to display
   const formTitle = editingProduct ? "Edit Product" : "Add New Product";
-  const handleSubmit = editingProduct ? handleEditSubmit : handleAddSubmit;
+  // Change handleSubmit to trigger confirmation modal
+  const handleSubmit = editingProduct ? confirmEdit : confirmAdd;
   const currentProductData = editingProduct || newProduct;
   const handleInputChangeCurrent = editingProduct
     ? (e) =>
@@ -200,9 +247,15 @@ function AdminProductManagement() {
         },
       });
       fetchProducts();
+      // Close confirm modal after action
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error deleting product:", err.response?.data || err);
       setError("Failed to delete product.");
+      // Close confirm modal after action
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null); // Clear the stored action
     }
   };
 
@@ -264,173 +317,202 @@ function AdminProductManagement() {
         <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4">
           <button
             onClick={() => {
-              if (isAdding && editingProduct) {
-                handleCancelEdit();
-              } else if (isAdding && !editingProduct) {
-                setIsAdding(false);
-              } else {
-                setIsAdding(true);
-              }
+              // Always open modal for adding when button is clicked
+              setIsModalOpen(true);
+              setEditingProduct(null); // Ensure adding new product mode
+              setNewProduct({
+                // Clear new product form fields
+                name: "",
+                description: "",
+                price: "",
+                stock_quantity: "",
+                productImage: null,
+                category_id: "",
+              });
+              setAddError(null); // Clear errors
+              setEditError(null); // Clear errors
+              setAddSuccess(false); // Clear success messages
+              setEditSuccess(false); // Clear success messages
             }}
             className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
           >
-            {isAdding
-              ? editingProduct
-                ? "Cancel Edit"
-                : "Cancel Add Product"
-              : "Add New Product"}
+            Add New Product
           </button>
         </div>
-        {/* Add/Edit Product Form */}
-        {isAdding && (
-          <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8 border border-green-100">
-            <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
-              {formTitle}
-            </h3>
-            {addError && <div className="text-red-500 mb-2">{addError}</div>}
-            {addSuccess && (
-              <div className="text-green-500 mb-2">
-                Product added successfully!
-              </div>
-            )}
-            {editError && <div className="text-red-500 mb-2">{editError}</div>}
-            {editSuccess && (
-              <div className="text-green-500 mb-2">
-                Product updated successfully!
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="name"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={currentProductData.name || ""}
-                  onChange={handleInputChangeCurrent}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="description"
-                >
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  value={currentProductData.description || ""}
-                  onChange={handleInputChangeCurrent}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                ></textarea>
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="price"
-                >
-                  Price
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  id="price"
-                  value={currentProductData.price || ""}
-                  onChange={handleInputChangeCurrent}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  step="0.01"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="stock_quantity"
-                >
-                  Stock Quantity
-                </label>
-                <input
-                  type="number"
-                  name="stock_quantity"
-                  id="stock_quantity"
-                  value={currentProductData.stock_quantity || ""}
-                  onChange={handleInputChangeCurrent}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="category_id"
-                >
-                  Category
-                </label>
-                <select
-                  name="category_id"
-                  id="category_id"
-                  value={currentProductData.category_id || ""}
-                  onChange={handleInputChangeCurrent}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option value="">Uncategorized</option>
-                  {renderCategoryOptions(hierarchicalCategories)}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="productImage"
-                >
-                  Product Image
-                </label>
-                <input
-                  type="file"
-                  name="productImage"
-                  id="productImage"
-                  onChange={handleFileChangeCurrent}
-                  accept="image/*"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-                {/* Display current image when editing */}
-                {editingProduct?.image_url &&
-                  !currentProductData.productImage && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600">Current Image:</p>
-                      <img
-                        src={`http://localhost:5000${editingProduct.image_url}`}
-                        alt="Current Product"
-                        className="w-20 h-20 object-cover rounded-md mt-1"
-                      />
-                    </div>
-                  )}
-              </div>
-              <div className="flex items-center justify-between">
-                <button
-                  type="submit"
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  {editingProduct ? "Update Product" : "Add Product"}
-                </button>
-                {editingProduct && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                  >
-                    Cancel
-                  </button>
+        {/* Add/Edit Product Form Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+            <div className="relative p-8 bg-white rounded-3xl shadow-2xl max-w-md mx-auto">
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingProduct(null); // Clear editing state when closing modal
+                  setAddError(null); // Clear errors
+                  setEditError(null); // Clear errors
+                  // Also close confirmation modal and clear action if it was pending
+                  setIsConfirmModalOpen(false);
+                  setActionToConfirm(null);
+                }}
+              >
+                &times;
+              </button>
+              <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8 border border-green-100">
+                <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
+                  {formTitle}
+                </h3>
+                {addError && (
+                  <div className="text-red-500 mb-2">{addError}</div>
                 )}
+                {addSuccess && (
+                  <div className="text-green-500 mb-2">
+                    Product added successfully!
+                  </div>
+                )}
+                {editError && (
+                  <div className="text-red-500 mb-2">{editError}</div>
+                )}
+                {editSuccess && (
+                  <div className="text-green-500 mb-2">
+                    Product updated successfully!
+                  </div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="name"
+                    >
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      value={currentProductData.name || ""}
+                      onChange={handleInputChangeCurrent}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="description"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      id="description"
+                      value={currentProductData.description || ""}
+                      onChange={handleInputChangeCurrent}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    ></textarea>
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="price"
+                    >
+                      Price
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      id="price"
+                      value={currentProductData.price || ""}
+                      onChange={handleInputChangeCurrent}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="stock_quantity"
+                    >
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="stock_quantity"
+                      id="stock_quantity"
+                      value={currentProductData.stock_quantity || ""}
+                      onChange={handleInputChangeCurrent}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="category_id"
+                    >
+                      Category
+                    </label>
+                    <select
+                      name="category_id"
+                      id="category_id"
+                      value={currentProductData.category_id || ""}
+                      onChange={handleInputChangeCurrent}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      <option value="">Uncategorized</option>
+                      {renderCategoryOptions(hierarchicalCategories)}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="productImage"
+                    >
+                      Product Image
+                    </label>
+                    <input
+                      type="file"
+                      name="productImage"
+                      id="productImage"
+                      onChange={handleFileChangeCurrent}
+                      accept="image/*"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                    {/* Display current image when editing */}
+                    {editingProduct?.image_url &&
+                      !currentProductData.productImage && (
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-600">
+                            Current Image:
+                          </p>
+                          <img
+                            src={`http://localhost:5000${editingProduct.image_url}`}
+                            alt="Current Product"
+                            className="w-20 h-20 object-cover rounded-md mt-1"
+                          />
+                        </div>
+                      )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="submit"
+                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                      {editingProduct ? "Update Product" : "Add Product"}
+                    </button>
+                    {editingProduct && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         )}
         {/* Search Input */}
@@ -496,7 +578,7 @@ function AdminProductManagement() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteProduct(product.id)}
+                            onClick={() => confirmDelete(product.id)}
                             className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
                           >
                             Delete
@@ -533,6 +615,13 @@ function AdminProductManagement() {
           )}
         </div>
       </div>
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        message={confirmMessage}
+        isOpen={isConfirmModalOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancelConfirm}
+      />
     </div>
   );
 }
