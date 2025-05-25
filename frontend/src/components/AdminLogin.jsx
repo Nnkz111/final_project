@@ -21,46 +21,70 @@ function AdminLogin() {
   };
 
   return (
-    <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg">
-      <h3 className="text-2xl font-bold text-center">Admin Login</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="mt-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      {" "}
+      {/* Center content vertically and horizontally */}
+      <div className="px-8 py-6 mt-4 text-left bg-white shadow-xl rounded-lg w-full max-w-md">
+        {" "}
+        {/* Wider container, rounded corners, stronger shadow */}
+        <h3 className="text-3xl font-bold text-center mb-6 text-gray-800">
+          {" "}
+          {/* Larger title, stronger font, more margin */}
+          Admin Login
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {" "}
+          {/* Added space between form groups */}
           <div>
-            <label className="block" htmlFor="emailOrUsername">
-              Email or Username
+            <label
+              className="block text-gray-700 font-medium mb-1"
+              htmlFor="emailOrUsername"
+            >
+              {" "}
+              {/* Styled label */}
+              Username
             </label>
             <input
               type="text"
               placeholder="Email or Username"
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
               value={emailOrUsername}
               onChange={(e) => setEmailOrUsername(e.target.value)}
               required
             />
           </div>
-          <div className="mt-4">
-            <label className="block" htmlFor="password">
+          <div>
+            {" "}
+            {/* Changed div structure for consistency */}
+            <label
+              className="block text-gray-700 font-medium mb-1"
+              htmlFor="password"
+            >
+              {" "}
+              {/* Styled label */}
               Password
             </label>
             <input
               type="password"
               placeholder="Password"
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-center">
+            {" "}
+            {/* Centered button */}
             <button
               type="submit"
-              className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-900"
+              className="px-8 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
             >
               Login as Admin
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

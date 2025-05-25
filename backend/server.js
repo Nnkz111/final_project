@@ -1040,15 +1040,21 @@ app.get("/api/admin/stats", async (req, res) => {
     const totalSalesResult = await pool.query(
       "SELECT COALESCE(SUM(total::numeric), 0) FROM orders WHERE status = 'completed'"
     );
-    const totalCustomersResult = await pool.query("SELECT COUNT(*) FROM users");
+    const totalCustomersResult = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE is_admin = false"
+    );
     const totalProductsResult = await pool.query(
       "SELECT COUNT(*) FROM products"
+    );
+    const pendingOrdersResult = await pool.query(
+      "SELECT COUNT(*) FROM orders WHERE status = 'pending'"
     );
     res.json({
       totalOrders: parseInt(totalOrdersResult.rows[0].count, 10),
       totalSales: parseFloat(totalSalesResult.rows[0].coalesce),
       totalCustomers: parseInt(totalCustomersResult.rows[0].count, 10),
       totalProducts: parseInt(totalProductsResult.rows[0].count, 10),
+      pendingOrders: parseInt(pendingOrdersResult.rows[0].count, 10),
     });
   } catch (err) {
     console.error("Error fetching admin stats:", err);

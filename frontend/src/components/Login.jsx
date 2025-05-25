@@ -19,6 +19,10 @@ function Login() {
     }
   };
 
+  const handleRegisterClick = () => {
+    navigate("/register");
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       {" "}
@@ -83,6 +87,17 @@ function Login() {
             </button>
           </div>
         </form>
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?
+            <button
+              onClick={handleRegisterClick}
+              className="text-blue-600 hover:text-blue-800 font-medium ml-1 focus:outline-none"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

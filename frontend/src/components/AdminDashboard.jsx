@@ -18,23 +18,13 @@ function AdminDashboard() {
       try {
         const res = await fetch("http://localhost:5000/api/admin/stats");
         const data = await res.json();
-        // Fetch pending orders count
-        const pendingRes = await fetch(
-          "http://localhost:5000/api/orders?status=pending"
-        );
-        let pendingOrders = 0;
-        if (pendingRes.ok) {
-          const pendingData = await pendingRes.json();
-          pendingOrders = Array.isArray(pendingData)
-            ? pendingData.filter((o) => o.status === "pending").length
-            : 0;
-        }
+        // Removed separate fetch for pending orders, now included in /api/admin/stats
         setStats({
           ...data,
-          pendingOrders,
           loading: false,
         });
       } catch (err) {
+        console.error("Error fetching admin stats:", err); // Log error for debugging
         setStats((prev) => ({ ...prev, loading: false }));
       }
     };
@@ -82,7 +72,7 @@ function AdminDashboard() {
             key={index}
             title={stat.title}
             value={stat.value}
-            icon={stat.icon} // Pass icon prop
+            icon={stat.icon}
           />
         ))}
       </div>
