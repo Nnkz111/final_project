@@ -32,7 +32,7 @@ function Header({ showMegaDropdown }) {
     }
   };
 
-  // Dropdown menu for categories (only on category page)
+  // Dropdown menu for categories
   const renderCategoryDropdown = () => (
     <nav className="w-full bg-white border-b border-gray-200 shadow-sm z-40">
       <div className="container mx-auto flex flex-row items-stretch relative">
@@ -152,24 +152,79 @@ function Header({ showMegaDropdown }) {
           {/* User/Cart Icons Area - using flex and spacing */}
           <div className="flex items-center space-x-6 ml-6">
             {/* Language Switcher Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1 focus:outline-none text-sm"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7 2a1 1 0 011 1v1h2V3a1 1 0 112 0v1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2v2h2a1 1 0 011 1v2a1 1 0 01-1 1h-2v1a1 1 0 11-2 0v-1H8v1a1 1 0 11-2 0v-1H4a1 1 0 01-1-1v-2a1 1 0 011-1h2v-2H4a1 1 0 01-1-1V5a1 1 0 011-1h2V3a1 1 0 011-1zM5 5h1v2H5V5zm5 0h1v2h-1V5zm-5 5h1v2H5v-2zm5 0h1v2h-1v-2zm-5 5h1v2H5v-2zm5 0h1v2h-1v-2zm5-10h-1v2h1V5zm0 5h-1v2h1v-2zm0 5h-1v2h1v-2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{i18n.language.toUpperCase()}</span>
+            <div
+              className="relative"
+              onMouseEnter={() => setLangDropdownOpen(true)}
+              onMouseLeave={() => setLangDropdownOpen(false)}
+            >
+              <button className="flex items-center gap-1 focus:outline-none text-sm">
+                {i18n.language === "en" ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 32 24"
+                  >
+                    <mask
+                      id="flagpackUs0"
+                      width="32"
+                      height="24"
+                      x="0"
+                      y="0"
+                      maskUnits="userSpaceOnUse"
+                    >
+                      <path fill="#fff" d="M0 0h32v24H0z" />
+                    </mask>
+                    <g fill="none" mask="url(#flagpackUs0)">
+                      <path
+                        fill="#F7FCFF"
+                        fill-rule="evenodd"
+                        d="M0 0h32v24H0V0z"
+                        clip-rule="evenodd"
+                      />
+                      <path
+                        fill="#E31D1C"
+                        fill-rule="evenodd"
+                        d="M0 14.667v2h32v-2H0zm0 3.666v2h32v-2H0zm0-11v2h32v-2H0zM0 22v2h32v-2H0zm0-11v2h32v-2H0zM0 0v2h32V0H0zm0 3.667v2h32v-2H0z"
+                        clip-rule="evenodd"
+                      />
+                      <path fill="#2E42A5" d="M0 0h20v13H0z" />
+                      <path
+                        fill="#F7FCFF"
+                        fill-rule="evenodd"
+                        d="m1.722 2.939l-.726.509l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm4 0l-.726.509l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.509l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 7.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 11.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274-7.49l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm.726 3.49l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.905zM3.722 4.938l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-8.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-4.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906z"
+                        clip-rule="evenodd"
+                      />
+                    </g>
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 512 512"
+                    className="rounded-full h-5 w-5"
+                  >
+                    <mask id="circleFlagsLa0">
+                      <circle cx="256" cy="256" r="256" fill="#fff" />
+                    </mask>
+                    <g mask="url(#circleFlagsLa0)">
+                      <path
+                        fill="#d80027"
+                        d="M0 0h512v144.8l-45.8 113L512 367.4V512H0V367.4l46.3-111.1L0 144.8z"
+                      />
+                      <path fill="#0052b4" d="M0 144.8h512v222.6H0z" />
+                      <circle cx="256" cy="256.1" r="89" fill="#eee" />
+                    </g>
+                  </svg>
+                )}
+                <span>
+                  {i18n.language === "en"
+                    ? "ENG"
+                    : i18n.language === "lo"
+                    ? "ລາວ"
+                    : i18n.language.toUpperCase()}
+                </span>
                 <svg
                   className={`h-4 w-4 transition-transform duration-200 ${
                     langDropdownOpen ? "rotate-180" : "rotate-0"
@@ -187,14 +242,52 @@ function Header({ showMegaDropdown }) {
                 </svg>
               </button>
               {langDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-24 bg-white text-gray-800 rounded-md shadow-lg z-[55]">
+                <div className="absolute right-0 w-30 bg-white text-gray-800 rounded-md shadow-lg z-[60]">
                   <button
                     onClick={() => {
                       i18n.changeLanguage("en");
                       setLangDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                    className="block w-full text-left px-4 py-2 hover:bg-blue-50 text-sm hover:text-blue-600 rounded-lg flex items-center gap-2"
                   >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="22"
+                      viewBox="0 0 32 24"
+                    >
+                      <mask
+                        id="flagpackUs0"
+                        width="32"
+                        height="24"
+                        x="0"
+                        y="0"
+                        maskUnits="userSpaceOnUse"
+                      >
+                        <path fill="#fff" d="M0 0h32v24H0z" />
+                      </mask>
+                      <g fill="none" mask="url(#flagpackUs0)">
+                        <path
+                          fill="#F7FCFF"
+                          fill-rule="evenodd"
+                          d="M0 0h32v24H0V0z"
+                          clip-rule="evenodd"
+                        />
+                        <path
+                          fill="#E31D1C"
+                          fill-rule="evenodd"
+                          d="M0 14.667v2h32v-2H0zm0 3.666v2h32v-2H0zm0-11v2h32v-2H0zM0 22v2h32v-2H0zm0-11v2h32v-2H0zM0 0v2h32V0H0zm0 3.667v2h32v-2H0z"
+                          clip-rule="evenodd"
+                        />
+                        <path fill="#2E42A5" d="M0 0h20v13H0z" />
+                        <path
+                          fill="#F7FCFF"
+                          fill-rule="evenodd"
+                          d="m1.722 2.939l-.726.509l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm4 0l-.726.509l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.509l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 7.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 11.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274-7.49l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm.726 3.49l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.905zM3.722 4.938l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-8.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-4.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906z"
+                          clip-rule="evenodd"
+                        />
+                      </g>
+                    </svg>
                     English
                   </button>
                   <button
@@ -202,8 +295,27 @@ function Header({ showMegaDropdown }) {
                       i18n.changeLanguage("lo");
                       setLangDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                    className="block w-full text-left px-4 py-2 hover:bg-blue-50 text-sm hover:text-blue-600 rounded-lg  flex items-center gap-2"
                   >
+                    {" "}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="22"
+                      viewBox="0 0 512 512"
+                    >
+                      <mask id="circleFlagsLa0">
+                        <circle cx="256" cy="256" r="256" fill="#fff" />
+                      </mask>
+                      <g mask="url(#circleFlagsLa0)">
+                        <path
+                          fill="#d80027"
+                          d="M0 0h512v144.8l-45.8 113L512 367.4V512H0V367.4l46.3-111.1L0 144.8z"
+                        />
+                        <path fill="#0052b4" d="M0 144.8h512v222.6H0z" />
+                        <circle cx="256" cy="256.1" r="89" fill="#eee" />
+                      </g>
+                    </svg>
                     ລາວ
                   </button>
                 </div>
@@ -248,7 +360,7 @@ function Header({ showMegaDropdown }) {
                 </button>
                 {/* Dropdown menu - Increased z-index to appear above category dropdowns */}
                 <div
-                  className={`absolute right-0 mt-20 w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
+                  className={`absolute right-0 top-full w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
                     profileOpen
                       ? "opacity-100 scale-100 pointer-events-auto"
                       : "opacity-0 scale-95 pointer-events-none"
