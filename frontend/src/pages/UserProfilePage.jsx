@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import AuthContext from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function UserProfilePage() {
   const { user } = useContext(AuthContext);
@@ -24,6 +25,7 @@ function UserProfilePage() {
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState(null);
   const [changePasswordSuccess, setChangePasswordSuccess] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -164,9 +166,9 @@ function UserProfilePage() {
   if (!user) {
     return (
       <div className="container mx-auto p-4 text-center">
-        <p>Please log in to view your profile.</p>
+        <p>{t("profile_login_prompt")}</p>
         <Link to="/login" className="text-green-600 hover:underline mt-4 block">
-          Go to Login
+          {t("go_to_login_link")}
         </Link>
       </div>
     );
@@ -175,27 +177,29 @@ function UserProfilePage() {
   return (
     <div className="w-full py-8">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">User Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+          {t("user_profile_title")}
+        </h1>
         <div className="space-y-3">
           <p>
-            <strong>Username:</strong> {profileFormData.username}
+            <strong>{t("username_label")}:</strong> {profileFormData.username}
           </p>
           <p>
-            <strong>Email:</strong> {profileFormData.email}
+            <strong>{t("email_label")}:</strong> {profileFormData.email}
           </p>
           {profileFormData.name && profileFormData.name !== "" && (
             <p>
-              <strong>Name:</strong> {profileFormData.name}
+              <strong>{t("name_label")}:</strong> {profileFormData.name}
             </p>
           )}
           {profileFormData.phone && profileFormData.phone !== "" && (
             <p>
-              <strong>Phone:</strong> {profileFormData.phone}
+              <strong>{t("phone_label")}:</strong> {profileFormData.phone}
             </p>
           )}
           {profileFormData.address && profileFormData.address !== "" && (
             <p>
-              <strong>Address:</strong> {profileFormData.address}
+              <strong>{t("address_label")}:</strong> {profileFormData.address}
             </p>
           )}
         </div>
@@ -205,7 +209,7 @@ function UserProfilePage() {
               onClick={() => setIsEditingProfile(true)}
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
             >
-              Edit Profile
+              {t("edit_profile_button")}
             </button>
           )}
           {!isEditingProfile && !isChangingPassword && (
@@ -213,21 +217,23 @@ function UserProfilePage() {
               onClick={() => setIsChangingPassword(true)}
               className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition"
             >
-              Change Password
+              {t("change_password_button")}
             </button>
           )}
         </div>
 
         {isEditingProfile && (
           <div className="mt-6 p-4 border rounded-md bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {t("edit_profile_title")}
+            </h2>
             <form onSubmit={handleSubmitProfile}>
               <div className="mb-4">
                 <label
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="username"
                 >
-                  Username:
+                  {t("username_label")}:
                 </label>
                 <input
                   type="text"
@@ -276,7 +282,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="phone"
                 >
-                  Phone Number:
+                  {t("phone_number_label")}:
                 </label>
                 <input
                   type="tel"
@@ -308,22 +314,26 @@ function UserProfilePage() {
                   type="submit"
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
-                  Save Changes
+                  {t("save_changes_button")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEditingProfile(false)}
                   className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
                 >
-                  Cancel
+                  {t("cancel_button")}
                 </button>
               </div>
-              {editProfileLoading && <p>Saving changes...</p>}
+              {editProfileLoading && <p>{t("saving_changes_message")}</p>}
               {editProfileError && (
-                <p className="text-red-500">Error: {editProfileError}</p>
+                <p className="text-red-500">
+                  {t("error_prefix")}: {editProfileError}
+                </p>
               )}
               {editProfileSuccess && (
-                <p className="text-green-500">Profile updated successfully!</p>
+                <p className="text-green-500">
+                  {t("profile_updated_success_message")}
+                </p>
               )}
             </form>
           </div>
@@ -331,14 +341,16 @@ function UserProfilePage() {
 
         {isChangingPassword && (
           <div className="mt-6 p-4 border rounded-md bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">Change Password</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {t("change_password_title")}
+            </h2>
             <form onSubmit={handleSubmitPasswordChange}>
               <div className="mb-4">
                 <label
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="current-password"
                 >
-                  Current Password:
+                  {t("current_password_label")}:
                 </label>
                 <input
                   type="password"
@@ -354,7 +366,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="new-password"
                 >
-                  New Password:
+                  {t("new_password_label")}:
                 </label>
                 <input
                   type="password"
@@ -370,7 +382,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="confirm-new-password"
                 >
-                  Confirm New Password:
+                  {t("confirm_new_password_label")}:
                 </label>
                 <input
                   type="password"
@@ -386,22 +398,24 @@ function UserProfilePage() {
                   type="submit"
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
-                  Change Password
+                  {t("change_password_button")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsChangingPassword(false)}
                   className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
                 >
-                  Cancel
+                  {t("cancel_button")}
                 </button>
               </div>
-              {changePasswordLoading && <p>Changing password...</p>}
+              {changePasswordLoading && <p>{t("changing_password_message")}</p>}
               {changePasswordError && (
-                <p className="text-red-500">Error: {changePasswordError}</p>
+                <p className="text-red-500">{t("new_passwords_match_error")}</p>
               )}
               {changePasswordSuccess && (
-                <p className="text-green-500">Password changed successfully!</p>
+                <p className="text-green-500">
+                  {t("password_changed_success_message")}
+                </p>
               )}
             </form>
           </div>

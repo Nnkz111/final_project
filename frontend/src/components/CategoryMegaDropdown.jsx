@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useCategories } from "../context/CategoryContext";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function CategoryMegaDropdown() {
   const { hierarchicalCategories } = useCategories();
   const [open, setOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Helper to render nested subcategories vertically within a column
   const renderVerticalChildren = (category) => {
@@ -38,7 +40,7 @@ function CategoryMegaDropdown() {
         onMouseLeave={() => setOpen(false)}
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="text-lg">Categories</span>
+        <span className="text-lg">{t("category_megadropdown_categories")}</span>
         <svg
           className={`w-5 h-5 ml-2 transition-transform ${
             open ? "rotate-180" : "rotate-0"
@@ -77,7 +79,7 @@ function CategoryMegaDropdown() {
                     onFocus={() => setActiveCategory(cat.id)}
                     onClick={() => setOpen(false)}
                   >
-                    {cat.name}
+                    {t(`category_${cat.name}`, cat.name)}
                   </Link>
                 </li>
               ))}
@@ -99,7 +101,7 @@ function CategoryMegaDropdown() {
                           className="font-bold text-gray-800 hover:text-blue-700 transition-colors block px-2 py-1 rounded hover:bg-blue-50"
                           onClick={() => setOpen(false)}
                         >
-                          {directChild.name}
+                          {t(`category_${directChild.name}`, directChild.name)}
                         </Link>
                         {/* Render nested children vertically under this direct child */}
                         {renderVerticalChildren(directChild)}
@@ -108,13 +110,15 @@ function CategoryMegaDropdown() {
                   {/* Handle case where a top-level category has no direct children but might have products */}
                   {hierarchicalCategories.find((c) => c.id === activeCategory)
                     ?.children.length === 0 && (
-                    <div className="text-gray-500">No subcategories</div>
+                    <div className="text-gray-500">
+                      {t("category_megadropdown_no_subcategories")}
+                    </div>
                   )}
                 </div>
               </>
             ) : (
               <div className="text-gray-400 text-lg flex items-center h-full">
-                Hover a category to see subcategories
+                {t("category_megadropdown_hover_prompt")}
               </div>
             )}
           </div>

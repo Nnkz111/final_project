@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function SearchResultsPage() {
   const [searchResults, setSearchResults] = useState([]);
@@ -8,6 +9,7 @@ function SearchResultsPage() {
   const location = useLocation();
   const searchTerm = new URLSearchParams(location.search).get("query");
   const [sortByPrice, setSortByPrice] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -41,22 +43,22 @@ function SearchResultsPage() {
   }, [searchTerm, sortByPrice]);
 
   if (loading) {
-    return <div>Loading search results...</div>;
+    return <div>{t("search_results_loading")}</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div>{t("search_results_error", { message: error })}</div>;
   }
 
   return (
     <div className="container mx-auto p-6 bg-gray-100 flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
-          Search Results for "{searchTerm}"
+          {t("search_result")} {searchTerm}
         </h2>
         <div className="flex items-center">
           <label htmlFor="sort-price" className="mr-2 text-gray-700">
-            Sort by Price:
+            {t("search_results_sort_by_price")}
           </label>
           <select
             id="sort-price"
@@ -64,9 +66,13 @@ function SearchResultsPage() {
             value={sortByPrice}
             onChange={(e) => setSortByPrice(e.target.value)}
           >
-            <option value="">Relevance</option>
-            <option value="lowToHigh">Price: Low to High</option>
-            <option value="highToLow">Price: High to Low</option>
+            <option value="">{t("search_results_sort_relevance")}</option>
+            <option value="lowToHigh">
+              {t("search_results_sort_low_to_high")}
+            </option>
+            <option value="highToLow">
+              {t("search_results_sort_high_to_low")}
+            </option>
           </select>
         </div>
       </div>
@@ -88,7 +94,7 @@ function SearchResultsPage() {
                     />
                   ) : (
                     <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                      No Image Available
+                      {t("search_results_no_image")}
                     </div>
                   )}
                 </div>
@@ -108,7 +114,7 @@ function SearchResultsPage() {
         </div>
       ) : (
         <p className="text-gray-600 text-lg mt-8">
-          No products found matching your search term.
+          {t("search_results_no_products")}
         </p>
       )}
     </div>

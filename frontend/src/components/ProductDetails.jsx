@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import { useCategories } from "../context/CategoryContext";
+import { useTranslation } from "react-i18next";
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
@@ -17,6 +18,7 @@ function ProductDetails() {
   const { hierarchicalCategories } = useCategories();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -83,7 +85,7 @@ function ProductDetails() {
   if (loading) {
     return (
       <div className="text-center text-gray-600 text-lg mt-8">
-        Loading product details...
+        {t("product_details_loading")}
       </div>
     );
   }
@@ -91,7 +93,7 @@ function ProductDetails() {
   if (error) {
     return (
       <div className="text-center text-red-600 text-lg mt-8">
-        Error: {error.message}
+        {t("error_message", { message: error.message })}
       </div>
     );
   }
@@ -99,7 +101,7 @@ function ProductDetails() {
   if (!product) {
     return (
       <div className="text-center text-gray-600 text-lg mt-8">
-        Product not found.
+        {t("product_not_found")}
       </div>
     );
   }
@@ -166,7 +168,7 @@ function ProductDetails() {
               />
             ) : (
               <div className="w-full h-80 flex items-center justify-center text-gray-400 text-lg">
-                No Image Available
+                {t("no_image_available")}
               </div>
             )}
           </div>
@@ -203,7 +205,7 @@ function ProductDetails() {
           {/* Quantity Selector & Add to Cart Button */}
           <div className="mt-6 flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <span className="font-medium">Quantity</span>
+              <span className="font-medium">{t("quantity_label")}</span>
               <div className="flex items-center border rounded-md overflow-hidden">
                 <button
                   className="px-3 py-1 text-lg font-bold text-gray-600 hover:bg-gray-200"
@@ -237,7 +239,7 @@ function ProductDetails() {
                   typeof product.stock === "number" && product.stock <= 0
                 }
               >
-                ADD TO CART
+                {t("product_details_add_to_cart_button")}
               </button>
             </div>
           </div>

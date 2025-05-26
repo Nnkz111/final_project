@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const ProductListPage = () => {
   const [products, setProducts] = useState([]);
@@ -7,6 +8,7 @@ const ProductListPage = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(8);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -63,7 +65,7 @@ const ProductListPage = () => {
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow flex flex-col">
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">
-        All Products
+        {t("all_products")}
       </h1>
       {/* Using Grid for responsive columns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6">
@@ -83,7 +85,7 @@ const ProductListPage = () => {
                 />
               ) : (
                 <div className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                  No Image Available
+                  {t("no_image_available")}
                 </div>
               )}
             </div>

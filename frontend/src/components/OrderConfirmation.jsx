@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function OrderConfirmation() {
   const location = useLocation();
@@ -7,7 +8,7 @@ function OrderConfirmation() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const { t } = useTranslation();
   useEffect(() => {
     if (!orderId) return;
     const fetchOrder = async () => {
@@ -47,11 +48,11 @@ function OrderConfirmation() {
           </svg>
         </div>
         <h2 className="text-3xl font-extrabold text-green-700 mb-2">
-          Thank you for your order!
+          {t("order_confirmation_title")}{" "}
         </h2>
         {orderId ? (
           <p className="text-lg text-gray-700 mb-2">
-            Your order ID is{" "}
+            {t("order_id_message")}{" "}
             <span className="font-mono font-bold text-green-700 text-xl">
               #{orderId}
             </span>
@@ -59,48 +60,58 @@ function OrderConfirmation() {
           </p>
         ) : (
           <p className="text-lg text-gray-700 mb-2">
-            Your order has been placed.
+            {t("order_placed_message")}
           </p>
         )}
 
         {/* Order Details Section */}
         <div className="w-full mt-8 text-left">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
-            Order Details
+            {t("order_details_title")}
           </h3>
           {loading ? (
-            <div className="text-gray-500">Loading order details...</div>
+            <div className="text-gray-500">{t("loading_order_details")}</div>
           ) : error ? (
             <div className="text-red-500">{error}</div>
           ) : order ? (
             <div className="bg-gray-50 rounded-xl p-6 shadow flex flex-col md:flex-row gap-8">
               <div className="flex-1">
                 <div className="mb-2">
-                  <span className="font-semibold">Order ID:</span>{" "}
+                  <span className="font-semibold">
+                    {t("order_id_label_details")}:
+                  </span>{" "}
                   <span className="font-mono">#{order.id}</span>
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Status:</span>{" "}
+                  <span className="font-semibold">
+                    {t("status_label_details")}:
+                  </span>{" "}
                   <span className="capitalize">{order.status}</span>
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Payment Type:</span>{" "}
+                  <span className="font-semibold">
+                    {t("payment_type_label")}:
+                  </span>{" "}
                   <span className="capitalize">
                     {order.payment_type || "-"}
                   </span>
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Shipping:</span>{" "}
+                  <span className="font-semibold">{t("shipping_label")}:</span>{" "}
                   {order.shipping_name}, {order.shipping_address},{" "}
                   {order.shipping_phone}, {order.shipping_email}
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Created At:</span>{" "}
+                  <span className="font-semibold">
+                    {t("created_at_label")}:
+                  </span>{" "}
                   {order.created_at &&
                     new Date(order.created_at).toLocaleString()}
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Items:</span>
+                  <span className="font-semibold">
+                    {t("items_label_details")}:
+                  </span>{" "}
                   <ul className="list-disc ml-6 mt-1">
                     {order.items && order.items.length > 0 ? (
                       order.items.map((item) => (
@@ -112,7 +123,7 @@ function OrderConfirmation() {
                         </li>
                       ))
                     ) : (
-                      <li className="text-gray-500">No items</li>
+                      <li className="text-gray-500">{t("no_items_message")}</li>
                     )}
                   </ul>
                 </div>
@@ -126,13 +137,13 @@ function OrderConfirmation() {
             to="/my-orders"
             className="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 shadow-md text-center"
           >
-            View My Orders
+            {t("view_my_orders_button")}{" "}
           </Link>
           <Link
             to="/"
             className="w-full sm:w-auto bg-green-100 text-green-700 px-6 py-3 rounded-lg font-semibold hover:bg-green-200 transition duration-200 border border-green-200 text-center"
           >
-            Back to Home
+            {t("back_to_home_button")}{" "}
           </Link>
         </div>
       </div>

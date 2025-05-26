@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 function MyOrders() {
   const { user, token } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!user || !token) return;
@@ -36,15 +38,17 @@ function MyOrders() {
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
-          My Orders
+          {t("my_orders_title")}
         </h2>
         {loading ? (
-          <div className="text-gray-500 text-center">Loading orders...</div>
+          <div className="text-gray-500 text-center">{t("loading_orders")}</div>
         ) : error ? (
-          <div className="text-red-500 text-center">{error}</div>
+          <div className="text-red-500 text-center">
+            {t("error_message", { message: error })}
+          </div>
         ) : orders.length === 0 ? (
           <div className="text-gray-500 text-center">
-            You have no orders yet.
+            {t("no_orders_message")}
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -55,22 +59,25 @@ function MyOrders() {
               >
                 <div className="flex-1">
                   <div className="mb-1 font-semibold">
-                    Order ID: <span className="font-mono">#{order.id}</span>
+                    {t("order_id_label")}:{" "}
+                    <span className="font-mono">#{order.id}</span>
                   </div>
                   <div className="mb-1">
-                    Status:{" "}
+                    {t("status_label")}:{" "}
                     <span className="capitalize font-semibold text-green-700">
                       {order.status}
                     </span>
                   </div>
                   <div className="mb-1">
-                    Created:{" "}
+                    {t("created_label")}:{" "}
                     {order.created_at &&
                       new Date(order.created_at).toLocaleString()}
                   </div>
-                  <div className="mb-1">Items: {order.item_count}</div>
                   <div className="mb-1">
-                    Total:{" "}
+                    {t("items_label")}: {order.item_count}
+                  </div>
+                  <div className="mb-1">
+                    {t("total_label")}:{" "}
                     <span className="font-bold text-green-700">
                       ${parseFloat(order.total).toFixed(2)}
                     </span>
@@ -81,7 +88,7 @@ function MyOrders() {
                   state={{ orderId: order.id }}
                   className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center"
                 >
-                  View Details
+                  {t("view_details_button")}
                 </Link>
               </div>
             ))}

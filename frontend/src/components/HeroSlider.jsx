@@ -4,11 +4,13 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "../slick-theme.css"; // Corrected import path
 import { Link } from "react-router-dom"; // Import Link
+import { useTranslation } from "react-i18next"; // Import useTranslation
 
 function HeroSlider() {
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t } = useTranslation(); // Get the t function
 
   useEffect(() => {
     const fetchTopProducts = async () => {
@@ -50,7 +52,7 @@ function HeroSlider() {
   if (loading) {
     return (
       <div className="hero-banner w-full md:w-3/4 lg:w-4/5 bg-gray-200 h-64 flex items-center justify-center">
-        <p className="text-gray-600 text-xl">Loading top products...</p>
+        <p className="text-gray-600 text-xl">{t("loading_top_products")}</p>
       </div>
     );
   }
@@ -58,7 +60,9 @@ function HeroSlider() {
   if (error) {
     return (
       <div className="hero-banner w-full md:w-3/4 lg:w-4/5 bg-red-200 h-64 flex items-center justify-center">
-        <p className="text-red-800 text-xl">{error}</p>
+        <p className="text-red-800 text-xl">
+          {t("error_loading_top_products")}
+        </p>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function Checkout() {
   const { cartItems, clearCart } = useCart();
@@ -19,6 +20,7 @@ function Checkout() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const fileInputRef = useRef();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Update form state if user and customer data are available
@@ -99,11 +101,11 @@ function Checkout() {
       <div className="w-full md:w-2/3">
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">
-            Order Summary
+            {t("order_summary_title")}
           </h2>
           <div className="flex flex-col gap-4">
             {cartItems.length === 0 ? (
-              <p className="text-gray-600">Your cart is empty.</p>
+              <p className="text-gray-600">{t("cart_empty_message")}</p>
             ) : (
               cartItems.map((item) => (
                 <div
@@ -126,7 +128,7 @@ function Checkout() {
                       {item.name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      Qty: {item.quantity}
+                      {t("quantity_label")}: {item.quantity}
                     </div>
                   </div>
                   {/* Product Price */}
@@ -139,7 +141,9 @@ function Checkout() {
           </div>
           {/* Total */}
           <div className="flex justify-end items-center border-t pt-4 mt-6">
-            <div className="text-xl font-bold text-gray-800 mr-4">Total:</div>
+            <div className="text-xl font-bold text-gray-800 mr-4">
+              {t("checkout_total_label")}:
+            </div>
             <div className="text-xl font-bold text-green-600">
               ${total.toFixed(2)}
             </div>
@@ -149,13 +153,13 @@ function Checkout() {
       {/* Shipping & Payment Form Card */}
       <div className="w-full md:w-1/3 bg-white rounded-2xl shadow-lg p-6 border border-gray-100 flex flex-col gap-4 self-start">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Shipping & Payment
+          {t("shipping_address_title")} & {t("payment_information_title")}
         </h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
-            placeholder="Full Name"
+            placeholder={t("name_placeholder")}
             value={form.name}
             onChange={handleChange}
             className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none"
@@ -164,7 +168,7 @@ function Checkout() {
           <input
             type="text"
             name="address"
-            placeholder="Address"
+            placeholder={t("address_placeholder")}
             value={form.address}
             onChange={handleChange}
             className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none"
@@ -173,7 +177,7 @@ function Checkout() {
           <input
             type="tel"
             name="phone"
-            placeholder="Phone Number"
+            placeholder={t("phone_number_label")}
             value={form.phone}
             onChange={handleChange}
             className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none"
@@ -182,7 +186,7 @@ function Checkout() {
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder={t("email_label")}
             value={form.email}
             onChange={handleChange}
             className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none"
@@ -190,7 +194,9 @@ function Checkout() {
           />
           {/* Payment Type Selection */}
           <div>
-            <label className="block font-semibold mb-2">Payment Type</label>
+            <label className="block font-semibold mb-2">
+              {t("payment_type_label")}
+            </label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2">
                 <input
@@ -201,7 +207,7 @@ function Checkout() {
                   onChange={handleChange}
                   className="accent-green-600"
                 />
-                Cash on Delivery
+                {t("cash_on_delivery_option")}
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -212,7 +218,7 @@ function Checkout() {
                   onChange={handleChange}
                   className="accent-green-600"
                 />
-                Bank Transfer
+                {t("bank_transfer_option")}
               </label>
             </div>
           </div>
@@ -220,7 +226,7 @@ function Checkout() {
           {form.payment_type === "bank_transfer" && (
             <div>
               <label className="block font-semibold mb-2">
-                Upload Payment Proof
+                {t("upload_payment_proof_label")}
               </label>
               <input
                 type="file"
@@ -238,7 +244,7 @@ function Checkout() {
             className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md disabled:opacity-60"
             disabled={loading}
           >
-            {loading ? "Placing Order..." : "Place Order"}
+            {loading ? t("processing_order_message") : t("place_order_button")}
           </button>
           {success && (
             <div className="text-green-600 font-semibold text-center mt-2">
@@ -247,7 +253,7 @@ function Checkout() {
           )}
           {error && (
             <div className="text-red-600 font-semibold text-center mt-2">
-              {error}
+              {t("order_failed_message")}
             </div>
           )}
         </form>

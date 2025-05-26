@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function Cart() {
   // const { cartItems } = useCart(); // Not getting items from context anymore
@@ -12,6 +13,7 @@ function Cart() {
   const { refreshCart, removeCartItem, updateCartItemQuantity } = useCart();
   const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Function to fetch cart items from the backend
   const fetchCartItems = async () => {
@@ -81,7 +83,7 @@ function Cart() {
   if (loading) {
     return (
       <div className="text-center text-gray-600 text-lg mt-8">
-        Loading cart...
+        {t("loading_cart")}
       </div>
     );
   }
@@ -98,9 +100,11 @@ function Cart() {
     <div className="container mx-auto mt-2 p-4 md:p-8 bg-white rounded-lg shadow-xl flex flex-col md:flex-row gap-8">
       {/* Cart Items Section */}
       <div className="flex-1">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Shopping Cart</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          {t("cart_title")}
+        </h2>
         {cartItems.length === 0 ? (
-          <p className="text-gray-600">Your cart is empty.</p>
+          <p className="text-gray-600">{t("cart_empty_message")}</p>
         ) : (
           <div className="flex flex-col gap-6">
             {cartItems.map((item, idx) => (
@@ -118,7 +122,7 @@ function Cart() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-                      No Image
+                      {t("no_image_available")}
                     </div>
                   )}
                 </div>
@@ -209,7 +213,9 @@ function Cart() {
         <div className="w-full md:w-80 md:sticky md:top-24 self-start">
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col gap-4">
             <div className="flex justify-between items-center">
-              <div className="text-xl font-bold text-gray-800">Total:</div>
+              <div className="text-xl font-bold text-gray-800">
+                {t("cart_total_label")}:
+              </div>
               <div className="text-xl font-bold text-green-600">
                 $
                 {cartItems
@@ -224,7 +230,7 @@ function Cart() {
               className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md"
               onClick={() => navigate("/checkout")}
             >
-              Proceed to Checkout
+              {t("proceed_to_checkout_button")}
             </button>
           </div>
         </div>

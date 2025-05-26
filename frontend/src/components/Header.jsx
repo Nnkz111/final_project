@@ -5,6 +5,7 @@ import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useCategories } from "../context/CategoryContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import CategoryMegaDropdown from "./CategoryMegaDropdown";
+import { useTranslation } from "react-i18next"; // Import useTranslation
 
 function Header({ showMegaDropdown }) {
   const { cartItemCount } = useCart(); // Get count from context
@@ -15,6 +16,8 @@ function Header({ showMegaDropdown }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const { t, i18n } = useTranslation(); // Get the t and i18n instance
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false); // State for language dropdown
 
   // No need to manually fetch or refresh here due to useEffect in CartContext
 
@@ -118,7 +121,7 @@ function Header({ showMegaDropdown }) {
           <div className="flex-grow mx-4 flex items-center bg-white rounded-md overflow-hidden">
             <input
               type="text"
-              placeholder="Search for products..."
+              placeholder={t("search_placeholder")}
               className="w-full p-2 text-gray-800 outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -148,6 +151,64 @@ function Header({ showMegaDropdown }) {
 
           {/* User/Cart Icons Area - using flex and spacing */}
           <div className="flex items-center space-x-6 ml-6">
+            {/* Language Switcher Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                className="flex items-center gap-1 focus:outline-none text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7 2a1 1 0 011 1v1h2V3a1 1 0 112 0v1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2v2h2a1 1 0 011 1v2a1 1 0 01-1 1h-2v1a1 1 0 11-2 0v-1H8v1a1 1 0 11-2 0v-1H4a1 1 0 01-1-1v-2a1 1 0 011-1h2v-2H4a1 1 0 01-1-1V5a1 1 0 011-1h2V3a1 1 0 011-1zM5 5h1v2H5V5zm5 0h1v2h-1V5zm-5 5h1v2H5v-2zm5 0h1v2h-1v-2zm-5 5h1v2H5v-2zm5 0h1v2h-1v-2zm5-10h-1v2h1V5zm0 5h-1v2h1v-2zm0 5h-1v2h1v-2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{i18n.language.toUpperCase()}</span>
+                <svg
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    langDropdownOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {langDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-24 bg-white text-gray-800 rounded-md shadow-lg z-[55]">
+                  <button
+                    onClick={() => {
+                      i18n.changeLanguage("en");
+                      setLangDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => {
+                      i18n.changeLanguage("lo");
+                      setLangDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    ລາວ
+                  </button>
+                </div>
+              )}
+            </div>
             {user ? (
               // If customer user is logged in, show Account dropdown
               <div
@@ -198,14 +259,14 @@ function Header({ showMegaDropdown }) {
                     className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition"
                     onClick={() => setProfileOpen(false)}
                   >
-                    Profile
+                    {t("profile_link_text")}
                   </Link>
                   <Link
                     to="/my-orders"
                     className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition"
                     onClick={() => setProfileOpen(false)}
                   >
-                    My Orders
+                    {t("my_orders_link_text")}
                   </Link>
                   <button
                     onClick={() => {
@@ -214,7 +275,7 @@ function Header({ showMegaDropdown }) {
                     }}
                     className="block w-full text-left px-4 py-3 hover:bg-blue-50  rounded-b-lg transition text-red-600"
                   >
-                    Logout
+                    {t("logout_button_text")}
                   </button>
                 </div>
               </div>
@@ -239,7 +300,7 @@ function Header({ showMegaDropdown }) {
                       d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  <span>Login</span>
+                  <span>{t("login_link_text")}</span>
                 </Link>
                 <Link
                   to="/register"
@@ -259,7 +320,7 @@ function Header({ showMegaDropdown }) {
                       d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  <span>Register</span>
+                  <span>{t("register_link_text")}</span>
                 </Link>
               </>
             )}
@@ -289,7 +350,7 @@ function Header({ showMegaDropdown }) {
                     {cartItemCount}
                   </span>
                 )}
-                <span>Cart</span>
+                <span>{t("cart_link_text")}</span>
               </Link>
             )}
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCategories } from "../context/CategoryContext";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function MegaSidebar({ bannerHeight }) {
   const { hierarchicalCategories, loading } = useCategories();
@@ -8,6 +9,7 @@ function MegaSidebar({ bannerHeight }) {
   const [dropdownStyle, setDropdownStyle] = useState({});
   const timeoutRef = useRef();
   const sidebarRef = useRef(null);
+  const { t } = useTranslation();
 
   // Handles hover with delay to prevent flicker
   const handleMouseEnter = (id) => {
@@ -47,8 +49,8 @@ function MegaSidebar({ bannerHeight }) {
     }
   }, [activeCategory, bannerHeight]);
 
-  // Recursive render for submenus (columns)
-  const renderSubMenu = (category, level = 2) => {
+  // Recursive render for submenus (columns) - only for direct sub-categories
+  const renderSubMenu = (category) => {
     if (!category.children || category.children.length === 0) return null;
     return (
       <ul className="space-y-1 mt-2">
@@ -57,11 +59,9 @@ function MegaSidebar({ bannerHeight }) {
             <Link
               to={`/category/${sub.id}`}
               className="block px-3 py-1.5 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-              style={{ fontWeight: level === 2 ? "bold" : "normal" }}
             >
-              {sub.name}
+              {t(`category_${sub.name}`, sub.name)}
             </Link>
-            {renderSubMenu(sub, level + 1)}
           </li>
         ))}
       </ul>
@@ -71,7 +71,7 @@ function MegaSidebar({ bannerHeight }) {
   if (loading) {
     return (
       <div className="w-64 bg-white border-r h-full flex items-center justify-center text-gray-500">
-        Loading categories...
+        {t("loading_categories")}
       </div>
     );
   }
@@ -98,8 +98,7 @@ function MegaSidebar({ bannerHeight }) {
               }`}
               style={{ fontWeight: 500 }}
             >
-              {/* You can add an icon here if you want */}
-              {cat.name}
+              {t(`category_${cat.name}`, cat.name)}
             </Link>
             {cat.children &&
               cat.children.length > 0 &&
@@ -116,9 +115,9 @@ function MegaSidebar({ bannerHeight }) {
                         to={`/category/${sub.id}`}
                         className="block mb-2 text-gray-900 font-semibold text-base hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                       >
-                        {sub.name}
+                        {t(`category_${sub.name}`, sub.name)}
                       </Link>
-                      {renderSubMenu(sub, 3)}
+                      {renderSubMenu(sub)}
                     </div>
                   ))}
                 </div>

@@ -3,6 +3,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
@@ -11,6 +12,7 @@ function ProductList() {
   const [error, setError] = useState(null);
   const { refreshCart } = useCart();
   const { user, token } = useContext(AuthContext);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -73,7 +75,7 @@ function ProductList() {
   if (loading) {
     return (
       <div className="text-center text-gray-600 text-lg mt-8">
-        Loading products...
+        {t("loading_products")}
       </div>
     );
   }
@@ -81,7 +83,7 @@ function ProductList() {
   if (error) {
     return (
       <div className="text-center text-red-600 text-lg mt-8">
-        Error: {error.message}
+        {t("error_message", { message: error.message })}
       </div>
     );
   }
@@ -89,7 +91,7 @@ function ProductList() {
   return (
     <main className="flex-1 p-6">
       <h2 className="text-2xl font-bold mb-8 text-gray-800 border-b pb-2">
-        Featured Products
+        {t("featured_products_title")}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {products
@@ -106,7 +108,7 @@ function ProductList() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                      No Image Available
+                      {t("no_image_available")}
                     </div>
                   )}
                 </div>
@@ -133,7 +135,7 @@ function ProductList() {
             to="/products"
             className="bg-black hover:opacity-80 text-white font-bold py-2 px-4 rounded"
           >
-            Show All Products
+            {t("show_all_products_button")}
           </Link>
         </div>
       )}

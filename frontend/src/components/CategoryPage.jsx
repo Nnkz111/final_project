@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext";
-
+import { useTranslation } from "react-i18next";
 function getDescendantCategoryIds(categories, parentId) {
   // This helper is now unused as we are not fetching products on this page
   return [parseInt(parentId)]; // Simplified return for clarity if still called elsewhere
@@ -14,6 +14,7 @@ function CategoryPage() {
     .split("/")
     .filter((segment) => segment !== ""); // Split into segments and filter empty ones
   const currentCategoryId = pathSegments[pathSegments.length - 1]; // The last segment should be the current category ID
+  const { t } = useTranslation();
 
   const { categories, hierarchicalCategories } = useCategories();
   const [category, setCategory] = useState(null);
@@ -88,7 +89,9 @@ function CategoryPage() {
 
   if (!category) {
     return (
-      <div className="p-8 text-center text-gray-500">Category not found.</div>
+      <div className="p-8 text-center text-gray-500">
+        {t("category_page_not_found")}
+      </div>
     );
   }
 
@@ -101,27 +104,33 @@ function CategoryPage() {
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       {/* Category Title matching CategoryListPage structure */}
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-4">
-        {category.name}
+        {t(`category_${category.name}`, category.name)}
       </h1>
       {/* Flex container for sidebar and main content */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Sidebar Placeholder */}
         {isDisplayingProducts && (
           <aside className="hidden md:block w-64 h-fit">
-            <div className="text-lg font-bold text-green-700 mb-4">Filters</div>
+            <div className="text-lg font-bold text-green-700 mb-4">
+              {t("category_page_filters_title")}
+            </div>
             {/* Sort by Price filter */}
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Sort by Price
+                {t("category_page_sort_by_price_title")}
               </h3>
               <select
                 value={sortByPrice}
                 onChange={(e) => setSortByPrice(e.target.value)}
                 className="w-full px-2 py-1 border rounded text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                <option value="">None</option>
-                <option value="lowToHigh">Price: Low to High</option>
-                <option value="highToLow">Price: High to Low</option>
+                <option value="">{t("category_page_sort_none")}</option>
+                <option value="lowToHigh">
+                  {t("category_page_sort_low_to_high")}
+                </option>
+                <option value="highToLow">
+                  {t("category_page_sort_high_to_low")}
+                </option>
               </select>
             </div>
             {/* Other filters can be added here, also conditional if needed */}
@@ -150,7 +159,7 @@ function CategoryPage() {
                     )}
                     <div className="p-3">
                       <div className="font-semibold text-base text-gray-800 mt-1">
-                        {child.name}
+                        {t(`category_${child.name}`, child.name)}
                       </div>
                     </div>
                   </Link>
@@ -163,10 +172,12 @@ function CategoryPage() {
               {/* Products Section */}
               <section className="">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
-                  Products in this Category
+                  {t("category_page_products_title")}
                 </h2>
                 {loading ? (
-                  <div className="text-gray-500">Loading products...</div>
+                  <div className="text-gray-500">
+                    {t("category_page_loading_products")}
+                  </div>
                 ) : products.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {products.map((product) => (
@@ -196,7 +207,7 @@ function CategoryPage() {
                   </div>
                 ) : (
                   <div className="text-gray-500">
-                    No products found in this category.
+                    {t("category_page_no_products")}
                   </div>
                 )}
               </section>

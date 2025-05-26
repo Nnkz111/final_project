@@ -1,27 +1,33 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext";
+import { useTranslation } from "react-i18next";
 
 const CategoryListPage = () => {
   const { categories, loading, error } = useCategories();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-500">Loading categories...</div>
+      <div className="p-8 text-center text-gray-500">
+        {t("category_list_loading")}
+      </div>
     );
   }
 
   if (error) {
     return (
       <div className="p-8 text-center text-red-500">
-        Error loading categories.
+        {t("category_list_error")}
       </div>
     );
   }
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">No categories found.</div>
+      <div className="p-8 text-center text-gray-500">
+        {t("category_list_no_categories")}
+      </div>
     );
   }
 
@@ -33,7 +39,7 @@ const CategoryListPage = () => {
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow flex flex-col">
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">
-        All Categories
+        {t("category_list_title")}
       </h1>
       {/* Using Grid for 3 columns per row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6 items-stretch">
@@ -53,13 +59,13 @@ const CategoryListPage = () => {
               ) : (
                 // Placeholder for categories without images
                 <div className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-500">
-                  No Image Available
+                  {t("category_list_no_image")}
                 </div>
               )}
             </div>
             <div className="p-4 bg-gray-50 text-center">
               <h2 className="font-semibold text-lg text-gray-700">
-                {category.name}
+                {t(`category_${category.name}`, category.name)}
               </h2>
             </div>
           </Link>
