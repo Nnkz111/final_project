@@ -37,7 +37,12 @@ function AdminDashboard() {
   const statCards = [
     {
       title: t("admin_dashboard.total_revenue"),
-      value: stats.loading ? "..." : `$${stats.totalSales.toLocaleString()}`,
+      value: stats.loading
+        ? "..."
+        : stats.totalSales.toLocaleString("lo-LA", {
+            style: "currency",
+            currency: "LAK",
+          }),
       icon: "dollar",
     },
     {

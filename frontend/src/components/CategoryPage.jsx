@@ -197,9 +197,11 @@ function CategoryPage() {
                           <div className="font-semibold text-base text-gray-800 mt-1">
                             {product.name}
                           </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            ${product.price}{" "}
-                            {/* Assuming product object has a price field */}
+                          <div className="text-sm text-green-600 mt-1">
+                            {parseFloat(product.price).toLocaleString("lo-LA", {
+                              style: "currency",
+                              currency: "LAK",
+                            })}
                           </div>
                         </div>
                       </Link>

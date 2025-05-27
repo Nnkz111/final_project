@@ -66,10 +66,9 @@ function SalesAnalytic() {
         <div className="text-gray-700 font-semibold text-base">
           {t("salesAnalytic.totalSalesLabel")}:{" "}
           <span className="text-green-700 font-bold">
-            $
-            {totalSales.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
+            {totalSales.toLocaleString("lo-LA", {
+              style: "currency",
+              currency: "LAK",
             })}
           </span>
         </div>
@@ -129,10 +128,10 @@ function SalesAnalytic() {
               <Tooltip
                 labelFormatter={(label) => label}
                 formatter={(value) =>
-                  `$${parseFloat(value).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`
+                  parseFloat(value).toLocaleString("lo-LA", {
+                    style: "currency",
+                    currency: "LAK",
+                  })
                 }
               />
               <Line

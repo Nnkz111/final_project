@@ -94,8 +94,11 @@ const ProductListPage = () => {
                 {product.name}
               </h2>
               {/* You can add more product details here if needed */}
-              <p className="text-gray-900 font-bold mt-auto">
-                ${parseFloat(product.price).toFixed(2)}
+              <p className="text-green-600 font-bold mt-auto">
+                {parseFloat(product.price).toLocaleString("lo-LA", {
+                  style: "currency",
+                  currency: "LAK",
+                })}
               </p>
             </div>
           </Link>

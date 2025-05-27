@@ -65,7 +65,7 @@ function MyOrders() {
                   <div className="mb-1">
                     {t("status_label")}:{" "}
                     <span className="capitalize font-semibold text-green-700">
-                      {order.status}
+                      {t(`order_status_${order.status}`)}
                     </span>
                   </div>
                   <div className="mb-1">
@@ -78,8 +78,11 @@ function MyOrders() {
                   </div>
                   <div className="mb-1">
                     {t("total_label")}:{" "}
-                    <span className="font-bold text-green-700">
-                      ${parseFloat(order.total).toFixed(2)}
+                    <span className="font-bold text-green-600">
+                      {parseFloat(order.total).toLocaleString("lo-LA", {
+                        style: "currency",
+                        currency: "LAK",
+                      })}
                     </span>
                   </div>
                 </div>

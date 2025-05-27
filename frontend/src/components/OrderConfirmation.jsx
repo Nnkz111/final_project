@@ -86,14 +86,16 @@ function OrderConfirmation() {
                   <span className="font-semibold">
                     {t("status_label_details")}:
                   </span>{" "}
-                  <span className="capitalize">{order.status}</span>
+                  <span className="capitalize font-semibold text-green-700">
+                    {t(`order_status_${order.status}`)}
+                  </span>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
                     {t("payment_type_label")}:
                   </span>{" "}
                   <span className="capitalize">
-                    {order.payment_type || "-"}
+                    {t(`payment_type_${order.payment_type || "-"}`)}
                   </span>
                 </div>
                 <div className="mb-2">
@@ -117,8 +119,13 @@ function OrderConfirmation() {
                       order.items.map((item) => (
                         <li key={item.id} className="text-gray-700">
                           {item.name} x {item.quantity}{" "}
-                          <span className="text-gray-500">
-                            (${parseFloat(item.price).toFixed(2)} )
+                          <span className="text-green-600">
+                            (
+                            {parseFloat(item.price).toLocaleString("lo-LA", {
+                              style: "currency",
+                              currency: "LAK",
+                            })}{" "}
+                            )
                           </span>
                         </li>
                       ))

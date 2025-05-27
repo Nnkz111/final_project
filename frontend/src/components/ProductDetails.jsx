@@ -181,13 +181,19 @@ function ProductDetails() {
             </h1>
             {/* Price/Discount Badge */}
             <div className="flex items-center gap-4 mb-2">
-              <span className="text-2xl md:text-3xl font-bold text-red-500">
-                {product.price.toLocaleString()} LAK
+              <span className="text-2xl md:text-3xl font-bold text-green-600">
+                {parseFloat(product.price).toLocaleString("lo-LA", {
+                  style: "currency",
+                  currency: "LAK",
+                })}
               </span>
               {hasDiscount && (
                 <>
-                  <span className="text-lg text-gray-400 line-through">
-                    {product.old_price.toLocaleString()} LAK
+                  <span className="text-lg text-red-500 line-through">
+                    {product.old_price.toLocaleString("lo-LA", {
+                      style: "currency",
+                      currency: "LAK",
+                    })}
                   </span>
                   <span className="text-base text-white bg-red-500 rounded px-2 py-1 font-bold">
                     -{discountPercent}%

@@ -103,8 +103,11 @@ function SearchResultsPage() {
                     {product.name}
                   </h3>
                   <div className="flex items-center justify-between mt-auto">
-                    <p className="text-red-600 font-bold text-lg">
-                      ${parseFloat(product.price).toFixed(2)}
+                    <p className="text-green-600 font-bold mt-auto">
+                      {parseFloat(product.price).toLocaleString("lo-LA", {
+                        style: "currency",
+                        currency: "LAK",
+                      })}
                     </p>
                   </div>
                 </div>

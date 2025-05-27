@@ -55,10 +55,9 @@ function TopSellingProducts() {
                 {product.total_quantity} {t("topSellingProducts.sold")}
               </span>
               <span className="text-green-700 font-semibold">
-                $
-                {parseFloat(product.total_sales).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                {parseFloat(product.total_sales).toLocaleString("lo-LA", {
+                  style: "currency",
+                  currency: "LAK",
                 })}
               </span>
             </li>

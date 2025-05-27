@@ -132,8 +132,11 @@ function Checkout() {
                     </div>
                   </div>
                   {/* Product Price */}
-                  <div className="text-green-700 font-bold flex-shrink-0">
-                    ${(item.price * item.quantity).toFixed(2)}
+                  <div className="text-green-600 font-bold flex-shrink-0">
+                    {(item.price * item.quantity).toLocaleString("lo-LA", {
+                      style: "currency",
+                      currency: "LAK",
+                    })}
                   </div>
                 </div>
               ))
@@ -145,7 +148,10 @@ function Checkout() {
               {t("checkout_total_label")}:
             </div>
             <div className="text-xl font-bold text-green-600">
-              ${total.toFixed(2)}
+              {total.toLocaleString("lo-LA", {
+                style: "currency",
+                currency: "LAK",
+              })}
             </div>
           </div>
         </div>

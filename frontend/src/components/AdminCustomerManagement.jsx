@@ -319,10 +319,9 @@ function AdminCustomerManagement() {
                       </td>
                       <td className="px-4 py-3">{c.order_count}</td>
                       <td className="px-4 py-3 font-bold text-green-700">
-                        $
-                        {parseFloat(c.total_spent).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
+                        {parseFloat(c.total_spent).toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
                         })}
                       </td>
                       <td className="px-4 py-3">
@@ -468,7 +467,10 @@ function AdminCustomerManagement() {
                         </td>
                         <td className="px-4 py-3">{order.item_count}</td>
                         <td className="px-4 py-3 font-bold text-green-700">
-                          ${parseFloat(order.total).toFixed(2)}
+                          {parseFloat(order.total).toLocaleString("lo-LA", {
+                            style: "currency",
+                            currency: "LAK",
+                          })}
                         </td>
                         <td className="px-4 py-3 capitalize">
                           {order.payment_type

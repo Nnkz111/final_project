@@ -179,7 +179,10 @@ function AdminSalesPage() {
                     </td>
                     <td className="px-4 py-3">{order.item_count}</td>
                     <td className="px-4 py-3 font-bold text-green-700">
-                      ${parseFloat(order.total).toFixed(2)}
+                      {parseFloat(order.total).toLocaleString("lo-LA", {
+                        style: "currency",
+                        currency: "LAK",
+                      })}
                     </td>
                     <td className="px-4 py-3 capitalize">
                       {order.payment_type

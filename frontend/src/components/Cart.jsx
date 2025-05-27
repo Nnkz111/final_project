@@ -133,8 +133,11 @@ function Cart() {
                       {item.name}
                     </h3>
                     <p className="text-gray-600 text-sm mb-1">
-                      <span className="font-bold text-green-700 text-base">
-                        ${item.price.toFixed(2)}
+                      <span className="font-bold text-green-600 text-base">
+                        {item.price.toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
+                        })}
                       </span>{" "}
                       <span className="text-xs"></span>
                     </p>
@@ -175,7 +178,10 @@ function Cart() {
                   </div>
                   {/* Item Total */}
                   <div className="text-lg font-bold text-green-600 min-w-[80px] text-right">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {(item.price * item.quantity).toLocaleString("lo-LA", {
+                      style: "currency",
+                      currency: "LAK",
+                    })}
                   </div>
                   {/* Remove Button */}
                   <button
@@ -217,13 +223,15 @@ function Cart() {
                 {t("cart_total_label")}:
               </div>
               <div className="text-xl font-bold text-green-600">
-                $
                 {cartItems
                   .reduce(
                     (total, item) => total + item.price * item.quantity,
                     0
                   )
-                  .toFixed(2)}
+                  .toLocaleString("lo-LA", {
+                    style: "currency",
+                    currency: "LAK",
+                  })}
               </div>
             </div>
             <button

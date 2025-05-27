@@ -279,7 +279,10 @@ function AdminOrderManagement() {
                       </td>
                       <td className="px-4 py-3">{order.item_count}</td>
                       <td className="px-4 py-3 font-bold text-green-700">
-                        ${parseFloat(order.total).toFixed(2)}
+                        {parseFloat(order.total).toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
+                        })}
                       </td>
                       <td className="px-4 py-3 capitalize">
                         {order.payment_type
@@ -441,10 +444,10 @@ function AdminOrderManagement() {
                     {t("admin_order_management.detail_total_label")}:
                   </span>{" "}
                   <span className="font-bold text-green-700">
-                    {modalOrderDetails.total &&
-                    !isNaN(parseFloat(modalOrderDetails.total))
-                      ? `$${parseFloat(modalOrderDetails.total).toFixed(2)}`
-                      : t("admin_order_management.not_specified")}
+                    {parseFloat(modalOrderDetails.total).toLocaleString(
+                      "lo-LA",
+                      { style: "currency", currency: "LAK" }
+                    )}
                   </span>
                 </div>
                 {/* Payment Proof Image */}
