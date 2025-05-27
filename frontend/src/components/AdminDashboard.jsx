@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import StatCard from "./StatCard";
 import SalesAnalytic from "./SalesAnalytic";
 import TopSellingProducts from "./TopSellingProducts";
+import { useTranslation } from "react-i18next";
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -12,6 +13,8 @@ function AdminDashboard() {
     pendingOrders: 0,
     loading: true,
   });
+
+  const { t } = useTranslation(); // Initialize translation hook
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -33,27 +36,27 @@ function AdminDashboard() {
 
   const statCards = [
     {
-      title: "Total Revenue",
+      title: t("admin_dashboard.total_revenue"),
       value: stats.loading ? "..." : `$${stats.totalSales.toLocaleString()}`,
       icon: "dollar",
     },
     {
-      title: "Total Orders",
+      title: t("admin_dashboard.total_orders"),
       value: stats.loading ? "..." : stats.totalOrders,
       icon: "cart",
     },
     {
-      title: "Total Customers",
+      title: t("admin_dashboard.total_customers"),
       value: stats.loading ? "..." : stats.totalCustomers,
       icon: "user",
     },
     {
-      title: "Total Products",
+      title: t("admin_dashboard.total_products"),
       value: stats.loading ? "..." : stats.totalProducts,
       icon: "box",
     },
     {
-      title: "Pending Orders",
+      title: t("admin_dashboard.pending_orders"),
       value: stats.loading ? "..." : stats.pendingOrders,
       icon: "clock",
     },
@@ -64,7 +67,7 @@ function AdminDashboard() {
       {" "}
       {/* Add padding to the dashboard content */}
       {/* Overview Statistics Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {" "}
         {/* Responsive grid for stats */}
         {statCards.map((stat, index) => (

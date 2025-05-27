@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import AdminAuthContext from "../context/AdminAuthContext";
 import ConfirmationModal from "./ConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 // Helper function to build a category tree
 const buildCategoryTree = (categories, parentId = null) => {
@@ -13,7 +14,7 @@ const buildCategoryTree = (categories, parentId = null) => {
 };
 
 // Replace CategoryNode with a new version that supports expand/collapse and better visuals
-const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
+const CategoryNode = ({ category, onEdit, onDelete, level = 0, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
   // Calculate border and background for nesting
@@ -38,7 +39,11 @@ const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
             type="button"
             onClick={() => setExpanded((e) => !e)}
             className="w-6 h-6 flex items-center justify-center text-green-600 hover:bg-green-100 rounded transition"
-            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-label={
+              expanded
+                ? t("admin_category_management.collapse")
+                : t("admin_category_management.expand")
+            }
           >
             {expanded ? (
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -68,20 +73,20 @@ const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
             level === 0 ? "text-base" : "text-sm"
           }`}
         >
-          {category.name}
+          {t(`category_${category.name}`, category.name)}
         </span>
         <div className="flex-1" />
         <button
           onClick={() => onEdit(category)}
           className="bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-sm mr-2"
         >
-          Edit
+          {t("admin_category_management.edit_button")}
         </button>
         <button
           onClick={() => onDelete(category.id)}
           className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
         >
-          Delete
+          {t("admin_category_management.delete_button")}
         </button>
       </div>
       {hasChildren && expanded && (
@@ -93,6 +98,7 @@ const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
               onEdit={onEdit}
               onDelete={onDelete}
               level={level + 1}
+              t={t}
             />
           ))}
         </ul>
@@ -102,17 +108,17 @@ const CategoryNode = ({ category, onEdit, onDelete, level = 0 }) => {
 };
 
 // Helper to render nested category options for the select
-const renderCategoryOptions = (cats, level = 0, editingId = null) => {
+const renderCategoryOptions = (cats, level = 0, editingId = null, t) => {
   return cats.map((cat) => [
     <option
       key={cat.id}
       value={cat.id}
       disabled={editingId && cat.id === editingId}
     >
-      {`${"\u00A0".repeat(level * 4)}${cat.name}`}
+      {`${"\u00A0".repeat(level * 4)}${t(`category_${cat.name}`, cat.name)}`}
     </option>,
     cat.children && cat.children.length > 0
-      ? renderCategoryOptions(cat.children, level + 1, editingId)
+      ? renderCategoryOptions(cat.children, level + 1, editingId, t)
       : null,
   ]);
 };
@@ -122,6 +128,7 @@ function AdminCategoryManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { adminToken } = useContext(AdminAuthContext);
+  const { t } = useTranslation();
 
   // State for modal and form
   const [showModal, setShowModal] = useState(false);
@@ -198,7 +205,11 @@ function AdminCategoryManagement() {
         const data = await response.json();
         setCategoryImageUrl(data.url);
       } catch (err) {
-        alert("Image upload failed: " + err.message);
+        alert(
+          t("admin_category_management.image_upload_failed", {
+            error: err.message,
+          })
+        );
         setPreviewImageUrl("");
         setCategoryImage(null);
         setCategoryImageUrl("");
@@ -270,8 +281,12 @@ function AdminCategoryManagement() {
     } catch (error) {
       console.error("Error saving category:", error);
       alert(
-        `Failed to ${editingCategory ? "update" : "add"} category: ` +
-          error.message
+        t(
+          editingCategory
+            ? "admin_category_management.update_failed"
+            : "admin_category_management.add_failed",
+          { error: error.message }
+        )
       );
       // Close confirmation modal even on error
       setIsConfirmModalOpen(false);
@@ -309,7 +324,9 @@ function AdminCategoryManagement() {
       setActionToConfirm(null);
     } catch (error) {
       console.error("Error deleting category:", error);
-      alert("Failed to delete category: " + error.message);
+      alert(
+        t("admin_category_management.delete_failed", { error: error.message })
+      );
       // Close confirmation modal even on error
       setIsConfirmModalOpen(false);
       setActionToConfirm(null);
@@ -319,22 +336,20 @@ function AdminCategoryManagement() {
   // Functions to trigger confirmation modal
   const confirmAdd = (e) => {
     e.preventDefault(); // Prevent default form submission
-    setConfirmMessage("Are you sure you want to add this category?");
+    setConfirmMessage(t("admin_category_management.confirm_add"));
     setActionToConfirm(() => handleSubmit); // Store the add submit function
     setIsConfirmModalOpen(true);
   };
 
   const confirmEdit = (e) => {
     e.preventDefault(); // Prevent default form submission
-    setConfirmMessage("Are you sure you want to update this category?");
+    setConfirmMessage(t("admin_category_management.confirm_update"));
     setActionToConfirm(() => handleSubmit); // Store the edit submit function
     setIsConfirmModalOpen(true);
   };
 
   const confirmDelete = (categoryId) => {
-    setConfirmMessage(
-      "Are you sure you want to delete this category? This action cannot be undone."
-    );
+    setConfirmMessage(t("admin_category_management.confirm_delete"));
     setActionToConfirm(() => () => handleDeleteCategory(categoryId));
     setIsConfirmModalOpen(true);
   };
@@ -357,18 +372,22 @@ function AdminCategoryManagement() {
   const hierarchicalCategories = buildCategoryTree(categories);
 
   if (loading) {
-    return <div className="p-6">Loading categories...</div>;
+    return <div className="p-6">{t("admin_category_management.loading")}</div>;
   }
 
   if (error) {
-    return <div className="p-6 text-red-600">Error: {error.message}</div>;
+    return (
+      <div className="p-6 text-red-600">
+        {t("admin_category_management.error", { error: error.message })}
+      </div>
+    );
   }
 
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
-          Category Management
+          {t("admin_category_management.title")}
         </h2>
         {/* Add Category Button */}
         <button
@@ -383,7 +402,7 @@ function AdminCategoryManagement() {
           }}
           className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mb-6"
         >
-          Add New Category
+          {t("admin_category_management.add_category_button")}
         </button>
 
         {/* Modal for Add/Edit Category */}
@@ -393,18 +412,26 @@ function AdminCategoryManagement() {
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
                 onClick={() => setShowModal(false)}
-                aria-label="Close"
+                aria-label={t("admin_category_management.close_modal_aria")}
               >
                 &times;
               </button>
               <form onSubmit={confirmAdd} className="flex flex-col gap-4">
                 <h3 className="text-xl font-bold text-green-700 mb-2 text-center">
-                  {editingCategory ? "Edit Category" : "Add New Category"}
+                  {editingCategory
+                    ? t("admin_category_management.edit_category_title")
+                    : t("admin_category_management.add_category_title")}
                 </h3>
                 <input
                   type="text"
                   placeholder={
-                    editingCategory ? "Edit Category Name" : "New Category Name"
+                    editingCategory
+                      ? t(
+                          "admin_category_management.edit_category_name_placeholder"
+                        )
+                      : t(
+                          "admin_category_management.new_category_name_placeholder"
+                        )
                   }
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
@@ -416,18 +443,23 @@ function AdminCategoryManagement() {
                   onChange={(e) => setParentCategoryId(e.target.value)}
                   className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
-                  <option value="">-- Select Parent Category --</option>
+                  <option value="">
+                    {t(
+                      "admin_category_management.select_parent_category_option"
+                    )}
+                  </option>
                   {renderCategoryOptions(
                     hierarchicalCategories,
                     0,
-                    editingCategory ? editingCategory.id : null
+                    editingCategory ? editingCategory.id : null,
+                    t
                   )}
                 </select>
 
                 {/* Image upload field */}
                 <div className="flex flex-col items-center gap-2 border border-dashed border-gray-300 p-4 rounded-md">
                   <label className="text-gray-700 font-medium text-sm">
-                    Category Image
+                    {t("admin_category_management.category_image_label")}
                   </label>
                   <input
                     type="file"
@@ -452,12 +484,14 @@ function AdminCategoryManagement() {
                         onClick={handleRemoveImage}
                         className="text-red-600 text-sm hover:underline"
                       >
-                        Remove Image
+                        {t("admin_category_management.remove_image_button")}
                       </button>
                     </div>
                   )}
                   {uploading && (
-                    <span className="text-xs text-gray-400">Uploading...</span>
+                    <span className="text-xs text-gray-400">
+                      {t("admin_category_management.uploading_status")}
+                    </span>
                   )}
                 </div>
 
@@ -467,14 +501,16 @@ function AdminCategoryManagement() {
                     className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm flex-1"
                     disabled={uploading || !categoryName.trim()}
                   >
-                    {editingCategory ? "Update Category" : "Add Category"}
+                    {editingCategory
+                      ? t("admin_category_management.update_category_button")
+                      : t("admin_category_management.add_category_button")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
                     className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 shadow text-center text-sm flex-1"
                   >
-                    Cancel
+                    {t("admin_category_management.cancel_button")}
                   </button>
                 </div>
               </form>
@@ -484,14 +520,20 @@ function AdminCategoryManagement() {
 
         {/* Category List (Hierarchical) */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
-          <h3 className="text-lg font-bold text-green-700 mb-4">Categories</h3>
+          <h3 className="text-lg font-bold text-green-700 mb-4">
+            {t("admin_category_management.categories_list_title")}
+          </h3>
           {error && (
-            <div className="text-red-500 mb-4">Error: {error.message}</div>
+            <div className="text-red-500 mb-4">
+              {t("admin_category_management.error", { error: error.message })}
+            </div>
           )}
           {
             /* Render category tree */
             categories.length === 0 && !loading && !error ? (
-              <p className="text-gray-500">No categories found.</p>
+              <p className="text-gray-500">
+                {t("admin_category_management.no_categories_found")}
+              </p>
             ) : (
               <ul className="space-y-1">
                 {hierarchicalCategories.map((category) => (
@@ -500,6 +542,7 @@ function AdminCategoryManagement() {
                     category={category}
                     onEdit={handleEditClick}
                     onDelete={confirmDelete} // Call confirmDelete instead of handleDeleteCategory directly
+                    t={t} // Pass the t function down
                   />
                 ))}
               </ul>

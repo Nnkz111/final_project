@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useCategories } from "../context/CategoryContext";
 import ConfirmationModal from "./ConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 function AdminProductManagement() {
+  const { t } = useTranslation(); // Initialize translation hook
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,17 +46,21 @@ function AdminProductManagement() {
     loading: categoriesLoading,
   } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(""); // New state for category filter
+  const [selectedCategory, setSelectedCategory] = useState("");
+  // Re-add triggerSearch state for button/Enter key press
+  const [triggerSearch, setTriggerSearch] = useState(0);
 
-  // Function to fetch products (with pagination and optional category filter)
-  const fetchProducts = async (pageNum = 1, categoryId = selectedCategory) => {
+  // Function to fetch products (with pagination, category filter, and search)
+  const fetchProducts = async () => {
     setLoading(true);
     try {
-      const categoryQuery = categoryId ? `&category_id=${categoryId}` : "";
-      const searchQuery = searchTerm ? `&query=${searchTerm}` : ""; // Keep search term in fetch
+      const categoryQuery = selectedCategory
+        ? `&category_id=${selectedCategory}`
+        : "";
+      const searchQuery = searchTerm ? `&query=${searchTerm}` : "";
       const response = await axios.get(
         `http://localhost:5000/api/products?limit=${pageSize}&offset=${
-          (pageNum - 1) * pageSize
+          (page - 1) * pageSize
         }${categoryQuery}${searchQuery}`
       );
       setProducts(response.data.products);
@@ -61,25 +68,35 @@ function AdminProductManagement() {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching products:", err);
-      setError("Failed to fetch products.");
+      setError(t("admin_product_management.fetch_error")); // Translate error message
       setLoading(false);
     }
   };
 
-  // Fetch products when page, selected category, or search term changes
+  // Fetch products when page, selected category, or triggerSearch changes
   useEffect(() => {
-    // Reset page to 1 when category or search term changes
-    if (page !== 1 && (selectedCategory !== "" || searchTerm !== "")) {
+    // Reset page to 1 when category or search is triggered (not on every key stroke)
+    if (page !== 1 && (selectedCategory !== "" || triggerSearch > 0)) {
       setPage(1);
     } else {
-      fetchProducts(page, selectedCategory);
+      fetchProducts(); // fetch uses current searchTerm internally
     }
-  }, [page, selectedCategory, searchTerm]); // Add selectedCategory and searchTerm dependencies
+    // No cleanup needed as we're not using setTimeout
+  }, [page, selectedCategory, triggerSearch]); // Depend on triggerSearch, not searchTerm or live typing
 
-  // Handle category filter change
+  // Handle category filter change (still triggers fetch via selectedCategory dependency)
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
-    // No need to call fetchProducts here, useEffect will handle it
+    // No need to call fetchProducts here, useEffect will handle it via selectedCategory
+  };
+
+  // Re-add handleSearchKeyPress to trigger search on Enter key
+  const handleSearchKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Prevent default form submission
+      setPage(1); // Reset page to 1 on new search
+      setTriggerSearch((prev) => prev + 1); // Increment to trigger useEffect
+    }
   };
 
   const handleInputChange = (e) => {
@@ -110,7 +127,7 @@ function AdminProductManagement() {
       await axios.post("http://localhost:5000/api/products", formData, {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
-          Authorization: `Bearer ${token}`, // Include the token
+          Authorization: `Bearer ${token}`,
         },
       });
       setAddSuccess(true);
@@ -130,7 +147,11 @@ function AdminProductManagement() {
       setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error adding product:", err.response?.data || err);
-      setAddError(err.response?.data?.error || "Failed to add product.");
+      setAddError(
+        t("admin_product_management.add_error", {
+          error: err.response?.data?.error || "",
+        })
+      ); // Translate error message
       setAddSuccess(false);
     }
   };
@@ -185,7 +206,11 @@ function AdminProductManagement() {
       setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error updating product:", err.response?.data || err);
-      setEditError(err.response?.data?.error || "Failed to update product.");
+      setEditError(
+        t("admin_product_management.update_error", {
+          error: err.response?.data?.error || "",
+        })
+      ); // Translate error message
       setEditSuccess(false);
     }
   };
@@ -200,20 +225,20 @@ function AdminProductManagement() {
   // Functions to show the confirmation modal
   const confirmAdd = (e) => {
     e.preventDefault(); // Prevent default form submission
-    setConfirmMessage("Are you sure you want to add this product?");
+    setConfirmMessage(t("admin_product_management.confirm_add")); // Translate confirmation message
     setActionToConfirm(() => handleAddSubmit); // Store the add submit function
     setIsConfirmModalOpen(true);
   };
 
   const confirmEdit = (e) => {
     e.preventDefault(); // Prevent default form submission
-    setConfirmMessage("Are you sure you want to update this product?");
+    setConfirmMessage(t("admin_product_management.confirm_update")); // Translate confirmation message
     setActionToConfirm(() => handleEditSubmit); // Store the edit submit function
     setIsConfirmModalOpen(true);
   };
 
   const confirmDelete = (id) => {
-    setConfirmMessage("Are you sure you want to delete this product?");
+    setConfirmMessage(t("admin_product_management.confirm_delete")); // Translate confirmation message
     // Store a function that calls handleDeleteProduct with the specific ID
     setActionToConfirm(() => () => handleDeleteProduct(id));
     setIsConfirmModalOpen(true);
@@ -234,7 +259,9 @@ function AdminProductManagement() {
   };
 
   // Determine which form to display
-  const formTitle = editingProduct ? "Edit Product" : "Add New Product";
+  const formTitle = editingProduct
+    ? t("admin_product_management.edit_product_title")
+    : t("admin_product_management.add_product_title"); // Translate form title
   // Change handleSubmit to trigger confirmation modal
   const handleSubmit = editingProduct ? confirmEdit : confirmAdd;
   const currentProductData = editingProduct || newProduct;
@@ -267,7 +294,9 @@ function AdminProductManagement() {
       setActionToConfirm(null); // Clear the stored action
     } catch (err) {
       console.error("Error deleting product:", err.response?.data || err);
-      // setError(err.response?.data?.error || "Failed to delete product."); // Removed for safety
+      alert(
+        t("admin_product_management.delete_error", { error: err.message || "" })
+      ); // Translate error message
       setIsConfirmModalOpen(false); // Close confirm modal even on error
       setActionToConfirm(null); // Clear the stored action even on error
     }
@@ -275,17 +304,18 @@ function AdminProductManagement() {
 
   // Helper to get category name
   const getCategoryName = (catId) => {
-    if (!catId || catId === "uncategorized") return "Uncategorized";
+    if (!catId || catId === "uncategorized")
+      return t("admin_product_management.uncategorized"); // Translate uncategorized
     const cat = categories.find((c) => String(c.id) === String(catId));
     // If not found, treat as Uncategorized
-    return cat ? cat.name : "Uncategorized";
+    return cat ? cat.name : t("admin_product_management.uncategorized"); // Translate uncategorized
   };
 
   // Helper to render nested category options
   const renderCategoryOptions = (cats, level = 0) => {
     return cats.map((cat) => [
       <option key={cat.id} value={cat.id}>
-        {`${"\u00A0".repeat(level * 4)}${cat.name}`}
+        {`${"\u00A0".repeat(level * 4)}${t(`category_${cat.name}`, cat.name)}`}
       </option>,
       cat.children && cat.children.length > 0
         ? renderCategoryOptions(cat.children, level + 1)
@@ -299,18 +329,18 @@ function AdminProductManagement() {
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
   if (loading) {
-    return <div>Loading products...</div>;
+    return <div>{t("admin_product_management.loading")}</div>; // Translate loading message
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div>{t("admin_product_management.error", { error: error })}</div>; // Translate error message
   }
 
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
+      <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
-          Product Management
+          {t("admin_product_management.title")}
         </h2>
         {/* Add/Edit Product Button */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4">
@@ -335,7 +365,7 @@ function AdminProductManagement() {
             }}
             className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
           >
-            Add New Product
+            {t("admin_product_management.add_product_button")}
           </button>
         </div>
         {/* Add/Edit Product Form Modal */}
@@ -365,7 +395,7 @@ function AdminProductManagement() {
                 )}
                 {addSuccess && (
                   <div className="text-green-500 mb-2">
-                    Product added successfully!
+                    {t("admin_product_management.add_success")}
                   </div>
                 )}
                 {editError && (
@@ -373,7 +403,7 @@ function AdminProductManagement() {
                 )}
                 {editSuccess && (
                   <div className="text-green-500 mb-2">
-                    Product updated successfully!
+                    {t("admin_product_management.update_success")}
                   </div>
                 )}
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -382,7 +412,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="name"
                     >
-                      Name
+                      {t("admin_product_management.form_name_label")}
                     </label>
                     <input
                       type="text"
@@ -399,7 +429,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="description"
                     >
-                      Description
+                      {t("admin_product_management.form_description_label")}
                     </label>
                     <textarea
                       name="description"
@@ -414,7 +444,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="price"
                     >
-                      Price
+                      {t("admin_product_management.form_price_label")}
                     </label>
                     <input
                       type="number"
@@ -432,7 +462,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="stock_quantity"
                     >
-                      Stock Quantity
+                      {t("admin_product_management.form_stock_label")}
                     </label>
                     <input
                       type="number"
@@ -449,7 +479,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="category_id"
                     >
-                      Category
+                      {t("admin_product_management.form_category_label")}
                     </label>
                     <select
                       name="category_id"
@@ -458,7 +488,9 @@ function AdminProductManagement() {
                       onChange={handleInputChangeCurrent}
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     >
-                      <option value="">Uncategorized</option>
+                      <option value="">
+                        {t("admin_product_management.uncategorized")}
+                      </option>
                       {renderCategoryOptions(hierarchicalCategories)}
                     </select>
                   </div>
@@ -467,7 +499,7 @@ function AdminProductManagement() {
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="productImage"
                     >
-                      Product Image
+                      {t("admin_product_management.form_image_label")}
                     </label>
                     <input
                       type="file"
@@ -482,11 +514,11 @@ function AdminProductManagement() {
                       !currentProductData.productImage && (
                         <div className="mt-2">
                           <p className="text-sm text-gray-600">
-                            Current Image:
+                            {t("admin_product_management.current_image")}:
                           </p>
                           <img
                             src={`http://localhost:5000${editingProduct.image_url}`}
-                            alt="Current Product"
+                            alt={editingProduct.name}
                             className="w-20 h-20 object-cover rounded-md mt-1"
                           />
                         </div>
@@ -497,7 +529,9 @@ function AdminProductManagement() {
                       type="submit"
                       className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                     >
-                      {editingProduct ? "Update Product" : "Add Product"}
+                      {editingProduct
+                        ? t("admin_product_management.update_product_button")
+                        : t("admin_product_management.add_product_button")}
                     </button>
                     {editingProduct && (
                       <button
@@ -505,7 +539,7 @@ function AdminProductManagement() {
                         onClick={handleCancelEdit}
                         className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                       >
-                        Cancel
+                        {t("admin_product_management.cancel_button")}
                       </button>
                     )}
                   </div>
@@ -518,46 +552,62 @@ function AdminProductManagement() {
         <div className="mb-6 flex flex-col md:flex-row items-center gap-2">
           <input
             type="text"
-            placeholder="Search by product name..."
+            placeholder={t("admin_product_management.search_placeholder")} // Translate placeholder
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)} // Only update searchTerm on change
+            onKeyPress={handleSearchKeyPress} // Add back key press handler
             className="border px-3 py-2 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
+          {/* Add Search Button */}
+          <button
+            onClick={() => {
+              setPage(1); // Reset page to 1 on new search
+              setTriggerSearch((prev) => prev + 1); // Trigger fetch
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-600 transition duration-200 shadow text-sm"
+          >
+            {t("admin_product_management.search_button")}{" "}
+            {/* Translate button text */}
+          </button>
           {/* Category Filter Dropdown */}
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}
             className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
           >
-            <option value="">All Categories</option>
+            <option value="">
+              {t("admin_product_management.all_categories")}
+            </option>
             {renderCategoryOptions(hierarchicalCategories)}
           </select>
         </div>
         {/* Product List */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">
           <h3 className="text-lg font-bold text-green-700 mb-4">
-            Product List
+            {t("admin_product_management.product_list_title")}
           </h3>
           {products.length === 0 ? (
-            <p className="text-gray-500 text-center">No products found.</p>
+            <p className="text-gray-500 text-center">
+              {t("admin_product_management.no_products_found")}
+            </p>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
-                    Name
+                    {t("admin_product_management.table_header_name")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
-                    Price
+                    {t("admin_product_management.table_header_price")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
-                    Stock
+                    {t("admin_product_management.table_header_stock")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/6">
-                    Image
+                    {t("admin_product_management.table_header_image")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
-                    Actions
+                    {t("admin_product_management.table_header_actions")}
                   </th>
                 </tr>
               </thead>
@@ -577,7 +627,9 @@ function AdminProductManagement() {
                           className="w-12 h-12 object-cover rounded-md"
                         />
                       ) : (
-                        <span className="text-gray-500 text-sm">No Image</span>
+                        <span className="text-gray-500 text-sm">
+                          {t("admin_product_management.no_image")}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 align-middle">
@@ -585,13 +637,13 @@ function AdminProductManagement() {
                         onClick={() => handleEditClick(product)}
                         className="bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-sm mr-2"
                       >
-                        Edit
+                        {t("admin_product_management.edit_button")}
                       </button>
                       <button
                         onClick={() => confirmDelete(product.id)}
                         className="bg-red-600 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-sm"
                       >
-                        Delete
+                        {t("admin_product_management.delete_button")}
                       </button>
                     </td>
                   </tr>
@@ -608,17 +660,18 @@ function AdminProductManagement() {
               disabled={page === 1 || loading}
               className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
             >
-              Previous
+              {t("admin_product_management.pagination_previous")}
             </button>
             <span className="font-semibold text-green-700">
-              Page {page} of {totalPages}
+              {t("admin_product_management.pagination_page")} {page}{" "}
+              {t("admin_product_management.pagination_of")} {totalPages}
             </span>
             <button
               onClick={handleNext}
               disabled={page === totalPages || loading}
               className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
             >
-              Next
+              {t("admin_product_management.pagination_next")}
             </button>
           </div>
         )}

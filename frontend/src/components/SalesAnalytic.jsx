@@ -8,12 +8,13 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const GROUP_OPTIONS = [
-  { label: "Day", value: "day" },
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year", value: "year" },
+  { label: "salesAnalytic.groupOption.day", value: "day" },
+  { label: "salesAnalytic.groupOption.week", value: "week" },
+  { label: "salesAnalytic.groupOption.month", value: "month" },
+  { label: "salesAnalytic.groupOption.year", value: "year" },
 ];
 
 function SalesAnalytic() {
@@ -23,6 +24,8 @@ function SalesAnalytic() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,11 +60,11 @@ function SalesAnalytic() {
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mt-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-2">
-        Sales Analytic
+        {t("salesAnalytic.title")}
       </h3>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
         <div className="text-gray-700 font-semibold text-base">
-          Total Sales:{" "}
+          {t("salesAnalytic.totalSalesLabel")}:{" "}
           <span className="text-green-700 font-bold">
             $
             {totalSales.toLocaleString(undefined, {
@@ -72,7 +75,7 @@ function SalesAnalytic() {
         </div>
         <div className="flex flex-wrap gap-2 items-center text-sm text-gray-600">
           <label>
-            Group by
+            {t("salesAnalytic.groupByLabel")}
             <select
               className="ml-1 border rounded-md px-2 py-1"
               value={group}
@@ -80,13 +83,13 @@ function SalesAnalytic() {
             >
               {GROUP_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.label)}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Start
+            {t("salesAnalytic.startLabel")}
             <input
               type="date"
               className="ml-1 border rounded-md px-2 py-1"
@@ -95,7 +98,7 @@ function SalesAnalytic() {
             />
           </label>
           <label>
-            End
+            {t("salesAnalytic.endLabel")}
             <input
               type="date"
               className="ml-1 border rounded-md px-2 py-1"
@@ -108,11 +111,11 @@ function SalesAnalytic() {
       <div className="mt-6 h-64">
         {loading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
-            Loading chart...
+            {t("salesAnalytic.loadingChart")}
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full text-red-500">
-            {error}
+            {t("salesAnalytic.error", { error: error })}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

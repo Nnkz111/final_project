@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function TopSellingProducts() {
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchTopProducts = async () => {
@@ -28,14 +31,16 @@ function TopSellingProducts() {
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mt-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        Top Selling Products
+        {t("topSellingProducts.title")}
       </h3>
       {loading ? (
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-gray-500">{t("topSellingProducts.loading")}</div>
       ) : error ? (
-        <div className="text-red-500">{error}</div>
+        <div className="text-red-500">
+          {t("topSellingProducts.error", { error: error })}
+        </div>
       ) : topProducts.length === 0 ? (
-        <div className="text-gray-500">No data available.</div>
+        <div className="text-gray-500">{t("topSellingProducts.noData")}</div>
       ) : (
         <ul className="divide-y divide-gray-200">
           {topProducts.map((product, idx) => (
@@ -47,7 +52,7 @@ function TopSellingProducts() {
                 {idx + 1}. {product.name}
               </span>
               <span className="text-gray-600 text-sm">
-                {product.total_quantity} sold
+                {product.total_quantity} {t("topSellingProducts.sold")}
               </span>
               <span className="text-green-700 font-semibold">
                 $

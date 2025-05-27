@@ -1,5 +1,6 @@
 import React from "react";
 import AdminSidebar from "./AdminSidebar"; // We will create this component next
+import AdminHeader from "./AdminHeader";
 
 function AdminLayout({ children }) {
   return (
@@ -10,7 +11,7 @@ function AdminLayout({ children }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {" "}
         {/* Main content area */}
-        {/* Potentially an admin header here in the future */}
+        <AdminHeader /> {/* Admin Header */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4">
           {" "}
           {/* Main content with padding */}

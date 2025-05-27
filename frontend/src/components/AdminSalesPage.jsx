@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import SalesAnalytic from "./SalesAnalytic";
 import TopSellingProducts from "./TopSellingProducts";
 import AdminAuthContext from "../context/AdminAuthContext";
+import { useTranslation } from "react-i18next";
 
 function AdminSalesPage() {
   const [orders, setOrders] = useState([]);
@@ -9,6 +10,7 @@ function AdminSalesPage() {
   const [error, setError] = useState("");
   const [editingStatus, setEditingStatus] = useState({});
   const { adminToken } = useContext(AdminAuthContext);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -86,14 +88,14 @@ function AdminSalesPage() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-green-700">
-        Sales Dashboard
+        {t("salesDashboard.title")}
       </h1>
       <SalesAnalytic />
       <TopSellingProducts />
       <div className="bg-white p-6 rounded-2xl shadow-xl mt-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">
-            Recent Sales (Last 20 Orders)
+            {t("salesDashboard.recentSales")}
           </h2>
           <button
             className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
@@ -122,36 +124,42 @@ function AdminSalesPage() {
           </div>
         </div> */}
         {loading ? (
-          <div className="text-gray-500">Loading orders...</div>
+          <div className="text-gray-500">
+            {t("salesDashboard.loadingOrders")}
+          </div>
         ) : error ? (
-          <div className="text-red-500">{error}</div>
+          <div className="text-red-500">
+            {t("salesDashboard.error", { error: error })}
+          </div>
         ) : orders.length === 0 ? (
-          <div className="text-gray-500">No orders found.</div>
+          <div className="text-gray-500">
+            {t("salesDashboard.noOrdersFound")}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Order ID
+                    {t("salesDashboard.orderId")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    User
+                    {t("salesDashboard.user")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Status
+                    {t("salesDashboard.status")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Created
+                    {t("salesDashboard.created")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Items
+                    {t("salesDashboard.items")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Total
+                    {t("salesDashboard.total")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Payment
+                    {t("salesDashboard.payment")}
                   </th>
                 </tr>
               </thead>
@@ -163,7 +171,7 @@ function AdminSalesPage() {
                       {order.username || order.user_id}
                     </td>
                     <td className="px-4 py-3 capitalize font-semibold text-green-700">
-                      {order.status}
+                      {t(`order_status_${order.status}`)}
                     </td>
                     <td className="px-4 py-3">
                       {order.created_at &&
@@ -174,7 +182,9 @@ function AdminSalesPage() {
                       ${parseFloat(order.total).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 capitalize">
-                      {order.payment_type || "-"}
+                      {order.payment_type
+                        ? t(`payment_type_${order.payment_type}`)
+                        : "-"}
                     </td>
                   </tr>
                 ))}

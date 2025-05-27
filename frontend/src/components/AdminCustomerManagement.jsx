@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import AdminAuthContext from "../context/AdminAuthContext";
 import ConfirmationModal from "./ConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 const STATUS_OPTIONS = ["pending", "paid", "shipped", "completed", "cancelled"];
 const USER_STATUS_OPTIONS = ["active", "inactive", "banned"];
@@ -27,6 +28,7 @@ function AdminCustomerManagement() {
   const [actionToConfirm, setActionToConfirm] = useState(null); // Store the action to perform on confirm
 
   const { adminToken } = useContext(AdminAuthContext);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchCustomers(page);
@@ -217,9 +219,7 @@ function AdminCustomerManagement() {
   // Function to trigger confirmation modal for delete
   const confirmDelete = (customerId) => {
     const currentAdminToken = adminToken;
-    setConfirmMessage(
-      "Are you sure you want to delete this customer? This action cannot be undone."
-    );
+    setConfirmMessage(t("customerManagement.confirmDelete"));
     setActionToConfirm(
       () => () => handleDeleteCustomer(customerId, currentAdminToken)
     );
@@ -243,23 +243,29 @@ function AdminCustomerManagement() {
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
-          Customer Management
+          {t("customerManagement.title")}
         </h2>
         <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4">
           <input
             type="text"
             className="border rounded px-3 py-2 w-full md:w-80"
-            placeholder="Search by username or email..."
+            placeholder={t("customerManagement.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         {loading ? (
-          <div className="text-gray-500 text-center">Loading customers...</div>
+          <div className="text-gray-500 text-center">
+            {t("customerManagement.loadingCustomers")}
+          </div>
         ) : error ? (
-          <div className="text-red-500 text-center">{error}</div>
+          <div className="text-red-500 text-center">
+            {t("customerManagement.error", { error: error })}
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="text-gray-500 text-center">No customers found.</div>
+          <div className="text-gray-500 text-center">
+            {t("customerManagement.noCustomersFound")}
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -270,28 +276,28 @@ function AdminCustomerManagement() {
                       ID
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Name
+                      {t("customerManagement.Name")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Username
+                      {t("customerManagement.Username")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Email
+                      {t("customerManagement.Email")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Registered
+                      {t("customerManagement.Registered")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Status
+                      {t("customerManagement.Status")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Orders
+                      {t("customerManagement.Orders")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Total Spent
+                      {t("customerManagement.TotalSpent")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Actions
+                      {t("customerManagement.Actions")}
                     </th>
                   </tr>
                 </thead>
@@ -324,14 +330,16 @@ function AdminCustomerManagement() {
                           className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mr-2"
                           onClick={() => openOrdersModal(c)}
                         >
-                          View
+                          {t("view_details_button")}
                         </button>
                         <button
                           className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm"
                           onClick={() => confirmDelete(c.id)}
                           disabled={deleting[c.id]}
                         >
-                          {deleting[c.id] ? "Deleting..." : "Delete"}
+                          {deleting[c.id]
+                            ? t("deleting_button")
+                            : t("delete_button")}
                         </button>
                       </td>
                     </tr>
@@ -375,15 +383,23 @@ function AdminCustomerManagement() {
               &times;
             </button>
             <h3 className="text-2xl font-bold mb-4 text-green-700">
-              Orders for {modalCustomer.username}
+              {t("customerManagement.ordersFor", {
+                username: modalCustomer.username,
+              })}
             </h3>
             {modalLoading ? (
-              <div className="text-gray-500">Loading orders...</div>
+              <div className="text-gray-500">
+                {t("customerManagement.loadingOrdersModal")}
+              </div>
             ) : modalError ? (
-              <div className="text-red-500">{modalError}</div>
+              <div className="text-red-500">
+                {t("customerManagement.errorLoadingOrdersModal", {
+                  error: modalError,
+                })}
+              </div>
             ) : modalOrders.length === 0 ? (
               <div className="text-gray-500">
-                No orders found for this customer.
+                {t("customerManagement.noOrdersFoundForCustomer")}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -391,22 +407,22 @@ function AdminCustomerManagement() {
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Order ID
+                        {t("customerManagement.Id")}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Status
+                        {t("customerManagement.status")}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Created
+                        {t("customerManagement.created")}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Items
+                        {t("customerManagement.items")}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Total
+                        {t("customerManagement.total")}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                        Payment
+                        {t("customerManagement.payment")}
                       </th>
                       <th className="px-4 py-3"></th>
                     </tr>
@@ -428,8 +444,7 @@ function AdminCustomerManagement() {
                           >
                             {STATUS_OPTIONS.map((status) => (
                               <option key={status} value={status}>
-                                {status.charAt(0).toUpperCase() +
-                                  status.slice(1)}
+                                {t(`order_status_${status}`)}
                               </option>
                             ))}
                           </select>
@@ -442,7 +457,9 @@ function AdminCustomerManagement() {
                                 order.status
                             }
                           >
-                            {updating[order.id] ? "Saving..." : "Save"}
+                            {updating[order.id]
+                              ? t("saving_button")
+                              : t("save_button")}
                           </button>
                         </td>
                         <td className="px-4 py-3">
@@ -454,7 +471,9 @@ function AdminCustomerManagement() {
                           ${parseFloat(order.total).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 capitalize">
-                          {order.payment_type || "-"}
+                          {order.payment_type
+                            ? t(`payment_type_${order.payment_type}`)
+                            : "-"}
                         </td>
                         <td className="px-4 py-3">
                           {/* Optionally, add a View Details button here for a nested modal */}

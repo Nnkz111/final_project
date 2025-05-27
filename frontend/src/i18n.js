@@ -7,7 +7,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: "en",
-    lng: "en", // default language
+    lng: "lo", // default language
     supportedLngs: ["en", "lo"],
     backend: {
       loadPath: "/locales/{{lng}}/{{ns}}.json", // Path to your translation files

@@ -122,11 +122,11 @@ app.get("/api/products/top-selling", async (req, res) => {
   }
 });
 
-// Endpoint to get all products (with pagination and category filter)
+// Endpoint to get all products (with pagination, category filter, and search)
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
-  const { category_id, sort_by_price } = req.query; // Get sort_by_price from query
+  const { category_id, sort_by_price, query: searchTerm } = req.query; // Get category_id, sort_by_price, and searchTerm from query
 
   let orderByClause = "ORDER BY id DESC"; // Default sorting
   if (sort_by_price === "lowToHigh") {
@@ -135,37 +135,44 @@ app.get("/api/products", async (req, res) => {
     orderByClause = "ORDER BY price DESC";
   }
 
+  let whereClauses = [];
+  let whereParams = [];
+  let paramIndex = 1;
+
+  // Add category filter clause
+  if (category_id) {
+    // Assuming category_id is a single ID string from the frontend filter
+    whereClauses.push(`category_id = $${paramIndex++}`);
+    whereParams.push(category_id);
+  }
+
+  // Add search term clause
+  if (searchTerm) {
+    whereClauses.push(
+      `(name ILIKE $${paramIndex} OR description ILIKE $${paramIndex + 1})`
+    );
+    whereParams.push(`%${searchTerm}%`);
+    whereParams.push(`%${searchTerm}%`);
+    paramIndex += 2; // Increment paramIndex by 2 for the two placeholders
+  }
+
+  const where = whereClauses.length
+    ? `WHERE ${whereClauses.join(" AND ")}`
+    : "";
+
+  const dataQueryParams = [...whereParams, limit, offset];
+
   try {
-    let dataResult, countResult;
-    if (category_id) {
-      let categoryIds;
-      if (category_id.includes(",")) {
-        categoryIds = category_id.split(",").map((id) => parseInt(id));
-        dataResult = await pool.query(
-          `SELECT * FROM products WHERE category_id = ANY($1) ${orderByClause} LIMIT $2 OFFSET $3`,
-          [categoryIds, limit, offset]
-        );
-        countResult = await pool.query(
-          `SELECT COUNT(*) FROM products WHERE category_id = ANY($1)`,
-          [categoryIds]
-        );
-      } else {
-        dataResult = await pool.query(
-          `SELECT * FROM products WHERE category_id = $1 ${orderByClause} LIMIT $2 OFFSET $3`,
-          [category_id, limit, offset]
-        );
-        countResult = await pool.query(
-          "SELECT COUNT(*) FROM products WHERE category_id = $1",
-          [category_id]
-        );
-      }
-    } else {
-      dataResult = await pool.query(
-        `SELECT * FROM products ${orderByClause} LIMIT $1 OFFSET $2`,
-        [limit, offset]
-      );
-      countResult = await pool.query("SELECT COUNT(*) FROM products");
-    }
+    const dataResult = await pool.query(
+      `SELECT * FROM products ${where} ${orderByClause} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+      dataQueryParams
+    );
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM products ${where}`,
+      whereParams // Use only whereParams for the count query
+    );
+
     res.json({
       products: dataResult.rows,
       total: parseInt(countResult.rows[0].count, 10),

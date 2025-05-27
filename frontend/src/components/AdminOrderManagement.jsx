@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import AdminAuthContext from "../context/AdminAuthContext";
 import ConfirmationModal from "./ConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 const STATUS_OPTIONS = ["pending", "paid", "shipped", "completed", "cancelled"];
 
@@ -26,6 +27,8 @@ function AdminOrderManagement() {
   const [confirmMessage, setConfirmMessage] = useState("");
   const [actionToConfirm, setActionToConfirm] = useState(null); // Store the action to perform on confirm
 
+  const { t } = useTranslation(); // Initialize translation hook
+
   useEffect(() => {
     fetchOrders(page);
   }, [page]);
@@ -39,7 +42,7 @@ function AdminOrderManagement() {
           (pageNum - 1) * pageSize
         }`
       );
-      if (!res.ok) throw new Error("Failed to fetch orders");
+      if (!res.ok) throw new Error(t("admin_order_management.fetch_failed")); // Translate error
       const data = await res.json();
       setOrders(data.orders);
       setTotal(data.total);
@@ -57,14 +60,19 @@ function AdminOrderManagement() {
   const handleUpdateStatus = async (orderId) => {
     setUpdating((prev) => ({ ...prev, [orderId]: true }));
     try {
+      // We need to send the authorization token with the request
+      const token = localStorage.getItem("adminToken"); // Get admin token from local storage
       await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ status: editingStatus[orderId] }),
       });
       await fetchOrders();
     } catch (err) {
-      alert("Failed to update status");
+      alert(t("admin_order_management.update_status_failed")); // Translate alert
     } finally {
       setUpdating((prev) => ({ ...prev, [orderId]: false }));
     }
@@ -85,7 +93,7 @@ function AdminOrderManagement() {
       setIsConfirmModalOpen(false);
       setActionToConfirm(null);
     } catch (err) {
-      alert("Failed to delete order");
+      alert(t("admin_order_management.delete_failed")); // Translate alert
       setIsConfirmModalOpen(false);
       setActionToConfirm(null);
     } finally {
@@ -104,8 +112,13 @@ function AdminOrderManagement() {
     setModalLoading(true);
     setModalError("");
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${order.id}`);
-      if (!res.ok) throw new Error("Failed to fetch order details");
+      // We need to send the authorization token with the request
+      const token = localStorage.getItem("adminToken"); // Get admin token from local storage
+      const res = await fetch(`http://localhost:5000/api/orders/${order.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok)
+        throw new Error(t("admin_order_management.fetch_details_failed")); // Translate error
       const data = await res.json();
       setModalOrderDetails(data);
     } catch (err) {
@@ -123,7 +136,7 @@ function AdminOrderManagement() {
   // Function to trigger confirmation modal for delete
   const confirmDelete = (orderId) => {
     setConfirmMessage(
-      "Are you sure you want to delete this order? This cannot be undone."
+      t("admin_order_management.confirm_delete") // Translate confirmation message
     );
     setActionToConfirm(() => () => handleDeleteOrder(orderId));
     setIsConfirmModalOpen(true);
@@ -147,33 +160,47 @@ function AdminOrderManagement() {
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-3xl font-extrabold text-green-700 mb-4 text-center">
-            Order Management
+            {t("admin_order_management.title")}
           </h2>
         </div>
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
           <div>
-            <label className="font-semibold mr-2">Filter by Status:</label>
+            <label className="font-semibold mr-2">
+              {t("admin_order_management.filter_status_label")}
+            </label>
             <select
               className="border rounded px-3 py-2"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All</option>
+              <option value="">
+                {t("admin_order_management.all_statuses_option")}
+              </option>
               {STATUS_OPTIONS.map((status) => (
                 <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {t(
+                    `order_status_${status}`,
+                    status.charAt(0).toUpperCase() + status.slice(1)
+                  )}{" "}
+                  {/* Translate status */}
                 </option>
               ))}
             </select>
           </div>
         </div>
         {loading ? (
-          <div className="text-gray-500 text-center">Loading orders...</div>
+          <div className="text-gray-500 text-center">
+            {t("admin_order_management.loading")}
+          </div>
         ) : error ? (
-          <div className="text-red-500 text-center">{error}</div>
+          <div className="text-red-500 text-center">
+            {t("admin_order_management.error", { error: error })}
+          </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-gray-500 text-center">No orders found.</div>
+          <div className="text-gray-500 text-center">
+            {t("admin_order_management.no_orders_found")}
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -181,25 +208,25 @@ function AdminOrderManagement() {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Order ID
+                      {t("admin_order_management.table_header_order_id")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      User
+                      {t("admin_order_management.table_header_user")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Status
+                      {t("admin_order_management.table_header_status")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Created
+                      {t("admin_order_management.table_header_created")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Items
+                      {t("admin_order_management.table_header_items")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Total
+                      {t("admin_order_management.table_header_total")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Payment
+                      {t("admin_order_management.table_header_payment")}
                     </th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -209,7 +236,9 @@ function AdminOrderManagement() {
                     <tr key={order.id} className="hover:bg-green-50 transition">
                       <td className="px-4 py-3 font-mono">#{order.id}</td>
                       <td className="px-4 py-3">
-                        {order.username || order.user_id}
+                        {order.username ||
+                          order.user_id ||
+                          t("admin_order_management.guest_user")}
                       </td>
                       <td className="px-4 py-3 capitalize font-semibold text-green-700">
                         <select
@@ -221,7 +250,11 @@ function AdminOrderManagement() {
                         >
                           {STATUS_OPTIONS.map((status) => (
                             <option key={status} value={status}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                              {t(
+                                `order_status_${status}`,
+                                status.charAt(0).toUpperCase() + status.slice(1)
+                              )}{" "}
+                              {/* Translate status */}
                             </option>
                           ))}
                         </select>
@@ -234,7 +267,10 @@ function AdminOrderManagement() {
                               order.status
                           }
                         >
-                          {updating[order.id] ? "Saving..." : "Save"}
+                          {updating[order.id]
+                            ? t("admin_order_management.saving_button")
+                            : t("admin_order_management.save_button")}{" "}
+                          {/* Translate button text */}
                         </button>
                       </td>
                       <td className="px-4 py-3">
@@ -246,21 +282,31 @@ function AdminOrderManagement() {
                         ${parseFloat(order.total).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 capitalize">
-                        {order.payment_type || "-"}
+                        {order.payment_type
+                          ? t(
+                              `payment_type_${order.payment_type}`,
+                              order.payment_type
+                            )
+                          : t("admin_order_management.not_specified")}{" "}
+                        {/* Translate payment type */}
                       </td>
                       <td className="px-4 py-3">
                         <button
                           className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
                           onClick={() => openOrderModal(order)}
                         >
-                          View
+                          {t("admin_order_management.view_button")}{" "}
+                          {/* Translate button text */}
                         </button>
                         <button
                           className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm ml-2"
                           onClick={() => confirmDelete(order.id)}
                           disabled={deleting[order.id]}
                         >
-                          {deleting[order.id] ? "Deleting..." : "Delete"}
+                          {deleting[order.id]
+                            ? t("admin_order_management.deleting_button")
+                            : t("admin_order_management.delete_button")}{" "}
+                          {/* Translate button text */}
                         </button>
                       </td>
                     </tr>
@@ -300,49 +346,78 @@ function AdminOrderManagement() {
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold"
               onClick={() => setModalOrder(null)}
+              aria-label={t("admin_order_management.close_modal_aria")}
             >
               &times;
             </button>
             <h3 className="text-2xl font-bold mb-4 text-green-700">
-              Order #{modalOrder.id}
+              {t("admin_order_management.order_details_title", {
+                orderId: modalOrder.id,
+              })}
             </h3>
             {modalLoading ? (
-              <div className="text-gray-500">Loading details...</div>
+              <div className="text-gray-500">
+                {t("admin_order_management.loading_details")}
+              </div>
             ) : modalError ? (
-              <div className="text-red-500">{modalError}</div>
+              <div className="text-red-500">
+                {t("admin_order_management.modal_error", { error: modalError })}
+              </div>
             ) : modalOrderDetails ? (
               <>
                 <div className="mb-2">
-                  <span className="font-semibold">User:</span>{" "}
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_user_label")}:
+                  </span>{" "}
                   {modalOrderDetails.username ||
                     modalOrderDetails.shipping_name ||
-                    "-"}
+                    t("admin_order_management.not_specified")}
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Status:</span>{" "}
-                  <span className="capitalize">{modalOrderDetails.status}</span>
-                </div>
-                <div className="mb-2">
-                  <span className="font-semibold">Payment Type:</span>{" "}
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_status_label")}:
+                  </span>{" "}
                   <span className="capitalize">
-                    {modalOrderDetails.payment_type || "-"}
+                    {t(
+                      `order_status_${modalOrderDetails.status}`,
+                      modalOrderDetails.status.charAt(0).toUpperCase() +
+                        modalOrderDetails.status.slice(1)
+                    )}
                   </span>
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Created:</span>{" "}
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_payment_type_label")}:
+                  </span>{" "}
+                  <span className="capitalize">
+                    {modalOrderDetails.payment_type
+                      ? t(
+                          `payment_type_${modalOrderDetails.payment_type}`,
+                          modalOrderDetails.payment_type
+                        )
+                      : t("admin_order_management.not_specified")}
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_created_label")}:
+                  </span>{" "}
                   {modalOrderDetails.created_at &&
                     new Date(modalOrderDetails.created_at).toLocaleString()}
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Shipping:</span>{" "}
-                  {modalOrderDetails.shipping_name},{" "}
-                  {modalOrderDetails.shipping_address},{" "}
-                  {modalOrderDetails.shipping_phone},{" "}
-                  {modalOrderDetails.shipping_email}
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_shipping_label")}:
+                  </span>{" "}
+                  {modalOrderDetails.shipping_name
+                    ? `${modalOrderDetails.shipping_name}, ${modalOrderDetails.shipping_address}, ${modalOrderDetails.shipping_phone}, ${modalOrderDetails.shipping_email}`
+                    : t("admin_order_management.not_specified")}
                 </div>
 
                 <div className="mb-2">
-                  <span className="font-semibold">Items:</span>
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_items_label")}:
+                  </span>
                   <ul className="list-disc ml-6 mt-1">
                     {modalOrderDetails.items &&
                     modalOrderDetails.items.length > 0 ? (
@@ -355,22 +430,28 @@ function AdminOrderManagement() {
                         </li>
                       ))
                     ) : (
-                      <li className="text-gray-500">No items</li>
+                      <li className="text-gray-500">
+                        {t("admin_order_management.no_items_found")}
+                      </li>
                     )}
                   </ul>
                 </div>
                 <div className="mb-2">
-                  <span className="font-semibold">Total:</span>{" "}
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_total_label")}:
+                  </span>{" "}
                   <span className="font-bold text-green-700">
                     {modalOrderDetails.total &&
                     !isNaN(parseFloat(modalOrderDetails.total))
                       ? `$${parseFloat(modalOrderDetails.total).toFixed(2)}`
-                      : "-"}
+                      : t("admin_order_management.not_specified")}
                   </span>
                 </div>
                 {/* Payment Proof Image */}
                 <div className="mb-2">
-                  <span className="font-semibold">Payment Proof:</span>
+                  <span className="font-semibold">
+                    {t("admin_order_management.detail_payment_proof_label")}:
+                  </span>
                   {modalOrderDetails.payment_proof ? (
                     <a
                       href={`http://localhost:5000${modalOrderDetails.payment_proof}`}
@@ -379,12 +460,14 @@ function AdminOrderManagement() {
                     >
                       <img
                         src={`http://localhost:5000${modalOrderDetails.payment_proof}`}
-                        alt="Payment Proof"
+                        alt={t("admin_order_management.payment_proof_alt")}
                         className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
                       />
                     </a>
                   ) : (
-                    <span className="text-gray-500 ml-2">(No Image)</span>
+                    <span className="text-gray-500 ml-2">
+                      {t("admin_order_management.no_image")}
+                    </span>
                   )}
                 </div>
               </>
@@ -394,7 +477,7 @@ function AdminOrderManagement() {
       )}
       {/* Confirmation Modal */}
       <ConfirmationModal
-        message={confirmMessage}
+        message={confirmMessage} // This message is already translated via confirm functions
         isOpen={isConfirmModalOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancelConfirm}
