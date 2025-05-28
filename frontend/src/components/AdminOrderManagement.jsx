@@ -427,8 +427,13 @@ function AdminOrderManagement() {
                       modalOrderDetails.items.map((item) => (
                         <li key={item.id} className="text-gray-700">
                           {item.name} x {item.quantity}{" "}
-                          <span className="text-gray-500">
-                            (${parseFloat(item.price).toFixed(2)})
+                          <span className="font-bold text-green-700 ">
+                            (
+                            {parseFloat(item.price).toLocaleString("lo-LA", {
+                              style: "currency",
+                              currency: "LAK",
+                            })}{" "}
+                            )
                           </span>
                         </li>
                       ))

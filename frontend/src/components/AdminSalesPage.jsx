@@ -23,9 +23,9 @@ function AdminSalesPage() {
         if (!res.ok) throw new Error("Failed to fetch orders");
         const data = await res.json();
         if (data && Array.isArray(data.orders)) {
-          setOrders(data.orders.slice(0, 20));
+          setOrders(data.orders.slice(0, 10));
         } else if (Array.isArray(data)) {
-          setOrders(data.slice(0, 20));
+          setOrders(data.slice(0, 10));
         } else {
           throw new Error("Unexpected data format from orders API");
         }

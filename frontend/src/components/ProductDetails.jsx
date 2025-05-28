@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 // We will no longer directly use useCart to modify cart state here,
 // but might use it later to refresh cart data after adding.
 // import { useCart } from '../context/CartContext';
@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
+  const navigate = useNavigate(); // Get the navigate function
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,8 +53,8 @@ function ProductDetails() {
   // Function to handle adding a product to the persistent cart
   const handleAddToCart = async () => {
     if (!user || !token) {
-      // Prevent adding if not logged in
-      alert("Please log in to add items to the cart."); // Optional: inform user
+      // Redirect to login page if not logged in
+      navigate("/login");
       return;
     }
     const productId = product.id;

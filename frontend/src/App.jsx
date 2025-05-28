@@ -32,6 +32,7 @@ import CategoryListPage from "./pages/CategoryListPage";
 import ProductListPage from "./pages/ProductListPage";
 import MegaSidebar from "./components/MegaSidebar";
 import SearchResultsPage from "./pages/SearchResultsPage";
+import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -198,6 +199,10 @@ function App() {
                 />
                 <Route path="orders" element={<AdminOrderManagement />} />
                 <Route path="customers" element={<AdminCustomerManagement />} />
+                <Route
+                  path="notifications"
+                  element={<AdminNotificationsPage />}
+                />
                 <Route path="sales" element={<AdminSalesPage />} />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
                 {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}

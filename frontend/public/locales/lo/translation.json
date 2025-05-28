@@ -386,6 +386,29 @@
     "categoryManagementLink": "ການຈັດການໝວດໝູ່",
     "ordersLink": "ການຈັດການການສັ່ງຊື້",
     "salesLink": "ການຈັດການການຂາຍ",
-    "customerManagementLink": "ການຈັດການລູກຄ້າ"
-  }
+    "customerManagementLink": "ການຈັດການລູກຄ້າ",
+    "notificationsLink": "ການແຈ້ງເຕືອນ"
+  },
+
+  "new_order_notification": {
+    "title": "ແຈ້ງເຕືອນ",
+    "message": "ມີຄໍາສັ່ງຊື້ໃໝ່ເຂົ້າມາແລ້ວ.",
+    "message_with_count": "ທ່ານມີ {{count}} ຄໍາສັ່ງຊື້ໃໝ່.",
+    "no_new_orders": "ທ່ານບໍ່ມີຄໍາສັ່ງຊື້ໃໝ່.",
+    "view_all_orders": "ເບິ່ງຄໍາສັ່ງຊື້ທັງໝົດ"
+  },
+
+  "admin_notifications": {
+    "title": "ການແຈ້ງເຕືອນ",
+    "loading": "ກຳລັງໂຫຼດການແຈ້ງເຕືອນ...",
+    "error": "ຜິດພາດ: {{error}}",
+    "empty": "ບໍ່ມີການແຈ້ງເຕືອນ.",
+    "mark_as_read_button": "ອ່ານແລ້ວ",
+    "dropdown_empty": "ບໍ່ມີການແຈ້ງເຕືອນ",
+    "dropdown_view_all": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ"
+  },
+
+  "Confirm": "ຢືນຢັນ",
+  "Cancel": "ຍົກເລີກ",
+  "Confirm Action": "ຢືນຢັນການກະທໍາ"
 }

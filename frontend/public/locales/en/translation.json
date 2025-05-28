@@ -378,11 +378,34 @@
   },
 
   "adminSidebar": {
-    "dashboardLink": "ແດຊບອດ",
+    "dashboardLink": "Dashboard",
     "productsManagementLink": "Products Management",
-    "categoryManagementLink": "Categories Management",
-    "ordersLink": "Orders Management",
-    "salesLink": "Sales",
-    "customerManagementLink": "Customers Management"
-  }
+    "categoryManagementLink": "Category Management",
+    "ordersLink": "Orders",
+    "salesLink": "Sales Analytics",
+    "customerManagementLink": "Customer Management",
+    "notificationsLink": "Notifications"
+  },
+
+  "new_order_notification": {
+    "title": "Notification",
+    "message": "A new order has been placed.",
+    "message_with_count": "You have {{count}} new order(s).",
+    "no_new_orders": "You have no new orders.",
+    "view_all_orders": "View All Orders"
+  },
+
+  "admin_notifications": {
+    "title": "Notifications",
+    "loading": "Loading notifications...",
+    "error": "Error: {{error}}",
+    "empty": "No notifications to display.",
+    "mark_as_read_button": "Mark as Read",
+    "dropdown_empty": "No notifications",
+    "dropdown_view_all": "View All Notifications"
+  },
+
+  "Confirm": "Confirm",
+  "Cancel": "Cancel",
+  "Confirm Action": "Confirm Action"
 }

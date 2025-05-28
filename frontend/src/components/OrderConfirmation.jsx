@@ -119,7 +119,7 @@ function OrderConfirmation() {
                       order.items.map((item) => (
                         <li key={item.id} className="text-gray-700">
                           {item.name} x {item.quantity}{" "}
-                          <span className="text-green-600">
+                          <span className="font-semibold text-green-700">
                             (
                             {parseFloat(item.price).toLocaleString("lo-LA", {
                               style: "currency",

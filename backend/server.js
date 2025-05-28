@@ -913,6 +913,11 @@ app.post(
           total,
           orderId,
         ]);
+        // Insert notification for new order
+        await client.query(
+          "INSERT INTO notifications (type, order_id, message) VALUES ($1, $2, $3)",
+          ["new_order", orderId, `New order placed (Order ID: ${orderId})`]
+        );
         await client.query("COMMIT");
         res.status(201).json({ message: "Order placed successfully", orderId });
       } catch (err) {
@@ -1249,22 +1254,36 @@ app.delete("/api/orders/:id", authenticateToken, async (req, res) => {
     return res.sendStatus(403); // Forbidden if not an admin
   }
   const { id } = req.params;
+
+  const client = await pool.connect(); // Get a client for the transaction
   try {
-    // Delete order items first (to maintain referential integrity)
-    await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
-    // Then delete the order
-    const result = await pool.query(
+    await client.query("BEGIN"); // Start transaction
+
+    // 1. Delete associated notifications
+    await client.query("DELETE FROM notifications WHERE order_id = $1", [id]);
+
+    // 2. Delete order items first (to maintain referential integrity)
+    await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+
+    // 3. Then delete the order
+    const result = await client.query(
       "DELETE FROM orders WHERE id = $1 RETURNING id",
       [id]
     );
+
+    await client.query("COMMIT"); // Commit the transaction
+
     if (result.rows.length > 0) {
       res.status(200).json({ message: "Order deleted successfully" });
     } else {
       res.status(404).json({ error: "Order not found" });
     }
   } catch (err) {
+    await client.query("ROLLBACK"); // Rollback transaction on error
     console.error(`Error deleting order with ID ${id}:`, err);
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release(); // Release the client back to the pool
   }
 });
 
@@ -1490,6 +1509,51 @@ app.put("/api/change-password", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Error changing password:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// New endpoint to get notifications (Admin only)
+app.get("/api/notifications", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  try {
+    // Fetch all notifications, ordered by creation date
+    const result = await pool.query(
+      "SELECT id, type, order_id, message, is_read, created_at FROM notifications ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+// New endpoint to mark a notification as read (Admin only)
+app.put("/api/notifications/:id/read", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // Notification ID from URL
+
+  try {
+    const result = await pool.query(
+      "UPDATE notifications SET is_read = TRUE WHERE id = $1 RETURNING id",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "Notification marked as read" });
+    } else {
+      res.status(404).json({ error: "Notification not found" });
+    }
+  } catch (err) {
+    console.error(`Error marking notification ${id} as read:`, err);
+    res.status(500).json({ error: "Failed to mark notification as read" });
   }
 });
 
