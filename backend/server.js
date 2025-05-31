@@ -1168,30 +1168,59 @@ app.get("/api/admin/top-selling-products", async (req, res) => {
   }
 });
 
-// Customer management endpoint (with pagination)
+// Customer management endpoint (with pagination and search)
 app.get("/api/admin/customers", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
+  const searchTerm = req.query.query; // Get the search term from query parameters
+
+  let whereClauses = [];
+  let whereParams = [];
+  let paramIndex = 1;
+
+  // Add search term clause for username or email
+  if (searchTerm) {
+    whereClauses.push(
+      `(u.username ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex + 1})`
+    );
+    whereParams.push(`%${searchTerm}%`);
+    whereParams.push(`%${searchTerm}%`);
+    paramIndex += 2; // Increment paramIndex by 2 for the two placeholders
+  }
+
+  const where = whereClauses.length
+    ? `WHERE u.is_admin = false AND ${whereClauses.join(" AND ")}` // Filter for non-admin users and apply search clauses
+    : `WHERE u.is_admin = false`; // Default filter for non-admin users
+
+  const dataQueryParams = [...whereParams, limit, offset];
+
   try {
     const dataResult = await pool.query(
       `
       SELECT u.id, u.username, u.email, u.created_at, u.status,
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
         (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent,
-        c.name as customer_name
+        c.name as customer_name, -- Include customer name
+        u.is_admin -- Include is_admin status
       FROM users u
       LEFT JOIN customers c ON u.id = c.user_id
-      WHERE u.is_admin = false
+      ${where}
       ORDER BY u.created_at DESC
-      LIMIT $1 OFFSET $2
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `,
-      [limit, offset]
+      dataQueryParams
     );
+
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM users WHERE is_admin = false`
+      `SELECT COUNT(*) FROM users u ${where.replace(
+        "u.is_admin = false AND ",
+        ""
+      )}`, // Count only non-admin users matching search
+      whereParams // Use only whereParams for the count query
     );
+
     res.json({
-      customers: dataResult.rows,
+      customers: dataResult.rows, // Still return as 'customers' for frontend compatibility
       total: parseInt(countResult.rows[0].count, 10),
     });
   } catch (err) {
@@ -1200,7 +1229,7 @@ app.get("/api/admin/customers", async (req, res) => {
   }
 });
 
-// Add endpoint to update user status
+// Add endpoint to update user status (admin)
 app.put("/api/admin/customers/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -1212,6 +1241,84 @@ app.put("/api/admin/customers/:id/status", async (req, res) => {
     res.json({ message: "User status updated" });
   } catch (err) {
     res.status(500).json({ error: "Failed to update user status" });
+  }
+});
+
+// New endpoint for Admin to update any user's details (username, email, is_admin)
+app.put("/api/admin/users/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  const { id } = req.params; // User ID to update from URL
+  const { username, email, is_admin, status } = req.body; // Fields to update
+
+  // Basic validation (ensure at least one field to update is provided)
+  if (
+    username === undefined &&
+    email === undefined &&
+    is_admin === undefined &&
+    status === undefined
+  ) {
+    return res.status(400).json({ error: "No update data provided." });
+  }
+
+  try {
+    // Build the SET clause for the SQL query dynamically based on provided fields
+    const updateFields = [];
+    const queryParams = [id]; // Start with user ID
+    let paramIndex = 2; // Start index for other parameters
+
+    if (username !== undefined) {
+      // Optional: Add username format and uniqueness validation here
+      updateFields.push(`username = $${paramIndex++}`);
+      queryParams.push(username);
+    }
+    if (email !== undefined) {
+      // Optional: Add email format and uniqueness validation here
+      updateFields.push(`email = $${paramIndex++}`);
+      queryParams.push(email);
+    }
+    if (is_admin !== undefined) {
+      updateFields.push(`is_admin = $${paramIndex++}`);
+      queryParams.push(is_admin);
+    }
+    if (status !== undefined) {
+      updateFields.push(`status = $${paramIndex++}`);
+      queryParams.push(status);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "No valid fields to update." });
+    }
+
+    const query = `UPDATE users SET ${updateFields.join(
+      ", "
+    )} WHERE id = $1 RETURNING id, username, email, is_admin, status`;
+
+    const result = await pool.query(query, queryParams);
+
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]); // Return the updated user
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (err) {
+    console.error(`Error updating user with ID ${id}:`, err);
+    // Check for unique constraint violation on email or username
+    if (err.code === "23505") {
+      // PostgreSQL unique violation error code
+      const detail = err.detail || err.message;
+      if (detail.includes("email")) {
+        return res.status(409).json({ error: "Email already exists." });
+      } else if (detail.includes("username")) {
+        return res.status(409).json({ error: "Username already exists." });
+      } else {
+        return res.status(409).json({ error: "Duplicate key error." });
+      }
+    }
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

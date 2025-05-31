@@ -20,6 +20,8 @@
   "deleting_button": "ກຳລັງລຶບ...",
   "save_button": "ບັນທຶກ",
   "saving_button": "ກຳລັງບັນທຶກ...",
+  "remove_image_button": "ລຶບຮູບພາບ",
+  "edit_button": "ແກ້ໄຂ",
 
   "category_page_not_found": "ບໍ່ພົບໝວດໝູ່.",
   "category_page_filters_title": "ຕົວກອງ",
@@ -43,9 +45,11 @@
   "category_Laptops": "ແລັບທັອບ",
   "category_Desktops": "ຄອມພິວເຕີຕັ້ງໂຕະ",
   "category_Accessories": "ອຸປະກອນເສີມ",
+  "category_ອຸປະກອນເສີມມືຖື": "ອຸປະກອນເສີມມືຖື",
+  "category_Accessories for Laptops": "ອຸປະກອນເສີມສຳລັບແລັບທັອບ",
   "category_Phones": "ໂທລະສັບ",
   "category_Smartphones": "ສະມາດໂຟນ",
-  "category_Tablets": "ແທັບເລັດ",
+  "category_Tablets-iPads": "ແທັບເລັດ ແລະ iPads",
   "category_Gaming": "ເກມ",
   "category_Consoles": "ເຄື່ອງຫຼິ້ນເກມ",
   "category_PC_Gaming": "ເກມຄອມພິວເຕີ",
@@ -387,9 +391,22 @@
     "ordersLink": "ການຈັດການການສັ່ງຊື້",
     "salesLink": "ການຈັດການການຂາຍ",
     "customerManagementLink": "ການຈັດການລູກຄ້າ",
-    "notificationsLink": "ການແຈ້ງເຕືອນ"
+    "notificationsLink": "ການແຈ້ງເຕືອນ",
+    "userManagementLink": "ການຈັດການຜູ້ໃຊ້ລະບົບ"
   },
-
+  "admin_user_management": {
+    "title": "ການຈັດການຜູ້ໃຊ້ລະບົບ",
+    "searchPlaceholder": "ຄົ້ນຫາຕາມຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວ...",
+    "loading": "ກຳລັງໂຫຼດຜູ້ໃຊ້ລະບົບ...",
+    "error": "ຜິດພາດ: {{error}}",
+    "noUsersFound": "ບໍ່ພົບຜູ້ໃຊ້ລະບົບ.",
+    "username": "ຊື່ຜູ້ໃຊ້",
+    "email": "ອີເມວ",
+    "admin": "ຜູ້ໃຊ້ລະບົບ",
+    "registered": "ລົງທະບຽນເມື່ອ",
+    "status": "ສະຖານະ",
+    "actions": "ການກະທໍາ"
+  },
   "new_order_notification": {
     "title": "ແຈ້ງເຕືອນ",
     "message": "ມີຄໍາສັ່ງຊື້ໃໝ່ເຂົ້າມາແລ້ວ.",

@@ -20,6 +20,8 @@
   "deleting_button": "Deleting...",
   "save_button": "Save",
   "saving_button": "Saving...",
+  "remove_image_button": "Remove Image",
+  "edit_button": "Edit",
 
   "category_page_not_found": "Category not found.",
   "category_page_filters_title": "Filters",
@@ -43,9 +45,11 @@
   "category_Laptops": "Laptops",
   "category_Desktops": "Desktops",
   "category_Accessories": "Accessories",
+  "category_ອຸປະກອນເສີມມືຖື": "Accessories for Smartphones",
+  "category_Accessories for Laptops": "Accessories for Laptops",
   "category_Phones": "Phones",
   "category_Smartphones": "Smartphones",
-  "category_Tablets": "Tablets",
+  "category_Tablets-iPads": "Tablets and iPads",
   "category_Gaming": "Gaming",
   "category_Consoles": "Consoles",
   "category_PC_Gaming": "PC Gaming",
@@ -382,11 +386,25 @@
     "productsManagementLink": "Products Management",
     "categoryManagementLink": "Category Management",
     "ordersLink": "Orders",
-    "salesLink": "Sales Analytics",
+    "salesLink": "Sales",
     "customerManagementLink": "Customer Management",
-    "notificationsLink": "Notifications"
+    "notificationsLink": "Notifications",
+    "userManagementLink": "User Management"
   },
 
+  "admin_user_management": {
+    "title": "User Management",
+    "searchPlaceholder": "Search by username or email...",
+    "loading": "Loading users...",
+    "error": "Error: {{error}}",
+    "noUsersFound": "No users found.",
+    "username": "Username",
+    "email": "Email",
+    "admin": "Admin",
+    "registered": "Registered",
+    "status": "Status",
+    "actions": "Actions"
+  },
   "new_order_notification": {
     "title": "Notification",
     "message": "A new order has been placed.",

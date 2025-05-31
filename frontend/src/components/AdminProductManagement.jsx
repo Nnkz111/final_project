@@ -178,8 +178,12 @@ function AdminProductManagement() {
     formData.append("stock_quantity", editingProduct.stock_quantity);
     if (editingProduct.productImage) {
       formData.append("productImage", editingProduct.productImage);
+    } else if (editingProduct.image_url === null) {
+      // If image was explicitly removed (both productImage and image_url are null)
+      formData.append("image_url", ""); // Send empty string or a specific flag to backend to clear the image
     } else if (editingProduct.image_url) {
-      formData.append("image_url", editingProduct.image_url);
+      // If no new image and existing image URL is present (image was not removed)
+      formData.append("image_url", editingProduct.image_url); // Keep the existing image URL
     }
     if (editingProduct.category_id) {
       formData.append("category_id", editingProduct.category_id);
@@ -299,6 +303,22 @@ function AdminProductManagement() {
       ); // Translate error message
       setIsConfirmModalOpen(false); // Close confirm modal even on error
       setActionToConfirm(null); // Clear the stored action even on error
+    }
+  };
+
+  // Add function to handle removing product image
+  const handleRemoveProductImage = () => {
+    if (editingProduct) {
+      setEditingProduct({
+        ...editingProduct,
+        productImage: null,
+        image_url: null, // Also clear existing image URL
+      });
+    } else {
+      setNewProduct({
+        ...newProduct,
+        productImage: null,
+      });
     }
   };
 
@@ -509,20 +529,34 @@ function AdminProductManagement() {
                       accept="image/*"
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     />
-                    {/* Display current image when editing */}
-                    {editingProduct?.image_url &&
-                      !currentProductData.productImage && (
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-600">
-                            {t("admin_product_management.current_image")}:
-                          </p>
-                          <img
-                            src={`http://localhost:5000${editingProduct.image_url}`}
-                            alt={editingProduct.name}
-                            className="w-20 h-20 object-cover rounded-md mt-1"
-                          />
-                        </div>
-                      )}
+                    {/* Display current image when editing or preview new image */}
+                    {(currentProductData.image_url ||
+                      currentProductData.productImage) && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600">
+                          {t("admin_product_management.current_image")}:
+                        </p>
+                        <img
+                          src={
+                            currentProductData.productImage
+                              ? URL.createObjectURL(
+                                  currentProductData.productImage
+                                )
+                              : `http://localhost:5000${currentProductData.image_url}`
+                          }
+                          alt={currentProductData.name}
+                          className="w-20 h-20 object-cover rounded-md mt-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveProductImage} // Add remove button handler
+                          className="text-red-600 text-sm hover:underline mt-1"
+                        >
+                          {t("remove_image_button")}{" "}
+                          {/* Translate button text */}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <button
@@ -660,18 +694,17 @@ function AdminProductManagement() {
               disabled={page === 1 || loading}
               className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
             >
-              {t("admin_product_management.pagination_previous")}
+              Previous
             </button>
             <span className="font-semibold text-green-700">
-              {t("admin_product_management.pagination_page")} {page}{" "}
-              {t("admin_product_management.pagination_of")} {totalPages}
+              Page {page} of {totalPages}
             </span>
             <button
               onClick={handleNext}
               disabled={page === totalPages || loading}
               className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
             >
-              {t("admin_product_management.pagination_next")}
+              Next
             </button>
           </div>
         )}

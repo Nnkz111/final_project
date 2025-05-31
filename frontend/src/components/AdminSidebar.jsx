@@ -104,6 +104,27 @@ function AdminSidebar() {
           </svg>
           {t("adminSidebar.ordersLink")}
         </Link>
+        {/* Add User Management Link */}
+        <Link
+          to="/admin/users"
+          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
+        >
+          <svg
+            className="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+            ></path>
+          </svg>
+          {t("adminSidebar.userManagementLink")}
+        </Link>
+        {/* Existing Sales Link */}
         <Link
           to="/admin/sales"
           className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"

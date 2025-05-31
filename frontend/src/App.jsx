@@ -33,6 +33,7 @@ import ProductListPage from "./pages/ProductListPage";
 import MegaSidebar from "./components/MegaSidebar";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import AdminNotificationsPage from "./pages/AdminNotificationsPage";
+import AdminUserManagement from "./components/AdminUserManagement";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -199,6 +200,7 @@ function App() {
                 />
                 <Route path="orders" element={<AdminOrderManagement />} />
                 <Route path="customers" element={<AdminCustomerManagement />} />
+                <Route path="users" element={<AdminUserManagement />} />
                 <Route
                   path="notifications"
                   element={<AdminNotificationsPage />}

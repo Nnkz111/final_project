@@ -154,7 +154,7 @@ function CategoryPage() {
                       <img
                         src={`http://localhost:5000${child.image_url}`}
                         alt={child.name}
-                        className="w-full h-40 object-cover"
+                        className="w-full h-32 object-cover"
                       />
                     )}
                     <div className="p-3">
