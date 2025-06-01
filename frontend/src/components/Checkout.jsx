@@ -116,7 +116,7 @@ function Checkout() {
                   {item.image_url && (
                     <div className="w-16 h-16 overflow-hidden rounded-md mr-4 flex-shrink-0">
                       <img
-                        src={`http://localhost:5000${item.image_url}`}
+                        src={item.image_url}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />

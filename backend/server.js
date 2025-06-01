@@ -7,6 +7,8 @@ const path = require("path"); // Import path module
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const fs = require("fs"); // Import fs module for directory creation
+const cloudinary = require("cloudinary").v2; // Import Cloudinary
+const fileUpload = require("express-fileupload");
 
 // Create an Express application
 const app = express();
@@ -16,6 +18,13 @@ app.use(cors());
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
+// Middleware to handle file uploads using express-fileupload
+app.use(
+  fileUpload({
+    useTempFiles: true,
+  })
+);
 
 // Serve static files from the 'uploads' directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -39,6 +48,13 @@ pool.connect((err, client, release) => {
   }
   console.log("Database connected successfully!");
   release();
+});
+
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: "dgfk0ljyq", // Replace with your Cloudinary cloud name
+  api_key: "125295214115594", // Replace with your Cloudinary API key
+  api_secret: "fWZWhN3KOQSzW-YMEPKMDvP0a8M", // Replace with your Cloudinary API secret
 });
 
 // Configure multer for file uploads
@@ -238,9 +254,28 @@ app.get("/api/products/:id", async (req, res) => {
 });
 
 // Add a new product with image upload
-app.post("/api/products", upload.single("productImage"), async (req, res) => {
+// This route now uses Cloudinary for image uploads.
+app.post("/api/products", async (req, res) => {
   const { name, description, price, stock_quantity, category_id } = req.body;
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the uploaded image path
+
+  let imageUrl = null;
+
+  // Check if a file was uploaded with the field name 'productImage'
+  if (req.files && req.files.productImage) {
+    const file = req.files.productImage;
+
+    try {
+      // Upload the file to Cloudinary
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: "product_images", // Optional: specify a folder in Cloudinary
+      });
+      imageUrl = result.url; // Get the Cloudinary image URL
+    } catch (error) {
+      console.error("Error uploading product image to Cloudinary:", error);
+      // Continue without image or return an error, depending on requirements
+      // For now, we'll proceed without the image but log the error.
+    }
+  }
 
   // Basic validation
   if (!name || !price || !stock_quantity) {
@@ -288,86 +323,107 @@ app.delete("/api/products/:id", authenticateToken, async (req, res) => {
 });
 
 // PUT endpoint to update a product by ID with optional image upload
-app.put(
-  "/api/products/:id",
-  authenticateToken,
-  upload.single("productImage"),
-  async (req, res) => {
-    // Check if the authenticated user is an admin
-    if (!req.user || !req.user.is_admin) {
-      return res.sendStatus(403); // Forbidden if not an admin
-    }
+// This route now uses Cloudinary for image uploads.
+app.put("/api/products/:id", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
 
-    const { id } = req.params; // Get the product ID from the URL
-    const { name, description, price, stock_quantity, category_id } = req.body;
-    const imageUrl = req.file
-      ? `/uploads/${req.file.filename}`
-      : req.body.image_url; // Use new image or existing image URL
+  const { id } = req.params; // Get the product ID from the URL
+  const {
+    name,
+    description,
+    price,
+    stock_quantity,
+    category_id,
+    image_url: existingImageUrl,
+  } = req.body; // Get existing image_url from body
 
-    // Basic validation (ensure at least one field to update is provided)
-    if (
-      !name &&
-      !description &&
-      !price &&
-      !stock_quantity &&
-      !imageUrl &&
-      !category_id
-    ) {
-      return res.status(400).json({ error: "No update data provided." });
-    }
+  let imageUrl = existingImageUrl; // Start with the existing URL
+
+  // Check if a new file was uploaded with the field name 'productImage'
+  if (req.files && req.files.productImage) {
+    const file = req.files.productImage;
 
     try {
-      // Build the SET clause for the SQL query dynamically based on provided fields
-      const updateFields = [];
-      const queryParams = [id]; // Start with product ID
-      let paramIndex = 2; // Start index for other parameters
-
-      if (name) {
-        updateFields.push(`name = $${paramIndex++}`);
-        queryParams.push(name);
-      }
-      if (description !== undefined) {
-        updateFields.push(`description = $${paramIndex++}`);
-        queryParams.push(description);
-      } // Allow description to be set to null/empty
-      if (price) {
-        updateFields.push(`price = $${paramIndex++}`);
-        queryParams.push(price);
-      }
-      if (stock_quantity !== undefined) {
-        updateFields.push(`stock_quantity = $${paramIndex++}`);
-        queryParams.push(stock_quantity);
-      } // Allow stock to be set to 0
-      if (imageUrl !== undefined) {
-        updateFields.push(`image_url = $${paramIndex++}`);
-        queryParams.push(imageUrl);
-      } // Allow image_url to be set to null
-      if (category_id !== undefined) {
-        updateFields.push(`category_id = $${paramIndex++}`);
-        queryParams.push(category_id || null);
-      }
-
-      if (updateFields.length === 0) {
-        return res.status(400).json({ error: "No valid fields to update." });
-      }
-
-      const query = `UPDATE products SET ${updateFields.join(
-        ", "
-      )} WHERE id = $1 RETURNING *`;
-
-      const result = await pool.query(query, queryParams);
-
-      if (result.rows.length > 0) {
-        res.status(200).json(result.rows[0]); // Return the updated product
-      } else {
-        res.status(404).json({ error: "Product not found" });
-      }
-    } catch (err) {
-      console.error(`Error updating product with ID ${id}:`, err);
-      res.status(500).json({ error: "Internal server error" });
+      // Upload the new file to Cloudinary
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: "product_images", // Optional: specify a folder in Cloudinary
+      });
+      imageUrl = result.url; // Use the new Cloudinary image URL
+      // Optional: You might want to delete the old image from Cloudinary here
+      // if existingImageUrl was a Cloudinary URL.
+    } catch (error) {
+      console.error("Error uploading new product image to Cloudinary:", error);
+      // Decide how to handle upload failure: keep old image, set to null, or return error
+      // For now, we'll keep the existingImageUrl if upload fails.
     }
   }
-);
+
+  // Basic validation (ensure at least one field to update is provided)
+  if (
+    !name &&
+    !description &&
+    !price &&
+    !stock_quantity &&
+    !imageUrl &&
+    !category_id
+  ) {
+    return res.status(400).json({ error: "No update data provided." });
+  }
+
+  try {
+    // Build the SET clause for the SQL query dynamically based on provided fields
+    const updateFields = [];
+    const queryParams = [id]; // Start with product ID
+    let paramIndex = 2; // Start index for other parameters
+
+    if (name) {
+      updateFields.push(`name = $${paramIndex++}`);
+      queryParams.push(name);
+    }
+    if (description !== undefined) {
+      updateFields.push(`description = $${paramIndex++}`);
+      queryParams.push(description);
+    } // Allow description to be set to null/empty
+    if (price) {
+      updateFields.push(`price = $${paramIndex++}`);
+      queryParams.push(price);
+    }
+    if (stock_quantity !== undefined) {
+      updateFields.push(`stock_quantity = $${paramIndex++}`);
+      queryParams.push(stock_quantity);
+    } // Allow stock to be set to 0
+    if (imageUrl !== undefined) {
+      updateFields.push(`image_url = $${paramIndex++}`);
+      queryParams.push(imageUrl);
+    } // Allow image_url to be set to null
+    if (category_id !== undefined) {
+      updateFields.push(`category_id = $${paramIndex++}`);
+      queryParams.push(category_id || null);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "No valid fields to update." });
+    }
+
+    const query = `UPDATE products SET ${updateFields.join(
+      ", "
+    )} WHERE id = $1 RETURNING *`;
+
+    const result = await pool.query(query, queryParams);
+
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]); // Return the updated product
+    } else {
+      res.status(404).json({ error: "Product not found" });
+    }
+  } catch (err) {
+    console.error(`Error updating product with ID ${id}:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Category routes
 // Endpoint to get all categories
@@ -846,10 +902,11 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // Place this after cart routes, before app.listen
-const uploadOrderProof = multer({ storage: storage });
+// Removed Multer middleware from order creation route
+// const uploadOrderProof = multer({ storage: storage });
 app.post(
   "/api/orders",
-  uploadOrderProof.single("payment_proof"),
+  // Removed uploadOrderProof.single("payment_proof"),
   async (req, res) => {
     try {
       // Parse fields from FormData
@@ -857,9 +914,25 @@ app.post(
       const items = JSON.parse(req.body.items);
       const shipping = JSON.parse(req.body.shipping);
       const payment_type = req.body.payment_type;
-      const payment_proof = req.file
-        ? `/uploads/payment_proof/${req.file.filename}`
-        : null;
+
+      let payment_proof = null;
+
+      // Check if a payment proof file was uploaded with the field name 'payment_proof'
+      if (req.files && req.files.payment_proof) {
+        const file = req.files.payment_proof;
+
+        try {
+          // Upload the file to Cloudinary
+          const result = await cloudinary.uploader.upload(file.tempFilePath, {
+            folder: "payment_proofs", // Optional: specify a folder in Cloudinary
+          });
+          payment_proof = result.url; // Get the Cloudinary image URL
+        } catch (error) {
+          console.error("Error uploading payment proof to Cloudinary:", error);
+          // Decide how to handle upload failure
+          // For now, we'll proceed without the payment proof image but log the error.
+        }
+      }
 
       if (
         !userId ||
@@ -1395,24 +1468,36 @@ app.delete("/api/orders/:id", authenticateToken, async (req, res) => {
 });
 
 // Category Image Upload Endpoint (Admin only)
-app.post(
-  "/api/upload",
-  authenticateToken,
-  upload.single("image"),
-  (req, res) => {
-    // Check if the authenticated user is an admin
-    if (!req.user || !req.user.is_admin) {
-      return res.sendStatus(403); // Forbidden if not an admin
-    }
-
-    if (!req.file) {
+app.post("/api/upload", async (req, res) => {
+  try {
+    // Check if a file was uploaded
+    if (!req.files || Object.keys(req.files).length === 0) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Return the relative path as needed
-    res.json({ url: `/uploads/categories_img/${req.file.filename}` });
+    // Assuming the file input field name is 'image'
+    const file = req.files.image; // Access the uploaded file via req.files
+
+    // Upload the file to Cloudinary
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: "category_images", // Optional: specify a folder in Cloudinary
+    });
+
+    // The result object contains information about the uploaded image
+    const imageUrl = result.url; // This is the public URL of the uploaded image
+    const publicId = result.public_id; // This is the public ID of the image in Cloudinary
+
+    // You might want to save the imageUrl and/or publicId to your database
+    // For this example, we'll just return the URL.
+
+    res.json({ url: imageUrl, publicId: publicId });
+  } catch (error) {
+    console.error("Error uploading image to Cloudinary:", error);
+    res
+      .status(500)
+      .json({ error: "Image upload failed", details: error.message });
   }
-);
+});
 
 // Get user profile
 app.get("/api/profile", authenticateToken, async (req, res) => {

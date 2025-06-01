@@ -116,7 +116,7 @@ function Cart() {
                 <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-200">
                   {item.image_url ? (
                     <img
-                      src={`http://localhost:5000${item.image_url}`}
+                      src={item.image_url}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />

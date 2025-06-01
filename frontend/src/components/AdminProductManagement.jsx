@@ -542,7 +542,7 @@ function AdminProductManagement() {
                               ? URL.createObjectURL(
                                   currentProductData.productImage
                                 )
-                              : `http://localhost:5000${currentProductData.image_url}`
+                              : currentProductData.image_url
                           }
                           alt={currentProductData.name}
                           className="w-20 h-20 object-cover rounded-md mt-1"
@@ -656,14 +656,14 @@ function AdminProductManagement() {
                     <td className="px-4 py-3 align-middle">
                       {product.image_url ? (
                         <img
-                          src={`http://localhost:5000${product.image_url}`}
+                          src={product.image_url}
                           alt={product.name}
-                          className="w-12 h-12 object-cover rounded-md"
+                          className="w-16 h-16 object-cover rounded"
                         />
                       ) : (
-                        <span className="text-gray-500 text-sm">
+                        <div className="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded">
                           {t("admin_product_management.no_image")}
-                        </span>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 align-middle">

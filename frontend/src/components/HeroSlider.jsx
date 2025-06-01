@@ -78,7 +78,7 @@ function HeroSlider() {
           >
             <Link to={`/products/${product.id}`}>
               <img
-                src={`http://localhost:5000${product.image_url}`}
+                src={product.image_url}
                 alt={product.name}
                 style={{
                   width: "100%",

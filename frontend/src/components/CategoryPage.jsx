@@ -152,7 +152,7 @@ function CategoryPage() {
                   >
                     {child.image_url && (
                       <img
-                        src={`http://localhost:5000${child.image_url}`}
+                        src={child.image_url}
                         alt={child.name}
                         className="w-full h-32 object-cover"
                       />
@@ -188,7 +188,7 @@ function CategoryPage() {
                       >
                         {product.image_url && (
                           <img
-                            src={`http://localhost:5000${product.image_url}`}
+                            src={product.image_url}
                             alt={product.name}
                             className="w-full h-40 object-cover"
                           />

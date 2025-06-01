@@ -462,12 +462,12 @@ function AdminOrderManagement() {
                   </span>
                   {modalOrderDetails.payment_proof ? (
                     <a
-                      href={`http://localhost:5000${modalOrderDetails.payment_proof}`}
+                      href={modalOrderDetails.payment_proof}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <img
-                        src={`http://localhost:5000${modalOrderDetails.payment_proof}`}
+                        src={modalOrderDetails.payment_proof}
                         alt={t("admin_order_management.payment_proof_alt")}
                         className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
                       />

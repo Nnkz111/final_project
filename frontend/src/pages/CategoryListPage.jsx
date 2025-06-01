@@ -52,7 +52,7 @@ const CategoryListPage = () => {
             <div className="w-full h-40 overflow-hidden">
               {category.image_url ? (
                 <img
-                  src={`http://localhost:5000${category.image_url}`}
+                  src={category.image_url}
                   alt={category.name}
                   className="w-full h-full object-cover"
                 />

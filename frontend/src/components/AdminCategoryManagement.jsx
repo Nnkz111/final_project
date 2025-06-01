@@ -172,9 +172,7 @@ function AdminCategoryManagement() {
     setCategoryName(category.name);
     setParentCategoryId(category.parent_id || "");
     setCategoryImageUrl(category.image_url || "");
-    const imageUrlForPreview = category.image_url
-      ? `http://localhost:5000${category.image_url}`
-      : "";
+    const imageUrlForPreview = category.image_url ? category.image_url : "";
     setPreviewImageUrl(imageUrlForPreview);
     setCategoryImage(null);
     setUploading(false);
@@ -472,10 +470,7 @@ function AdminCategoryManagement() {
                   {(previewImageUrl || categoryImageUrl) && !uploading && (
                     <div className="flex flex-col items-center mt-2">
                       <img
-                        src={
-                          previewImageUrl ||
-                          `http://localhost:5000${categoryImageUrl}`
-                        }
+                        src={previewImageUrl || { categoryImageUrl }}
                         alt="Preview"
                         className="w-20 h-20 object-cover rounded shadow border border-green-100 mb-2"
                       />

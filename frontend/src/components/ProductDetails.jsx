@@ -152,7 +152,7 @@ function ProductDetails() {
                 onClick={() => setSelectedImage(img)}
               >
                 <img
-                  src={`http://localhost:5000${img}`}
+                  src={img}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -163,7 +163,7 @@ function ProductDetails() {
           <div className="flex-1 flex items-center justify-center min-h-[300px]">
             {selectedImage ? (
               <img
-                src={`http://localhost:5000${selectedImage}`}
+                src={selectedImage}
                 alt={product.name}
                 className="max-h-[400px] w-auto object-contain rounded-xl shadow-md"
               />

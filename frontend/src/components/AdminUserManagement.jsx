@@ -208,7 +208,7 @@ function AdminUserManagement() {
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
         <h2 className="text-3xl font-extrabold text-green-700 mb-8 text-center">
-          User Management
+          {t("admin_user_management.title")}
         </h2>
 
         {/* Search Bar */}
