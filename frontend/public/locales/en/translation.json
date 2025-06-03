@@ -23,6 +23,14 @@
   "remove_image_button": "Remove Image",
   "edit_button": "Edit",
 
+  "footer": {
+    "contact_us": "Contact Us",
+    "follow_us": "Follow Us",
+    "location": "Location",
+    "address": "Ban Viengmai, Luang Prabang, Laos",
+    "copyright": "Designed and Developed by Student of Souphanouvong University"
+  },
+
   "category_page_not_found": "Category not found.",
   "category_page_filters_title": "Filters",
   "category_page_sort_by_price_title": "Sort by Price",
@@ -39,17 +47,17 @@
   "category_list_title": "All Categories",
   "category_list_no_image": "No Image Available",
 
-  "category_Tablets-Smartphones": "Tablets-Smartphones",
+  "category_ແທັບເລັດ ແລະ ສະມາດໂຟນ": "Tablets-Smartphones",
   "category_Electronics": "Electronics",
-  "category_Computers": "Computers",
-  "category_Laptops": "Laptops",
+  "category_ຄອມພິວເຕີ": "Computers",
+  "category_ແລັບທອບ": "Laptops",
   "category_Desktops": "Desktops",
   "category_Accessories": "Accessories",
   "category_ອຸປະກອນເສີມມືຖື": "Accessories for Smartphones",
   "category_Accessories for Laptops": "Accessories for Laptops",
   "category_Phones": "Phones",
-  "category_Smartphones": "Smartphones",
-  "category_Tablets-iPads": "Tablets and iPads",
+  "category_ສະມາດໂຟນ": "Smartphones",
+  "category_ແທັບເລັດ-iPads": "Tablets and iPads",
   "category_Gaming": "Gaming",
   "category_Consoles": "Consoles",
   "category_PC_Gaming": "PC Gaming",

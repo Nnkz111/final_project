@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 function UserProfilePage() {
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
@@ -109,6 +109,7 @@ function UserProfilePage() {
       const updatedUser = await response.json();
       setEditProfileSuccess(true);
       setIsEditingProfile(false);
+      updateUser(updatedUser);
     } catch (err) {
       setEditProfileError(err.message);
     } finally {

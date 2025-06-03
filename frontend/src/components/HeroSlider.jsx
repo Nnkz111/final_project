@@ -82,9 +82,9 @@ function HeroSlider() {
                 alt={product.name}
                 style={{
                   width: "100%",
-                  maxWidth: "1050px",
-                  maxHeight: "300px",
-                  objectFit: "contain",
+                  maxWidth: "1067px",
+                  maxHeight: "450px",
+                  objectFit: "cover",
                   margin: "0 auto",
                 }}
               />

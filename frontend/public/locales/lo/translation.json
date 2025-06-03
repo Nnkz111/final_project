@@ -23,6 +23,14 @@
   "remove_image_button": "ລຶບຮູບພາບ",
   "edit_button": "ແກ້ໄຂ",
 
+  "footer": {
+    "contact_us": "ຕິດຕໍ່ພວກເຮົາ",
+    "follow_us": "ຕິດຕາມພວກເຮົາ",
+    "location": "ທີ່ຕັ້ງຮ້ານ",
+    "address": "ບ້ານ ວຽງໃໝ່, ນະຄອນຫຼວງພະບາງ, ແຂວງ ຫຼວງພະບາງ, ລາວ",
+    "copyright": "ອອກແບບ ແລະ ພັດທະນາໂດຍນັກສຶກສາມະຫາວິທະຍາໄລສຸພານຸວົງ "
+  },
+
   "category_page_not_found": "ບໍ່ພົບໝວດໝູ່.",
   "category_page_filters_title": "ຕົວກອງ",
   "category_page_sort_by_price_title": "ຈັດລຽງຕາມລາຄາ",
@@ -39,17 +47,17 @@
   "category_list_title": "ໝວດໝູ່ທັງໝົດ",
   "category_list_no_image": "ບໍ່ມີຮູບພາບ",
 
-  "category_Tablets-Smartphones": "ແທັບເລັດ ແລະ ສະມາດໂຟນ",
+  "category_ແທັບເລັດ ແລະ ສະມາດໂຟນ": "ແທັບເລັດ ແລະ ສະມາດໂຟນ",
   "category_Electronics": "ເຄື່ອງໃຊ້ໄຟຟ້າ",
-  "category_Computers": "ຄອມພິວເຕີ",
-  "category_Laptops": "ແລັບທັອບ",
+  "category_ຄອມພິວເຕີ": "ຄອມພິວເຕີ",
+  "category_ແລັບທອບ": "ແລັບທອບ",
   "category_Desktops": "ຄອມພິວເຕີຕັ້ງໂຕະ",
   "category_Accessories": "ອຸປະກອນເສີມ",
   "category_ອຸປະກອນເສີມມືຖື": "ອຸປະກອນເສີມມືຖື",
   "category_Accessories for Laptops": "ອຸປະກອນເສີມສຳລັບແລັບທັອບ",
   "category_Phones": "ໂທລະສັບ",
-  "category_Smartphones": "ສະມາດໂຟນ",
-  "category_Tablets-iPads": "ແທັບເລັດ ແລະ iPads",
+  "category_ສະມາດໂຟນ": "ສະມາດໂຟນ",
+  "category_ແທັບເລັດ-iPads": "ແທັບເລັດ ແລະ iPads",
   "category_Gaming": "ເກມ",
   "category_Consoles": "ເຄື່ອງຫຼິ້ນເກມ",
   "category_PC_Gaming": "ເກມຄອມພິວເຕີ",
@@ -166,7 +174,7 @@
   "login_no_account_text": "ທ່ານຍັງບໍ່ມີບັນຊີ?",
   "login_register_link": "ລົງທະບຽນ",
   "login_success_message": "ເຂົ້າສູ່ລະບົບສຳເລັດ!",
-  "login_failed_message": "ເຂົ້າສູ່ລະບົບຜິດພາດ: {{error}}",
+  "login_failed_message": "ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ",
   "login_alert_close_button": "ປິດ",
 
   "register_page_title": "ສ້າງບັນຊີ",
@@ -182,7 +190,7 @@
   "register_already_account_text": "ມີບັນຊີແລ້ວ?",
   "register_login_link": "ເຂົ້າສູ່ລະບົບ",
   "register_success_message": "ລົງທະບຽນສຳເລັດ! ກະລຸນາເຂົ້າສູ່ລະບົບ.",
-  "register_failed_message": "ລົງທະບຽນຜິດພາດ: {{error}}",
+  "register_failed_message": "ຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວມີຜູ້ໃຊ້ງານແລ້ວ",
   "register_alert_close_button": "ປິດ",
 
   "admin_dashboard": {

@@ -1,3 +1,5 @@
+require("dotenv").config(); // Load environment variables from .env file
+
 // Import the express library
 const express = require("express");
 const { Pool } = require("pg");
@@ -34,11 +36,11 @@ const port = process.env.PORT || 5000;
 
 // Database connection pool setup
 const pool = new Pool({
-  user: "postgres", // Replace with your PostgreSQL username
-  host: "localhost", // Replace with your PostgreSQL host
-  database: "e_commerce", // Replace with your PostgreSQL database name
-  password: "123", // Replace with your PostgreSQL password
-  port: 5432, // Default PostgreSQL port
+  user: process.env.DB_USER, // Use environment variable for username
+  host: process.env.DB_HOST, // Use environment variable for host
+  database: process.env.DB_DATABASE, // Use environment variable for database name
+  password: process.env.DB_PASSWORD, // Use environment variable for password
+  port: process.env.DB_PORT, // Use environment variable for port
 });
 
 // Test database connection (optional, but good practice)
@@ -52,9 +54,9 @@ pool.connect((err, client, release) => {
 
 // Cloudinary configuration
 cloudinary.config({
-  cloud_name: "dgfk0ljyq", // Replace with your Cloudinary cloud name
-  api_key: "125295214115594", // Replace with your Cloudinary API key
-  api_secret: "fWZWhN3KOQSzW-YMEPKMDvP0a8M", // Replace with your Cloudinary API secret
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // Use environment variable for cloud name
+  api_key: process.env.CLOUDINARY_API_KEY, // Use environment variable for API key
+  api_secret: process.env.CLOUDINARY_API_SECRET, // Use environment variable for API secret
 });
 
 // Configure multer for file uploads
@@ -726,8 +728,7 @@ app.delete("/api/cart/clear", authenticateToken, async (req, res) => {
 // Example: app.get('/api/products', async (req, res) => { ... });
 
 // Secret key for JWT (should be stored securely, e.g., in environment variables)
-const jwtSecret =
-  "ac4032c29c623d530ef35a38f4d05b736a88ba9aa7d43f5a9d179eced08260f764855cb16fa77b5ed611396a70ccbad5ad61628ea6c9a37244c73900f2216c55909e9b4833400ed637dd6d787b99b3d8f5b0e4c2408dec7e9883b2012d75444626bc8a8c4d74cae0a3f169cb9817894f5c5872baeb9514ba42cd030909313d49"; // TODO: Replace with a strong, secure key
+const jwtSecret = process.env.JWT_SECRET; // Use environment variable for JWT secret
 
 // Middleware to authenticate token
 function authenticateToken(req, res, next) {
@@ -1040,10 +1041,6 @@ app.get("/api/orders/:id", async (req, res) => {
           0
         )
         .toFixed(2);
-    }
-    // Ensure payment_proof is a relative path
-    if (order.payment_proof && !order.payment_proof.startsWith("/uploads/")) {
-      order.payment_proof = `/uploads/payment_proof/${order.payment_proof}`;
     }
     res.json(order);
   } catch (err) {
@@ -1637,7 +1634,41 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
     }
 
     await client.query("COMMIT");
-    res.status(200).json({ message: "Profile updated successfully" });
+    // Fetch and return the updated user profile
+    const updatedUserResult = await client.query(
+      `SELECT
+         u.id,
+         u.username,
+         u.email,
+         u.is_admin,
+         c.name AS customer_name,
+         c.phone AS customer_phone,
+         c.address AS customer_address
+       FROM users u
+       LEFT JOIN customers c ON u.id = c.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+    const updatedUserProfile = updatedUserResult.rows[0];
+
+    if (updatedUserProfile) {
+      // Restructure the response to match frontend expectation (user.customer)
+      const formattedProfile = {
+        id: updatedUserProfile.id,
+        username: updatedUserProfile.username,
+        email: updatedUserProfile.email,
+        is_admin: updatedUserProfile.is_admin,
+        customer: {
+          name: updatedUserProfile.customer_name,
+          phone: updatedUserProfile.customer_phone,
+          address: updatedUserProfile.customer_address,
+        },
+      };
+      res.status(200).json(formattedProfile);
+    } else {
+      // Should not happen if update was successful
+      res.status(500).json({ error: "Failed to retrieve updated profile" });
+    }
   } catch (err) {
     await client.query("ROLLBACK"); // Rollback transaction on error
     console.error("Error updating user profile:", err);

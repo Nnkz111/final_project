@@ -3,6 +3,7 @@ import { useCart } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import QrModal from "./QrModal";
 
 function Checkout() {
   const { cartItems, clearCart } = useCart();
@@ -22,6 +23,8 @@ function Checkout() {
   const fileInputRef = useRef();
   const { t } = useTranslation();
 
+  const [modalImageUrl, setModalImageUrl] = useState(null);
+
   useEffect(() => {
     // Update form state if user and customer data are available
     if (user?.customer) {
@@ -30,10 +33,46 @@ function Checkout() {
         name: user.customer.name || "",
         address: user.customer.address || "",
         phone: user.customer.phone || "",
-        // email is already handled on initial load and doesn't need to be updated here usually
+        email: user.email || "",
       }));
     }
-  }, [user]); // Depend on the user object
+  }, [user]); // Depend on the user object for context changes
+
+  // Add useEffect to fetch fresh user data when component mounts or user changes
+  useEffect(() => {
+    const fetchFreshUserData = async () => {
+      const token = localStorage.getItem("customerToken");
+      if (!user || !token) {
+        // User not logged in, form will remain with initial empty state
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const freshUser = await response.json();
+          setForm((prevForm) => ({
+            ...prevForm,
+            name: freshUser.customer?.name || "",
+            address: freshUser.customer?.address || "",
+            phone: freshUser.customer?.phone || "",
+            email: freshUser.email || "",
+          }));
+        } else {
+          console.error("Failed to fetch fresh user data:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching fresh user data:", error);
+      }
+    };
+
+    fetchFreshUserData();
+  }, [user]); // Also depend on user here, though mainly for initial load/login
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -94,6 +133,14 @@ function Checkout() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const openModal = (imageUrl) => {
+    setModalImageUrl(imageUrl);
+  };
+
+  const closeModal = () => {
+    setModalImageUrl(null);
+  };
 
   return (
     <div className="container mx-auto mt-8 p-2 md:p-8 flex flex-col md:flex-row gap-8">
@@ -231,6 +278,23 @@ function Checkout() {
           {/* Payment Proof Upload (if bank transfer) */}
           {form.payment_type === "bank_transfer" && (
             <div>
+              {/* QR Code Image Section */}
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold mb-2">
+                  Scan to Pay (Bank Transfer)
+                </h4>
+                {/* Make the image clickable */}
+                <img
+                  src="https://res.cloudinary.com/dgfk0ljyq/image/upload/v1748901020/Qr-bcel_x58vwf.jpg"
+                  alt="Bank Transfer QR Code"
+                  className="mx-auto w-48 h-48 object-contain border rounded-md p-2 cursor-pointer"
+                  onClick={() =>
+                    openModal(
+                      "https://res.cloudinary.com/dgfk0ljyq/image/upload/v1748901020/Qr-bcel_x58vwf.jpg"
+                    )
+                  }
+                />
+              </div>
               <label className="block font-semibold mb-2">
                 {t("upload_payment_proof_label")}
               </label>
@@ -264,6 +328,9 @@ function Checkout() {
           )}
         </form>
       </div>
+
+      {/* Render the modal */}
+      <QrModal imageUrl={modalImageUrl} onClose={closeModal} />
     </div>
   );
 }

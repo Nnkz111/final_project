@@ -34,6 +34,7 @@ import MegaSidebar from "./components/MegaSidebar";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 import AdminUserManagement from "./components/AdminUserManagement";
+import Footer from "./components/Footer";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -101,6 +102,7 @@ const CustomerLayout = () => {
       <div className="container mx-auto flex-1 p-4">
         <Outlet />
       </div>
+      <Footer />
     </div>
   );
 };

@@ -92,10 +92,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("customerUser"); // Use customerUser
   };
 
+  // Function to update user state and localStorage
+  const updateUser = (updatedUserInfo) => {
+    setUser(updatedUserInfo);
+    localStorage.setItem("customerUser", JSON.stringify(updatedUserInfo));
+  };
+
   // Provide loading state as well
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout }}
+      value={{ user, token, isLoading, login, register, logout, updateUser }}
     >
       {!isLoading && children}
       {isLoading && <div>Loading user...</div>}{" "}
