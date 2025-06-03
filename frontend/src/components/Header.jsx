@@ -34,7 +34,7 @@ function Header({ showMegaDropdown }) {
 
   // Dropdown menu for categories
   const renderCategoryDropdown = () => (
-    <nav className="w-full bg-white border-b border-gray-200 shadow-sm z-40">
+    <nav className="w-full bg-white border-b border-gray-200 shadow-sm z-40 sticky top-[64px]">
       <div className="container mx-auto flex flex-row items-stretch relative">
         <ul className="flex flex-row gap-2 py-2 w-full overflow-x-auto">
           {hierarchicalCategories.map((cat) => (
@@ -107,7 +107,7 @@ function Header({ showMegaDropdown }) {
 
   return (
     <>
-      <header className="bg-black text-white p-4 shadow-md">
+      <header className="bg-black text-white p-4 shadow-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
           {/* Logo Area - now clickable */}
           <Link

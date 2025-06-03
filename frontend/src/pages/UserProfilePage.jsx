@@ -251,7 +251,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="email"
                 >
-                  Email:
+                  {t("email_label")}:
                 </label>
                 <input
                   type="email"
@@ -267,7 +267,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="name"
                 >
-                  Name:
+                  {t("name_label")}:
                 </label>
                 <input
                   type="text"
@@ -299,7 +299,7 @@ function UserProfilePage() {
                   className="block text-gray-700 text-sm font-bold mb-2"
                   htmlFor="address"
                 >
-                  Address:
+                  {t("address_label")}:
                 </label>
                 <textarea
                   id="address"

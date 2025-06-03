@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext"; // Import useCategories
+import { useTranslation } from "react-i18next";
 
 const Breadcrumbs = () => {
   const location = useLocation();
   const pathnames = location.pathname.split("/").filter((x) => x);
   const { categories } = useCategories(); // Get categories from context
+  const { t } = useTranslation(); // Initialize useTranslation
 
   // State to hold fetched names and loading status for each segment by index
   const [segmentData, setSegmentData] = useState({});
@@ -29,9 +31,10 @@ const Breadcrumbs = () => {
 
   // Helper to get category name by id from the context
   const getCategoryName = (id) => {
-    if (!categories || categories.length === 0) return `Category ${id}`; // Return ID if categories not loaded
+    if (!categories || categories.length === 0) return t(`Category ${id}`); // Return translated ID fallback if categories not loaded
     const category = categories.find((cat) => String(cat.id) === String(id));
-    return category ? category.name : `Category ${id}`; // Return name if found, otherwise ID
+    // Return the raw category name here, translation will be applied based on position in breadcrumbItems
+    return category ? category.name : `Category ${id}`;
   };
 
   useEffect(() => {
@@ -59,12 +62,13 @@ const Breadcrumbs = () => {
           id: name,
         });
       } else if (isCategorySegment) {
-        // Category names are available from the context immediately, no async fetch needed
+        // Category names are available from the context immediately
+        // Store raw name; translation will be applied in breadcrumbItems generation based on position
         const categoryName = getCategoryName(name);
         initialSegmentData[index] = { name: categoryName, isLoading: false };
       } else {
         initialSegmentData[index] = {
-          name: name.charAt(0).toUpperCase() + name.slice(1),
+          name: t(name.charAt(0).toUpperCase() + name.slice(1)), // Translate capitalized segment
           isLoading: false,
         };
       }
@@ -101,11 +105,12 @@ const Breadcrumbs = () => {
               ...prevData,
               [index]: {
                 type: "productWithCategory",
+                // Store raw category names; translation will be applied in breadcrumbItems generation
                 hierarchy: hierarchy.map((cat) => ({
                   name: cat.name,
                   id: cat.id,
                 })),
-                productName: product.name,
+                productName: product.name, // Keep raw product name for fetching
                 productId: product.id,
                 isLoading: false,
               },
@@ -114,32 +119,32 @@ const Breadcrumbs = () => {
             // Product found, but category not found in context
             setSegmentData((prevData) => ({
               ...prevData,
-              [index]: { name: product.name, isLoading: false }, // Fallback to just product name
+              [index]: { name: product.name, isLoading: false }, // Fallback to just raw product name
             }));
           }
         } else if (product) {
           // Product found, but no category ID
           setSegmentData((prevData) => ({
             ...prevData,
-            [index]: { name: product.name, isLoading: false }, // Fallback to just product name
+            [index]: { name: product.name, isLoading: false }, // Fallback to just raw product name
           }));
         } else {
           // Product not found or error
           setSegmentData((prevData) => ({
             ...prevData,
-            [index]: { name: `Product ${id}`, isLoading: false }, // Fallback to Product ID
+            [index]: { name: `Product ${id}`, isLoading: false }, // Fallback to raw Product ID
           }));
         }
       }
     });
-  }, [location.pathname, categories]); // Re-run effect when pathname or categories change
+  }, [location.pathname, categories, t]); // Added t as a dependency
 
   // Build the breadcrumb items array
   const breadcrumbItems = [];
 
-  // Add Home breadcrumb
+  // Add Home breadcrumb (always translated)
   breadcrumbItems.push({
-    name: "Home",
+    name: t("Home"),
     routeTo: "/",
     isLast: false,
     isLoading: false,
@@ -149,16 +154,16 @@ const Breadcrumbs = () => {
     .split("/")
     .filter((segment) => segment !== "");
 
-  // Explicitly handle /checkout path to include Cart
+  // Explicitly handle /checkout path
   if (location.pathname === "/checkout") {
     breadcrumbItems.push({
-      name: "Cart",
+      name: t("Cart"),
       routeTo: "/cart",
       isLast: false,
       isLoading: false,
     });
     breadcrumbItems.push({
-      name: "Checkout",
+      name: t("Checkout"),
       routeTo: "/checkout",
       isLast: true,
       isLoading: false,
@@ -166,13 +171,13 @@ const Breadcrumbs = () => {
   } else if (pathSegments[0] === "category") {
     // Handle paths starting with 'category'
     breadcrumbItems.push({
-      name: "Category",
-      routeTo: "/categories", // Link to the category list page
-      isLast: pathSegments.length === 1, // Is last if only /category
+      name: t("Category"), // Translate the base "Category" link
+      routeTo: "/categories",
+      isLast: pathSegments.length === 1,
       isLoading: false,
     });
 
-    // Find the current category ID from the path (last numeric segment after 'category')
+    // Find the current category ID from the path
     const categoryId = pathSegments.findLast(
       (segment) => !isNaN(segment) && segment !== ""
     );
@@ -190,30 +195,33 @@ const Breadcrumbs = () => {
             (cat) => String(cat.id) === String(currentCategory.parent_id)
           );
         } else {
-          currentCategory = null; // Reached the top level
+          currentCategory = null;
         }
       }
 
-      // Add categories from the traced hierarchy to breadcrumbs (excluding the first one if it's the target of the base /categories link)
+      // Add categories from the traced hierarchy to breadcrumbs
       let cumulativeCategoryPath = "/category";
       hierarchy.forEach((cat, index) => {
-        // Construct the route incrementally based on the hierarchy IDs
         cumulativeCategoryPath += `/${cat.id}`;
 
         const isLast =
           index === hierarchy.length - 1 &&
-          pathSegments.indexOf(String(cat.id)) === pathSegments.length - 1; // Check if this is the last category in the hierarchy and the last segment in the original path
+          pathSegments.indexOf(String(cat.id)) === pathSegments.length - 1;
+
+        // Translate only the direct child of the base 'Category' link (index 0 in hierarchy)
+        const categoryDisplayName =
+          index === 0 ? t(`category_${cat.name}`) : cat.name;
 
         breadcrumbItems.push({
-          name: cat.name,
-          routeTo: cumulativeCategoryPath, // Hierarchical route
+          name: categoryDisplayName, // Use conditionally translated name
+          routeTo: cumulativeCategoryPath,
           isLast: isLast,
-          isLoading: false, // Assuming category names from context are not async loaded here
+          isLoading: false,
         });
       });
     }
 
-    // Handle any segments *after* the category path (shouldn't happen with current routing, but for robustness)
+    // Handle any segments *after* the category path (shouldn't happen with current routing)
     const lastCategorySegmentIndex = pathSegments.findLastIndex(
       (segment) => !isNaN(segment) && segment !== ""
     );
@@ -226,8 +234,9 @@ const Breadcrumbs = () => {
         pathSegments.slice(1, lastCategorySegmentIndex + 1).join("/"); // Start path from /category/last-category-id
       for (let i = lastCategorySegmentIndex + 1; i < pathSegments.length; i++) {
         subsequentPath += `/${pathSegments[i]}`;
-        const segmentName =
-          pathSegments[i].charAt(0).toUpperCase() + pathSegments[i].slice(1);
+        const segmentName = t(
+          pathSegments[i].charAt(0).toUpperCase() + pathSegments[i].slice(1)
+        ); // Translate capitalized segment
         const isLast = i === pathSegments.length - 1;
         // Determine if it's a product segment if needed
 
@@ -242,7 +251,7 @@ const Breadcrumbs = () => {
   } else if (pathSegments[0] === "products") {
     // Handle paths starting with /products
     breadcrumbItems.push({
-      name: "Products",
+      name: t("Products"), // Translate "Products"
       routeTo: "/products",
       isLast: pathSegments.length === 1,
       isLoading: false,
@@ -254,22 +263,25 @@ const Breadcrumbs = () => {
     if (productSegmentData?.type === "productWithCategory") {
       // Add category hierarchy breadcrumbs
       let cumulativeCategoryPath = "/category";
-      productSegmentData.hierarchy.forEach((cat, index) => {
+      productSegmentData.hierarchy.forEach((cat, index, arr) => {
         cumulativeCategoryPath += `/${cat.id}`;
+        // Translate all categories in the product hierarchy using the category_<name> format
+        const categoryDisplayName = t(`category_${cat.name}`);
+
         breadcrumbItems.push({
-          name: cat.name,
+          name: categoryDisplayName, // Use translated category name
           routeTo: cumulativeCategoryPath,
           isLast: false, // Not the last item yet
           isLoading: false,
         });
       });
 
-      // Add the product breadcrumb
+      // Add the product breadcrumb (always translated)
       const productRoute = `/products/${productSegmentData.productId}`;
       breadcrumbItems.push({
-        name: productSegmentData.productName,
+        name: t(productSegmentData.productName), // Translate product name
         routeTo: productRoute,
-        isLast: true, // This is the last item
+        isLast: true,
         isLoading: false,
       });
     } else if (pathSegments.length > 1 && !isNaN(pathSegments[1])) {
@@ -277,7 +289,7 @@ const Breadcrumbs = () => {
       const productId = pathSegments[1];
       const productRoute = `/products/${productId}`;
       breadcrumbItems.push({
-        name: productSegmentData?.name || `Product ${productId}`, // Use fetched product name or fallback
+        name: t(productSegmentData?.name) || t(`Product ${productId}`), // Use fetched product name or fallback, translated
         routeTo: productRoute,
         isLast: pathSegments.length === 2,
         isLoading: productSegmentData?.isLoading || false,
@@ -289,8 +301,9 @@ const Breadcrumbs = () => {
       let productSubsequentPath = `/products/${pathSegments[1]}`;
       for (let i = 2; i < pathSegments.length; i++) {
         productSubsequentPath += `/${pathSegments[i]}`;
-        const segmentName =
-          pathSegments[i].charAt(0).toUpperCase() + pathSegments[i].slice(1);
+        const segmentName = t(
+          pathSegments[i].charAt(0).toUpperCase() + pathSegments[i].slice(1)
+        ); // Translate capitalized segment
         breadcrumbItems.push({
           name: segmentName,
           routeTo: productSubsequentPath,
@@ -302,7 +315,7 @@ const Breadcrumbs = () => {
   } else if (pathSegments[0] === "cart") {
     // Handle /cart path
     breadcrumbItems.push({
-      name: "Cart",
+      name: t("Cart"), // Translate "Cart"
       routeTo: "/cart",
       isLast: pathSegments.length === 1, // Is last if only /cart
       isLoading: false,
@@ -311,28 +324,50 @@ const Breadcrumbs = () => {
     // Handle any segments after /cart (e.g., /cart/checkout)
     if (pathSegments.length > 1 && pathSegments[1] === "checkout") {
       breadcrumbItems.push({
-        name: "Checkout",
+        name: t("Checkout"), // Translate "Checkout"
         routeTo: "/cart/checkout", // Link to the checkout page
         isLast: pathSegments.length === 2, // Is last if only /cart/checkout
         isLoading: false,
       });
     }
   } else if (pathSegments.length > 0) {
-    // Handle general paths, including cart and checkout
+    // Handle general paths
     let cumulativePath = "";
     pathSegments.forEach((name, index) => {
       cumulativePath += `/${name}`;
       let displayName = name.charAt(0).toUpperCase() + name.slice(1);
 
-      // Customize display name for specific segments if needed
+      // Customize display name for specific segments (always translated)
       if (name === "cart") {
-        displayName = "Cart";
+        displayName = t("Cart");
       } else if (name === "checkout") {
-        displayName = "Checkout";
-      } // Add other custom names here if needed
+        displayName = t("Checkout");
+      } else if (name === "profile") {
+        // Added translation for profile
+        displayName = t("profile");
+      } else if (name === "my-orders") {
+        // Added translation for my-orders
+        displayName = t("my_orders");
+      } else {
+        // For other general segments, check if it matches a category name (case-insensitive)
+        const potentialCategory = categories.find(
+          (cat) => cat.name.toLowerCase() === name.toLowerCase()
+        );
+        if (potentialCategory) {
+          // Translate if it's a category name, but only if it's the first segment after Home
+          // This handles cases like /Electronics directly
+          displayName =
+            index === 0
+              ? t(`category_${potentialCategory.name}`)
+              : potentialCategory.name;
+        } else {
+          // Default translation for capitalized segments
+          displayName = t(displayName);
+        }
+      }
 
       breadcrumbItems.push({
-        name: displayName,
+        name: displayName, // Use determined display name (potentially translated)
         routeTo: cumulativePath,
         isLast: index === pathSegments.length - 1,
         isLoading: false,
@@ -346,22 +381,31 @@ const Breadcrumbs = () => {
   }
 
   return (
-    <nav aria-label="breadcrumb" className="text-gray-700 p-4">
+    <nav className="text-sm font-medium text-gray-500">
       <ol className="list-none p-0 inline-flex">
         {breadcrumbItems.map((item, index) => (
-          <li key={index} className="flex items-center">
-            <span className="mx-2">/</span>
+          <li
+            key={index}
+            className={`flex items-center ${
+              item.isLast ? "text-gray-700" : ""
+            }`}
+          >
             {item.isLast ? (
-              <span className="text-gray-500">
-                {item.isLoading ? "Loading..." : item.name}
-              </span>
+              <span className="text-gray-700">{item.name}</span>
             ) : (
-              <Link
-                to={item.routeTo}
-                className="text-black-600 hover:underline"
-              >
+              <Link to={item.routeTo} className="text-blue-600 hover:underline">
                 {item.isLoading ? "Loading..." : item.name}
               </Link>
+            )}
+            {!item.isLast && (
+              <svg
+                className="fill-current w-3 h-3 mx-3 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 320 512"
+              >
+                {/* Font Awesome angle-right icon (for separator) */}
+                <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
+              </svg>
             )}
           </li>
         ))}

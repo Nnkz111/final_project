@@ -103,12 +103,19 @@ function SearchResultsPage() {
                     {product.name}
                   </h3>
                   <div className="flex items-center justify-between mt-auto">
-                    <p className="text-green-600 font-bold mt-auto">
-                      {parseFloat(product.price).toLocaleString("lo-LA", {
-                        style: "currency",
-                        currency: "LAK",
-                      })}
-                    </p>
+                    {/* Conditional display for price or out of stock */}
+                    {product.stock_quantity > 0 ? (
+                      <p className="text-green-600 font-bold mt-auto">
+                        {parseFloat(product.price).toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-red-600 font-bold mt-auto">
+                        {t("out_of_stock")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </a>

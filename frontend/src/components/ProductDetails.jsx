@@ -57,6 +57,13 @@ function ProductDetails() {
       navigate("/login");
       return;
     }
+
+    // Check if product is out of stock before adding
+    if (product && product.stock_quantity <= 0) {
+      alert("Product is out of stock.");
+      return;
+    }
+
     const productId = product.id;
     // Use the quantity state variable here
     try {
@@ -182,12 +189,14 @@ function ProductDetails() {
             </h1>
             {/* Price/Discount Badge */}
             <div className="flex items-center gap-4 mb-2">
+              {/* Always display price */}
               <span className="text-2xl md:text-3xl font-bold text-green-600">
                 {parseFloat(product.price).toLocaleString("lo-LA", {
                   style: "currency",
                   currency: "LAK",
                 })}
               </span>
+
               {hasDiscount && (
                 <>
                   <span className="text-lg text-red-500 line-through">
@@ -208,59 +217,79 @@ function ProductDetails() {
                 {product.description}
               </p>
             )}
+
+            {/* Display Stock Quantity */}
+            <div className="mb-4 text-gray-700 text-base md:text-lg">
+              {product.stock_quantity > 0 ? (
+                <span>
+                  {t("stock_label")}: {product.stock_quantity}
+                </span>
+              ) : (
+                <span className="text-red-600 font-bold">
+                  {t("out_of_stock")}
+                </span>
+              )}
+            </div>
           </div>
           {/* Quantity Selector & Add to Cart Button */}
           <div className="mt-6 flex flex-col gap-4">
-            <div className="flex items-center gap-4">
-              <span className="font-medium">{t("quantity_label")}</span>
-              <div className="flex items-center border rounded-md overflow-hidden">
-                <button
-                  className="px-3 py-1 text-lg font-bold text-gray-600 hover:bg-gray-200"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                >
-                  –
-                </button>
-                <input
-                  type="number"
-                  className="w-12 text-center border-0 focus:ring-0"
-                  value={quantity}
-                  min={1}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                  }
-                />
-                <button
-                  className="px-3 py-1 text-lg font-bold text-gray-600 hover:bg-gray-200"
-                  onClick={() => setQuantity((q) => q + 1)}
-                >
-                  +
-                </button>
+            {/* Conditionally render quantity selector and add to cart button */}
+            {product.stock_quantity > 0 ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <span className="font-medium">{t("quantity_label")}</span>
+                  <div className="flex items-center border rounded-md overflow-hidden">
+                    <button
+                      className="px-3 py-1 text-lg font-bold text-gray-600 hover:bg-gray-200"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      –
+                    </button>
+                    <input
+                      type="number"
+                      className="w-12 text-center border-0 focus:ring-0"
+                      value={quantity}
+                      min={1}
+                      onChange={(e) =>
+                        setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                      }
+                    />
+                    <button
+                      className="px-3 py-1 text-lg font-bold text-gray-600 hover:bg-gray-200"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      disabled={quantity >= product.stock_quantity}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row gap-4 mt-2">
+                  <button
+                    className="w-64 bg-black hover:opacity-80 text-white font-bold py-3 rounded-lg text-lg shadow transition"
+                    onClick={handleAddToCart}
+                  >
+                    {t("product_details_add_to_cart_button")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-red-600 font-bold text-lg">
+                {t("out_of_stock")}
               </div>
-            </div>
-            <div className="flex flex-col md:flex-row gap-4 mt-2">
-              <button
-                className="w-64 bg-black hover:opacity-80 text-white font-bold py-3 rounded-lg text-lg shadow transition"
-                onClick={handleAddToCart}
-                disabled={
-                  typeof product.stock === "number" && product.stock <= 0
-                }
-              >
-                {t("product_details_add_to_cart_button")}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.4s cubic-bezier(.4,0,.2,1);
-        }
-      `}</style>
+
+      {/* Related Products Section (Optional) */}
+      {/* <div className="mt-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          // Example related product cards
+          // <ProductCard product={...} />
+        </div>
+      </div> */}
     </div>
   );
 }

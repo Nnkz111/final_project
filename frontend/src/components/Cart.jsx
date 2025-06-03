@@ -71,6 +71,17 @@ function Cart() {
       return;
     }
 
+    // Find the item in the current cartItems state to get its stock
+    const itemToUpdate = cartItems.find((item) => item.id === cartItemId);
+
+    // Prevent updating quantity if it exceeds stock
+    if (itemToUpdate && newQuantity > itemToUpdate.stock_quantity) {
+      alert(`${t("out_of_stock")}: ${itemToUpdate.name}`);
+      // Optionally, you can set the quantity to the max available stock instead of just alerting
+      // handleUpdateQuantity(cartItemId, itemToUpdate.stock_quantity);
+      return;
+    }
+
     // Use the updateCartItemQuantity function from CartContext
     await updateCartItemQuantity(cartItemId, newQuantity);
     // After successful update, refetch the cart items to update the UI
@@ -171,6 +182,7 @@ function Cart() {
                       onClick={() =>
                         handleUpdateQuantity(item.id, item.quantity + 1)
                       }
+                      disabled={item.quantity >= item.stock_quantity} // Disable if quantity reaches or exceeds stock
                       aria-label="Increase quantity"
                     >
                       +

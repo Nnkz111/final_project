@@ -33,7 +33,7 @@ function CategoryMegaDropdown() {
   };
 
   return (
-    <div className="relative w-full z-50">
+    <div className="relative w-full z-40 sticky top-[64px]">
       <div
         className="bg-black text-white font-bold px-8 py-3 cursor-pointer flex items-center gap-2 select-none"
         onMouseEnter={() => setOpen(true)}

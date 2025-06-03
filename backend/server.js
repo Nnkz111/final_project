@@ -221,9 +221,10 @@ app.get("/api/products/search", async (req, res) => {
 
   try {
     // Use a case-insensitive search for product name or description
+    // Include stock_quantity in the select statement
     const result = await pool.query(
       `
-      SELECT id, name, description, price, image_url
+      SELECT id, name, description, price, image_url, stock_quantity
       FROM products
       WHERE name ILIKE $1 OR description ILIKE $1
       ${orderByClause}
@@ -532,8 +533,9 @@ app.get("/api/cart/:userId", authenticateToken, async (req, res) => {
 
   try {
     // Use the authenticated user ID for the database query
+    // Include product.stock_quantity in the select statement
     const result = await pool.query(
-      "SELECT ci.id, ci.product_id, ci.quantity, p.name, p.price, p.image_url FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.user_id = $1",
+      "SELECT ci.id, ci.product_id, ci.quantity, p.name, p.price, p.image_url, p.stock_quantity FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.user_id = $1",
       [authenticatedUserId]
     );
     res.json(result.rows);

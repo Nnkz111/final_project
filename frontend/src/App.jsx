@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Routes, Route, Outlet, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ProductList from "./components/ProductList";
@@ -53,6 +59,7 @@ const CustomerLayout = () => {
   const isHomePage = location.pathname === "/"; // Check if it's the homepage
   const isCategoryListPage = location.pathname === "/categories"; // Check if it's the category list page
   const isProductListPage = location.pathname === "/products"; // Check if it's the product list page
+  const navigate = useNavigate();
 
   const [bannerHeight, setBannerHeight] = useState(0); // State to store banner height
   const bannerContainerRef = useRef(null); // Ref for the banner container
@@ -69,8 +76,12 @@ const CustomerLayout = () => {
       {" "}
       {/* Customer layout container */}
       <Header showMegaDropdown={!isHomePage} />
-      {/* Add Breadcrumbs here, show only if not homepage */}
-      {!isHomePage && <Breadcrumbs />}
+      {/* Display Breadcrumbs on non-homepage pages */}
+      {!isHomePage && (
+        <div className="container mx-auto p-4">
+          <Breadcrumbs />
+        </div>
+      )}
       {/* Sidebar and HeroSlider in the same row/section */}
       {/* Exclude sidebar and hero slider on specific pages like product detail, cart, etc., AND the category list page and product list page */}
       {!isProductDetail &&
@@ -99,6 +110,7 @@ const CustomerLayout = () => {
           </div>
         )}
       {/* Product list and other content below */}
+      {/* Adjusted padding for sticky header and dropdown */}
       <div className="container mx-auto flex-1 p-4">
         <Outlet />
       </div>

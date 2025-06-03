@@ -119,12 +119,19 @@ function ProductList() {
                   </h3>
 
                   <div className="flex items-center justify-between mt-auto">
-                    <p className="text-green-600 font-bold mt-auto">
-                      {parseFloat(product.price).toLocaleString("lo-LA", {
-                        style: "currency",
-                        currency: "LAK",
-                      })}
-                    </p>
+                    {product.stock_quantity > 0 ? (
+                      <p className="text-green-600 font-bold mt-auto">
+                        {parseFloat(product.price).toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-red-600 font-bold mt-auto">
+                        {t("out_of_stock")}
+                      </p>
+                    )}
+
                     {/* Removed Add to Cart button to match image design */}
                   </div>
                 </div>

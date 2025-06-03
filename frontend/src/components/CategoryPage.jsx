@@ -197,12 +197,22 @@ function CategoryPage() {
                           <div className="font-semibold text-base text-gray-800 mt-1">
                             {product.name}
                           </div>
-                          <div className="text-sm text-green-600 mt-1">
-                            {parseFloat(product.price).toLocaleString("lo-LA", {
-                              style: "currency",
-                              currency: "LAK",
-                            })}
-                          </div>
+                          {/* Conditional display for price or out of stock */}
+                          {product.stock_quantity > 0 ? (
+                            <div className="text-sm text-green-600 mt-1">
+                              {parseFloat(product.price).toLocaleString(
+                                "lo-LA",
+                                {
+                                  style: "currency",
+                                  currency: "LAK",
+                                }
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-red-600 mt-1 font-bold">
+                              {t("out_of_stock")}
+                            </div>
+                          )}
                         </div>
                       </Link>
                     ))}
