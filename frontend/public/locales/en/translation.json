@@ -458,6 +458,12 @@
     "dropdown_empty": "No notifications",
     "dropdown_view_all": "View All Notifications"
   },
+  "notifications": "Notifications",
+  "No_notifications": "No notifications",
+  "view_all_notifications": "View All Notifications",
+  "notification.order_status_update": "Your order #{{orderId}} has been updated to {{status}}.",
+
+  "notification.customer_order_placed": "Your order #{{orderId}} has been placed successfully.",
 
   "Confirm": "Confirm",
   "Cancel": "Cancel",

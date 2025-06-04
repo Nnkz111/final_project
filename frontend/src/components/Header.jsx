@@ -5,11 +5,16 @@ import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useCategories } from "../context/CategoryContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import CategoryMegaDropdown from "./CategoryMegaDropdown";
+import "flag-icons/css/flag-icons.min.css";
 import { useTranslation } from "react-i18next"; // Import useTranslation
+import {
+  getUserNotifications,
+  markNotificationAsRead,
+} from "../api/notificationApi"; // Import API functions
 
 function Header({ showMegaDropdown }) {
   const { cartItemCount } = useCart(); // Get count from context
-  const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
+  const { user, logout, token } = useContext(AuthContext); // Get user, logout, AND token from AuthContext
   const [profileOpen, setProfileOpen] = useState(false);
   const { hierarchicalCategories, loading } = useCategories();
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -18,6 +23,9 @@ function Header({ showMegaDropdown }) {
   const [searchTerm, setSearchTerm] = useState("");
   const { t, i18n } = useTranslation(); // Get the t and i18n instance
   const [langDropdownOpen, setLangDropdownOpen] = useState(false); // State for language dropdown
+  const [notificationOpen, setNotificationOpen] = useState(false); // State for notification dropdown
+  const [notifications, setNotifications] = useState([]); // State to store notifications
+  const [unreadCount, setUnreadCount] = useState(0); // State to store unread notification count
 
   // No need to manually fetch or refresh here due to useEffect in CartContext
 
@@ -32,9 +40,69 @@ function Header({ showMegaDropdown }) {
     }
   };
 
+  // Fetch notifications when user is logged in
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      // Ensure user, user.token, and user.id are available and user is not admin
+      if (user && token && user.id && !user.is_admin) {
+        try {
+          const userNotifications = await getUserNotifications(user.id, token);
+          setNotifications(userNotifications);
+          // Calculate unread count
+          const count = userNotifications.filter(
+            (notif) => !notif.is_read
+          ).length;
+          setUnreadCount(count);
+        } catch (error) {
+          console.error("Failed to fetch notifications:", error);
+        }
+      } else if (!user) {
+        // Clear notifications if user logs out
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds (adjust as needed)
+    const pollingInterval = setInterval(fetchNotifications, 10000);
+
+    return () => clearInterval(pollingInterval); // Cleanup interval on unmount
+  }, [user, token]); // Refetch when user changes
+
+  // Handle marking a notification as read
+  const handleMarkAsRead = async (notificationId) => {
+    if (user && token) {
+      try {
+        await markNotificationAsRead(notificationId, token);
+        // Update the notification in the state
+        setNotifications(
+          notifications.map((notif) =>
+            notif.id === notificationId ? { ...notif, is_read: true } : notif
+          )
+        );
+        // Decrement unread count if it was unread (only if it was previously unread)
+        const notificationToMark = notifications.find(
+          (notif) => notif.id === notificationId
+        );
+        if (notificationToMark && !notificationToMark.is_read) {
+          setUnreadCount((prevCount) => (prevCount > 0 ? prevCount - 1 : 0));
+        }
+      } catch (error) {
+        console.error(
+          `Failed to mark notification ${notificationId} as read:`,
+          error
+        );
+      }
+    }
+  };
+
   // Dropdown menu for categories
   const renderCategoryDropdown = () => (
-    <nav className="w-full bg-white border-b border-gray-200 shadow-sm z-40 sticky top-[64px]">
+    <nav
+      className="w-full bg-white border-b border-gray-200 shadow-sm z-40 sticky top-[64px]"
+      style={{ outline: "2px solid red" }}
+    >
       <div className="container mx-auto flex flex-row items-stretch relative">
         <ul className="flex flex-row gap-2 py-2 w-full overflow-x-auto">
           {hierarchicalCategories.map((cat) => (
@@ -107,7 +175,7 @@ function Header({ showMegaDropdown }) {
 
   return (
     <>
-      <header className="bg-black text-white p-4 shadow-md sticky top-0 z-50">
+      <header className="bg-gray-800 text-white p-4 shadow-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
           {/* Logo Area - now clickable */}
           <Link
@@ -159,64 +227,9 @@ function Header({ showMegaDropdown }) {
             >
               <button className="flex items-center gap-1 focus:outline-none text-sm">
                 {i18n.language === "en" ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 32 24"
-                  >
-                    <mask
-                      id="flagpackUs0"
-                      width="32"
-                      height="24"
-                      x="0"
-                      y="0"
-                      maskUnits="userSpaceOnUse"
-                    >
-                      <path fill="#fff" d="M0 0h32v24H0z" />
-                    </mask>
-                    <g fill="none" mask="url(#flagpackUs0)">
-                      <path
-                        fill="#F7FCFF"
-                        fillRule="evenodd"
-                        d="M0 0h32v24H0V0z"
-                        clipRule="evenodd"
-                      />
-                      <path
-                        fill="#E31D1C"
-                        fillRule="evenodd"
-                        d="M0 14.667v2h32v-2H0zm0 3.666v2h32v-2H0zm0-11v2h32v-2H0zM0 22v2h32v-2H0zm0-11v2h32v-2H0zM0 0v2h32V0H0zm0 3.667v2h32v-2H0z"
-                        clipRule="evenodd"
-                      />
-                      <path fill="#2E42A5" d="M0 0h20v13H0z" />
-                      <path
-                        fill="#F7FCFF"
-                        fillRule="evenodd"
-                        d="m1.722 2.939l-.726.509l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm4 0l-.726.509l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.509l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 7.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 11.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274-7.49l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm.726 3.49l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.905zM3.722 4.938l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-8.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-4.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906z"
-                        clipRule="evenodd"
-                      />
-                    </g>
-                  </svg>
+                  <span className="fi fi-us"></span>
                 ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 512 512"
-                    className="rounded-full h-5 w-5"
-                  >
-                    <mask id="circleFlagsLa0">
-                      <circle cx="256" cy="256" r="256" fill="#fff" />
-                    </mask>
-                    <g mask="url(#circleFlagsLa0)">
-                      <path
-                        fill="#d80027"
-                        d="M0 0h512v144.8l-45.8 113L512 367.4V512H0V367.4l46.3-111.1L0 144.8z"
-                      />
-                      <path fill="#0052b4" d="M0 144.8h512v222.6H0z" />
-                      <circle cx="256" cy="256.1" r="89" fill="#eee" />
-                    </g>
-                  </svg>
+                  <span className="fi fi-la"> </span>
                 )}
                 <span>
                   {i18n.language === "en"
@@ -250,44 +263,7 @@ function Header({ showMegaDropdown }) {
                     }}
                     className="block w-full text-left px-4 py-2 hover:bg-blue-50 text-sm hover:text-blue-600 rounded-lg flex items-center gap-2"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="22"
-                      height="22"
-                      viewBox="0 0 32 24"
-                    >
-                      <mask
-                        id="flagpackUs0"
-                        width="32"
-                        height="24"
-                        x="0"
-                        y="0"
-                        maskUnits="userSpaceOnUse"
-                      >
-                        <path fill="#fff" d="M0 0h32v24H0z" />
-                      </mask>
-                      <g fill="none" mask="url(#flagpackUs0)">
-                        <path
-                          fill="#F7FCFF"
-                          fillRule="evenodd"
-                          d="M0 0h32v24H0V0z"
-                          clipRule="evenodd"
-                        />
-                        <path
-                          fill="#E31D1C"
-                          fillRule="evenodd"
-                          d="M0 14.667v2h32v-2H0zm0 3.666v2h32v-2H0zm0-11v2h32v-2H0zM0 22v2h32v-2H0zm0-11v2h32v-2H0zM0 0v2h32V0H0zm0 3.667v2h32v-2H0z"
-                          clipRule="evenodd"
-                        />
-                        <path fill="#2E42A5" d="M0 0h20v13H0z" />
-                        <path
-                          fill="#F7FCFF"
-                          fillRule="evenodd"
-                          d="m1.722 2.939l-.726.509l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm4 0l-.726.509l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.509l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 7.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zM.996 11.449l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74H.596l.645.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.905zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.905l-.702-.508zm3.274-7.49l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm.726 3.49l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.905zM3.722 4.938l-.726.51l.245-.906l-.645-.574h.843l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-8.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.843l.645.574l-.245.906zm4.726-.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm3.274.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906zm4.726-4.51l-.726.51l.245-.906l-.644-.574h.842l.282-.74l.331.74h.718l-.564.574l.218.906l-.702-.51zm-.726 4.51l.726-.51l.702.51l-.218-.906l.564-.574h-.718l-.331-.74l-.282.74h-.842l.644.574l-.245.906z"
-                          clipRule="evenodd"
-                        />
-                      </g>
-                    </svg>
+                    <span className="fi fi-us"></span>
                     English
                   </button>
                   <button
@@ -298,29 +274,112 @@ function Header({ showMegaDropdown }) {
                     className="block w-full text-left px-4 py-2 hover:bg-blue-50 text-sm hover:text-blue-600 rounded-lg  flex items-center gap-2"
                   >
                     {" "}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="22"
-                      height="22"
-                      viewBox="0 0 512 512"
-                    >
-                      <mask id="circleFlagsLa0">
-                        <circle cx="256" cy="256" r="256" fill="#fff" />
-                      </mask>
-                      <g mask="url(#circleFlagsLa0)">
-                        <path
-                          fill="#d80027"
-                          d="M0 0h512v144.8l-45.8 113L512 367.4V512H0V367.4l46.3-111.1L0 144.8z"
-                        />
-                        <path fill="#0052b4" d="M0 144.8h512v222.6H0z" />
-                        <circle cx="256" cy="256.1" r="89" fill="#eee" />
-                      </g>
-                    </svg>
+                    <span className="fi fi-la"></span>
                     ລາວ
                   </button>
                 </div>
               )}
             </div>
+
+            {/* Notification Icon and Dropdown */}
+            {user && !user.is_admin && (
+              <div
+                className="relative group flex items-center"
+                onMouseEnter={() => setNotificationOpen(true)}
+                onMouseLeave={() => setNotificationOpen(false)}
+              >
+                <button className="flex items-center gap-2 focus:outline-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.465 6.015 6 8.309 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0v2a3 3 0 01-3 3H9a3 3 0 01-3-3v-2m6 0H9"
+                    />
+                  </svg>
+
+                  {/* Notification count badge */}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {/* Notification Dropdown Menu */}
+                <div
+                  className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
+                    notificationOpen
+                      ? "opacity-100 scale-100 pointer-events-auto"
+                      : "opacity-0 scale-95 pointer-events-none"
+                  }`}
+                >
+                  <div className="px-4 py-3 font-bold border-b border-gray-200">
+                    {t("notifications")}
+                  </div>
+                  <div className="py-2 max-h-60 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 4).map((notif) => {
+                        // Translate the order status first
+                        const translatedStatus = t(
+                          `order_status_${notif.order_status}`
+                        );
+
+                        return (
+                          <Link
+                            to={`/order-confirmation/${notif.order_id}`}
+                            key={notif.id}
+                            className={`block w-full px-4 py-2 hover:bg-blue-50 hover:text-blue-600 cursor-pointer text-sm flex items-center ${
+                              notif.is_read ? "text-gray-500" : "font-semibold"
+                            }`}
+                            onClick={() => handleMarkAsRead(notif.id)}
+                          >
+                            {/* Add an icon here */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 mr-2 text-green-500 flex-shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {/* Use the translatedStatus in the main notification message */}
+                            {t(notif.message, {
+                              orderId: notif.order_id,
+                              status: translatedStatus,
+                            })}
+                          </Link>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-2 text-sm text-gray-500">
+                        {t("No_notifications")}
+                      </div>
+                    )}
+                  </div>
+                  {notifications.length > 4 && (
+                    <Link
+                      to="/my-orders"
+                      className="block px-4 py-3 text-center text-blue-600 hover:bg-blue-50 border-t border-gray-200"
+                    >
+                      {t("view_all_notifications")}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
             {user ? (
               // If customer user is logged in, show Account dropdown
               <div
@@ -437,39 +496,39 @@ function Header({ showMegaDropdown }) {
               </>
             )}
 
-            {/* Cart Icon with item count - ONLY show if customer is logged in */}
-            {user && ( // Conditionally render cart icon if user is logged in (customer)
-              <Link
-                to="/cart"
-                className="flex items-center flex-col text-sm relative"
+            {/* Cart Icon */}
+            <Link
+              to="/cart"
+              className="flex items-center flex-col text-sm relative"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-                <span>{t("cart_link_text")}</span>
-              </Link>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              <span>{t("cart_link_text")}</span>
+              {cartItemCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
       </header>
       {/* Conditionally render CategoryMegaDropdown based on showMegaDropdown prop */}
-      {showMegaDropdown && <CategoryMegaDropdown />}
+      {showMegaDropdown && (
+        <CategoryMegaDropdown style={{ outline: "2px solid red" }} />
+      )}
     </>
   );
 }

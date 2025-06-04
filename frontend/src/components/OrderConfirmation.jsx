@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 function OrderConfirmation() {
   const location = useLocation();
-  const orderId = location.state?.orderId;
+  const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

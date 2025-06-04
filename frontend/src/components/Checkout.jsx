@@ -121,7 +121,7 @@ function Checkout() {
         payment_proof: null,
       });
       clearCart();
-      navigate("/order-confirmation", { state: { orderId: resData.orderId } });
+      navigate(`/order-confirmation/${resData.orderId}`);
     } catch (err) {
       setError(err.message);
     } finally {

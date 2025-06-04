@@ -15,7 +15,7 @@ const Breadcrumbs = () => {
   // Placeholder function to fetch product name by ID
   const fetchProductName = async (id) => {
     // *** Replace this with your actual product data fetching logic ***
-    console.log(`Fetching product with ID: ${id}`);
+
     try {
       const response = await fetch(`http://localhost:5000/api/products/${id}`);
       if (!response.ok) {

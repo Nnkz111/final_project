@@ -81,7 +81,7 @@ function ProductDetails() {
       }
 
       // Optional: Provide user feedback (e.g., a small notification)
-      console.log("Product added to cart!");
+
       // Optional: Refresh the cart data in the header/cart page after adding
       refreshCart(); // Refresh the cart data after adding
     } catch (error) {

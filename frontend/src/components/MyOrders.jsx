@@ -87,8 +87,7 @@ function MyOrders() {
                   </div>
                 </div>
                 <Link
-                  to={`/order-confirmation`}
-                  state={{ orderId: order.id }}
+                  to={`/order-confirmation/${order.id}`}
                   className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center"
                 >
                   {t("view_details_button")}

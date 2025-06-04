@@ -989,11 +989,24 @@ app.post(
           total,
           orderId,
         ]);
-        // Insert notification for new order
+
+        // Insert notification for new order (Admin Notification)
         await client.query(
           "INSERT INTO notifications (type, order_id, message) VALUES ($1, $2, $3)",
-          ["new_order", orderId, `New order placed (Order ID: ${orderId})`]
+          ["new_order", orderId, `ມີຄຳສັ່ງຊື້ໃໝ່ (ເລກທີ: ${orderId})`]
         );
+
+        // Insert notification for customer when order is placed (Customer Notification)
+        if (userId) {
+          // Ensure userId is available
+          const notificationType = "customer_order_placed";
+          const notificationMessageKey = "notification.customer_order_placed";
+          await client.query(
+            "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
+            [userId, notificationType, orderId, notificationMessageKey]
+          );
+        }
+
         await client.query("COMMIT");
         res.status(201).json({ message: "Order placed successfully", orderId });
       } catch (err) {
@@ -1106,10 +1119,29 @@ app.put("/api/orders/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   try {
+    // Fetch user_id before updating status
+    const orderResult = await pool.query(
+      "SELECT user_id FROM orders WHERE id = $1",
+      [id]
+    );
+    const userId = orderResult.rows[0]?.user_id;
+
     await pool.query("UPDATE orders SET status = $1 WHERE id = $2", [
       status,
       id,
     ]);
+
+    // Insert notification for the customer if user_id is found
+    if (userId) {
+      // Store a notification type and a simple message key instead of the full message
+      const notificationType = "order_status_update";
+      const notificationMessageKey = "notification.order_status_update"; // Use a key for translation
+      await pool.query(
+        "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
+        [userId, notificationType, id, notificationMessageKey]
+      ); // Pass type and message key
+    }
+
     res.json({ message: "Order status updated" });
   } catch (err) {
     console.error("Error updating order status:", err);
@@ -1745,10 +1777,10 @@ app.get("/api/notifications", authenticateToken, async (req, res) => {
   }
 
   try {
-    // Fetch all notifications, ordered by creation date
+    // Fetch all notifications intended for admins (where user_id is null), ordered by creation date
     const result = await pool.query(
-      "SELECT id, type, order_id, message, is_read, created_at FROM notifications ORDER BY created_at DESC"
-    );
+      "SELECT id, type, order_id, message, is_read, created_at FROM notifications WHERE user_id IS NULL ORDER BY created_at DESC"
+    ); // Added WHERE user_id IS NULL
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching notifications:", err);
@@ -1781,6 +1813,82 @@ app.put("/api/notifications/:id/read", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to mark notification as read" });
   }
 });
+
+// New endpoint to get notifications for a specific user (customer)
+app.get(
+  "/api/notifications/user/:userId",
+  authenticateToken,
+  async (req, res) => {
+    const { userId } = req.params;
+    const authenticatedUserId = req.user.userId;
+
+    // Ensure the authenticated user is requesting their own notifications
+    if (parseInt(userId) !== authenticatedUserId) {
+      return res.sendStatus(403); // Forbidden
+    }
+
+    try {
+      // Fetch notifications for the authenticated user, ordered by creation date
+      // Join with orders table to get the order status
+      const result = await pool.query(
+        "SELECT n.id, n.type, n.order_id, n.message, n.is_read, n.created_at, o.status as order_status FROM notifications n JOIN orders o ON n.order_id = o.id WHERE n.user_id = $1 ORDER BY n.created_at DESC", // Join with orders and select order_status
+        [authenticatedUserId]
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error(`Error fetching notifications for user ${userId}:`, err);
+      res.status(500).json({ error: "Failed to fetch user notifications" });
+    }
+  }
+);
+
+// New endpoint to mark a notification as read for a specific user (customer)
+app.put(
+  "/api/notifications/user/:notificationId/read",
+  authenticateToken,
+  async (req, res) => {
+    const { notificationId } = req.params;
+    const authenticatedUserId = req.user.userId;
+
+    try {
+      // Fetch the notification to ensure it belongs to the authenticated user
+      const notificationResult = await pool.query(
+        "SELECT user_id FROM notifications WHERE id = $1",
+        [notificationId]
+      );
+
+      if (notificationResult.rows.length === 0) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+
+      const notificationUserId = notificationResult.rows[0].user_id;
+
+      // Ensure the authenticated user owns the notification they are trying to mark as read
+      if (notificationUserId !== authenticatedUserId) {
+        return res.sendStatus(403); // Forbidden
+      }
+
+      // Mark the notification as read
+      const result = await pool.query(
+        "UPDATE notifications SET is_read = TRUE WHERE id = $1 RETURNING id",
+        [notificationId]
+      );
+
+      if (result.rows.length > 0) {
+        res.status(200).json({ message: "Notification marked as read" });
+      } else {
+        // Should not happen if the previous check passed
+        res.status(500).json({ error: "Failed to mark notification as read" });
+      }
+    } catch (err) {
+      console.error(
+        `Error marking notification ${notificationId} as read for user ${authenticatedUserId}:`,
+        err
+      );
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  }
+);
 
 // Start the server
 app.listen(port, () => {

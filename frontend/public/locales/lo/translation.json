@@ -172,7 +172,7 @@
   "place_order_button": "ສັ່ງຊື້",
   "processing_order_message": "ກຳລັງດຳເນີນການສັ່ງຊື້ຂອງທ່ານ...",
   "order_failed_message": "ສັ່ງຊື້ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.",
-  "cash_on_delivery_option": "ຈ່າຍເງິນສົດ",
+  "cash_on_delivery_option": "ຈ່າຍເງິນປາຍທາງ",
   "bank_transfer_option": "ຊຳລະຜ່ານທະນາຄານ",
   "upload_payment_proof_label": "ອັບໂຫຼດຫຼັກຖານການໂອນເງິນ",
 
@@ -263,7 +263,7 @@
     "table_header_price": "ລາຄາ",
     "table_header_stock": "ຈຳນວນ",
     "table_header_image": "ຮູບພາບ",
-    "table_header_actions": "ການກະທຳ",
+    "table_header_actions": "ການກະທໍາ",
     "no_image": "ບໍ່ມີຮູບພາບ",
     "edit_button": "ແກ້ໄຂ",
     "delete_button": "ລຶບ",
@@ -383,7 +383,7 @@
     "Orders": "ຄຳສັ່ງຊື້",
     "TotalSpent": "ຍອດໃຊ້ຈ່າຍທັງໝົດ",
     "Created": "ວັນທີ",
-    "Actions": "ການກະທຳ",
+    "Actions": "ການກະທໍາ",
     "confirmDelete": "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບລູກຄ້ານີ້? ການກະທໍານີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
     "ordersFor": "ຄຳສັ່ງຊື້ຂອງ {{username}}",
     "loadingOrdersModal": "ກຳລັງໂຫຼດຄຳສັ່ງຊື້...",
@@ -460,6 +460,12 @@
     "dropdown_empty": "ບໍ່ມີການແຈ້ງເຕືອນ",
     "dropdown_view_all": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ"
   },
+  "notifications": "ການແຈ້ງເຕືອນ",
+  "No_notifications": "ບໍ່ມີການແຈ້ງເຕືອນ",
+  "view_all_notifications": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ",
+  "notification.order_status_update": "ສະຖານະຄໍາສັ່ງຊື້ #{{orderId}} ຂອງທ່ານຖືກອັບເດດເປັນ {{status}}.",
+
+  "notification.customer_order_placed": "ຄໍາສັ່ງຊື້ #{{orderId}} ຂອງທ່ານສຳເລັດແລ້ວ.",
 
   "Confirm": "ຢືນຢັນ",
   "Cancel": "ຍົກເລີກ",

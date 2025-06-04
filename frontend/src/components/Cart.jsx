@@ -59,7 +59,7 @@ function Cart() {
     // After successful removal, refetch the cart items to update the UI
     fetchCartItems();
     // refreshCartCount is called within removeCartItem in CartContext
-    console.log("Cart item removed!");
+
     // Optional: Display user feedback
   };
 
@@ -87,7 +87,7 @@ function Cart() {
     // After successful update, refetch the cart items to update the UI
     fetchCartItems();
     // refreshCartCount is called within updateCartItemQuantity in CartContext
-    console.log("Cart item quantity updated!");
+
     // Optional: Display user feedback
   };
 
