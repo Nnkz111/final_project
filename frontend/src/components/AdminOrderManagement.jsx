@@ -40,7 +40,12 @@ function AdminOrderManagement() {
       const res = await fetch(
         `http://localhost:5000/api/orders?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
-        }`
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
       );
       if (!res.ok) throw new Error(t("admin_order_management.fetch_failed")); // Translate error
       const data = await res.json();

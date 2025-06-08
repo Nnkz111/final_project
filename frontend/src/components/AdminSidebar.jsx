@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminAuthContext from "../context/AdminAuthContext";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 function AdminSidebar() {
   const { adminLogout } = useContext(AdminAuthContext);
   const { t } = useTranslation();
+  const [isReportsDropdownOpen, setIsReportsDropdownOpen] = useState(false);
 
   const handleAdminLogout = () => {
     adminLogout();
@@ -124,32 +125,6 @@ function AdminSidebar() {
           </svg>
           {t("adminSidebar.userManagementLink")}
         </Link>
-        {/* Existing Sales Link */}
-        <Link
-          to="/admin/sales"
-          className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
-            ></path>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M20.945 13H11V3.055A9.001 9.001 0 1120.945 13z"
-            ></path>
-          </svg>
-          {t("adminSidebar.salesLink")}
-        </Link>
         <Link
           to="/admin/customers"
           className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
@@ -188,6 +163,78 @@ function AdminSidebar() {
           </svg>
           {t("adminSidebar.notificationsLink")}
         </Link>
+        {/* New Reports Section with Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsReportsDropdownOpen(!isReportsDropdownOpen)}
+            className="flex items-center w-full px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md focus:outline-none"
+          >
+            <svg
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            ລາຍງານ
+            {/* Dropdown Arrow */}
+            <svg
+              className={`h-4 w-4 ml-auto transform ${
+                isReportsDropdownOpen ? "rotate-180" : "rotate-0"
+              } transition-transform duration-200`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+          {isReportsDropdownOpen && (
+            <div className="pl-8 pt-2 pb-2">
+              <Link
+                to="/admin/reports/products"
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+                onClick={() => setIsReportsDropdownOpen(false)}
+              >
+                ລາຍງານຂໍ້ມູນສິນຄ້າ
+              </Link>
+              <Link
+                to="/admin/reports/customers"
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+                onClick={() => setIsReportsDropdownOpen(false)}
+              >
+                ລາຍງານຂໍ້ມູນລູກຄ້າ
+              </Link>
+              <Link
+                to="/admin/sales"
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+                onClick={() => setIsReportsDropdownOpen(false)}
+              >
+                {t("adminSidebar.incomeReportLink")}
+              </Link>
+              <Link
+                to="/admin/reports/sales"
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+                onClick={() => setIsReportsDropdownOpen(false)}
+              >
+                {t("adminSidebar.sellingReportLink")}
+              </Link>
+
+              {/* Add more report links here in the future */}
+            </div>
+          )}
+        </div>
       </nav>
       {/* Admin Logout Button (at the bottom) */}
       <div className="p-4 border-t">

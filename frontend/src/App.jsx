@@ -30,7 +30,7 @@ import OrderConfirmation from "./components/OrderConfirmation";
 import MyOrders from "./components/MyOrders";
 import AdminOrderManagement from "./components/AdminOrderManagement";
 import AdminCustomerManagement from "./components/AdminCustomerManagement";
-import AdminSalesPage from "./components/AdminSalesPage";
+import AdminIncomeReportPage from "./components/AdminIncomeReportPage";
 import CategoryPage from "./components/CategoryPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import Breadcrumbs from "./components/Breadcrumbs";
@@ -42,6 +42,9 @@ import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 import AdminUserManagement from "./components/AdminUserManagement";
 import Footer from "./components/Footer";
 import InvoicePage from "./components/InvoicePage";
+import ProductsReportPage from "./pages/ProductsReportPage";
+import CustomerReportPage from "./pages/CustomerReportPage";
+import SalesReportsPage from "./pages/SalesReportsPage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -221,7 +224,19 @@ function App() {
                   path="notifications"
                   element={<AdminNotificationsPage />}
                 />
-                <Route path="sales" element={<AdminSalesPage />} />
+                <Route path="sales" element={<AdminIncomeReportPage />} />
+                <Route
+                  path="/admin/reports/products"
+                  element={<ProductsReportPage />}
+                />
+                <Route
+                  path="/admin/reports/customers"
+                  element={<CustomerReportPage />}
+                />
+                <Route
+                  path="/admin/reports/sales"
+                  element={<SalesReportsPage />}
+                />
                 {/* Add other admin routes here (e.g., users, orders, settings) */}
                 {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}
                 <Route path="*" element={<div>Admin Page Not Found</div>} />

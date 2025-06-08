@@ -266,11 +266,6 @@ function AdminCategoryManagement() {
         );
       }
 
-      // Success
-      console.log(
-        `${editingCategory ? "Updated" : "Added"} category:`,
-        response.json()
-      );
       setShowModal(false); // Close the add/edit modal
       fetchCategories(); // Refresh the list
       // Close confirmation modal

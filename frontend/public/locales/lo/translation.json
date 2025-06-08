@@ -227,7 +227,7 @@
     "total_orders": "ຄຳສັ່ງຊື້ທັງໝົດ",
     "total_customers": "ລູກຄ້າທັງໝົດ",
     "total_products": "ສິນຄ້າທັງໝົດ",
-    "pending_orders": "ລໍຖ້າດຳເນິນການ "
+    "pending_orders": "ລໍຖ້າດຳເນີນການ "
   },
 
   "admin_product_management": {
@@ -345,12 +345,12 @@
     "no_image": "(ບໍ່ມີຮູບພາບ)"
   },
 
-  "order_status_pending": "ລໍຖ້າ",
+  "order_status_pending": "ລໍຖ້າດຳເນີນການ",
   "order_status_paid": "ຊໍາລະແລ້ວ",
   "order_status_shipped": "ກຳລັງຈັດສົ່ງ",
   "order_status_completed": "ສຳເລັດ",
   "order_status_cancelled": "ຍົກເລີກ",
-  "payment_type_cod": "ເກັບເງິນປາຍທາງ",
+  "payment_type_cod": "ຈ່າຍເງິນສົດ",
   "payment_type_bank_transfer": "ຊຳລະຜ່ານທະນາຄານ",
 
   "salesDashboard": {
@@ -429,7 +429,9 @@
     "salesLink": "ຂໍ້ມູນການຂາຍ",
     "customerManagementLink": "ຂໍ້ມູນລູກຄ້າ",
     "notificationsLink": "ການແຈ້ງເຕືອນ",
-    "userManagementLink": "ຈັດການຂໍ້ມູນຜູ້ໃຊ້ລະບົບ"
+    "userManagementLink": "ຈັດການຂໍ້ມູນຜູ້ໃຊ້ລະບົບ",
+    "incomeReportLink": "ລາຍງານລາຍຮັບ",
+    "sellingReportLink": "ລາຍງານການຂາຍສິນຄ້າ"
   },
   "admin_user_management": {
     "title": "ຈັດການຂໍ້ມູນຜູ້ໃຊ້ລະບົບ",
@@ -494,5 +496,18 @@
   "table_header_qty": "ຈຳນວນ",
   "table_header_unit_price": "ລາຄາ",
   "table_header_total": " ລາຄາທັງໝົດ",
-  "thank_you_message": "ຂອບໃຈທ່ານທີ່ໃຊ້ບໍລິການ"
+  "thank_you_message": "ຂອບໃຈທ່ານທີ່ໃຊ້ບໍລິການ",
+
+  "incomeReport": {
+    "title": "ລາຍງານລາຍຮັບ"
+  },
+
+  "salesReport": {
+    "title": "ລາຍງານການຂາຍ",
+    "no_orders_found": "ບໍ່ພົບຄຳສັ່ງຊື້",
+    "all": "ທັງໝົດ",
+    "start_date": "ວັນທີເລີ່ມຕົ້ນ",
+    "end_date": "ວັນທີສິ້ນສຸດ",
+    "error_creating_sales_report": "ເກີດຂໍ້ຜິດພາດໃນການສ້າງລາຍງານການຂາຍ: "
+  }
 }

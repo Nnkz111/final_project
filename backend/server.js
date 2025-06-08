@@ -144,7 +144,12 @@ app.get("/api/products/top-selling", async (req, res) => {
 app.get("/api/products", async (req, res) => {
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
-  const { category_id, sort_by_price, query: searchTerm } = req.query; // Get category_id, sort_by_price, and searchTerm from query
+  const {
+    category_id,
+    sort_by_price,
+    query: searchTerm,
+    low_stock,
+  } = req.query; // Get category_id, sort_by_price, and searchTerm from query
 
   let orderByClause = "ORDER BY id DESC"; // Default sorting
   if (sort_by_price === "lowToHigh") {
@@ -174,6 +179,11 @@ app.get("/api/products", async (req, res) => {
     paramIndex += 2; // Increment paramIndex by 2 for the two placeholders
   }
 
+  // Add low stock filter clause
+  if (low_stock === "true") {
+    whereClauses.push(`stock_quantity < 3`); // Filter for stock less than 3
+  }
+
   const where = whereClauses.length
     ? `WHERE ${whereClauses.join(" AND ")}`
     : "";
@@ -182,7 +192,7 @@ app.get("/api/products", async (req, res) => {
 
   try {
     const dataResult = await pool.query(
-      `SELECT * FROM products ${where} ${orderByClause} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+      `SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ${where} ${orderByClause} LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       dataQueryParams
     );
 
@@ -258,7 +268,7 @@ app.get("/api/products/:id", async (req, res) => {
 
 // Add a new product with image upload
 // This route now uses Cloudinary for image uploads.
-app.post("/api/products", async (req, res) => {
+app.post("/api/products", authenticateToken, async (req, res) => {
   const { name, description, price, stock_quantity, category_id } = req.body;
 
   let imageUrl = null;
@@ -290,7 +300,14 @@ app.post("/api/products", async (req, res) => {
   try {
     const result = await pool.query(
       "INSERT INTO products (name, description, price, stock_quantity, image_url, category_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [name, description, price, stock_quantity, imageUrl, category_id || null]
+      [
+        name,
+        description || null,
+        parseFloat(price),
+        parseInt(stock_quantity, 10),
+        imageUrl,
+        category_id || null,
+      ]
     );
     res.status(201).json(result.rows[0]); // Return the newly created product
   } catch (err) {
@@ -736,17 +753,14 @@ const jwtSecret = process.env.JWT_SECRET; // Use environment variable for JWT se
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Get token from 'Bearer TOKEN' format
-  // console.log("Attempting to authenticate token..."); // Removed for safety
-  // console.log("Received Authorization Header:", authHeader); // Removed for safety
-  // console.log("Extracted Token:", token); // Removed for safety
 
   if (token == null) {
     return res.sendStatus(401); // If there is no token, return unauthorized
   }
 
   jwt.verify(token, jwtSecret, (err, user) => {
-    // console.log("JWT Verify Result:", { error: err, user: user }); // Removed for safety
     if (err) {
+      console.error("JWT verification error:", err); // Debugging line
       return res.sendStatus(403); // If token is invalid, return forbidden
     }
     req.user = user; // Attach user information to the request
@@ -875,13 +889,16 @@ app.post("/api/auth/login", async (req, res) => {
       // Passwords do not match
       return res.status(401).json({ error: "Invalid credentials" });
     }
+    console.log("User authenticated. is_admin from DB:", user.is_admin); // Debugging line
 
     // Passwords match, create a JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, is_admin: user.is_admin }, // Include is_admin here
-      jwtSecret,
-      { expiresIn: "2d" }
-    );
+    const tokenPayload = {
+      userId: user.id,
+      email: user.email,
+      is_admin: user.is_admin,
+    };
+    console.log("JWT Payload:", tokenPayload); // Debugging line
+    const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "2d" });
 
     res.status(200).json({
       token,
@@ -1088,23 +1105,68 @@ app.get("/api/orders/user/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Get all orders (admin, with pagination)
-app.get("/api/orders", async (req, res) => {
+// Get all orders (admin, with pagination, status, payment type, and date filters)
+app.get("/api/orders", authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
+  const { status, payment_type, start_date, end_date } = req.query;
+
+  let whereClauses = [];
+  let queryParams = [];
+  let paramIndex = 1;
+
+  if (status && status !== "all") {
+    whereClauses.push(`o.status = $${paramIndex++}`);
+    queryParams.push(status);
+  }
+
+  if (payment_type && payment_type !== "all") {
+    whereClauses.push(`o.payment_type = $${paramIndex++}`);
+    queryParams.push(payment_type);
+  }
+
+  if (start_date) {
+    whereClauses.push(`o.created_at >= $${paramIndex++}::date`);
+    queryParams.push(start_date);
+  }
+
+  if (end_date) {
+    whereClauses.push(
+      `o.created_at < ($${paramIndex++}::date + interval '1 day')`
+    );
+    queryParams.push(end_date);
+  }
+
+  const where = whereClauses.length
+    ? `WHERE ${whereClauses.join(" AND ")}`
+    : "";
+
+  const dataQueryParams = [...queryParams, limit, offset];
+  const countQueryParams = [...queryParams];
+
   try {
     const ordersResult = await pool.query(
-      `SELECT o.*, u.username,
+      `SELECT o.*, u.username, c.name AS customer_name,
         (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
         (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
        FROM orders o
        LEFT JOIN users u ON o.user_id = u.id
        LEFT JOIN customers c ON o.user_id = c.user_id
+       ${where}
        ORDER BY o.created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
+       LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+      dataQueryParams
     );
-    const countResult = await pool.query(`SELECT COUNT(*) FROM orders`);
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM orders o ${where}`,
+      countQueryParams
+    );
+
     res.json({
       orders: ordersResult.rows,
       total: parseInt(countResult.rows[0].count, 10),
@@ -1274,7 +1336,12 @@ app.get("/api/admin/top-selling-products", async (req, res) => {
 });
 
 // Customer management endpoint (with pagination and search)
-app.get("/api/admin/customers", async (req, res) => {
+app.get("/api/admin/customers", authenticateToken, async (req, res) => {
+  // Check if the authenticated user is an admin
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
   const searchTerm = req.query.query; // Get the search term from query parameters
@@ -1306,6 +1373,8 @@ app.get("/api/admin/customers", async (req, res) => {
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
         (SELECT COALESCE(SUM(total::numeric), 0) FROM orders o WHERE o.user_id = u.id AND o.status = 'completed') AS total_spent,
         c.name as customer_name, -- Include customer name
+        c.phone as phone_number, -- Include customer phone number
+        c.address as address, -- Include customer address
         u.is_admin -- Include is_admin status
       FROM users u
       LEFT JOIN customers c ON u.id = c.user_id

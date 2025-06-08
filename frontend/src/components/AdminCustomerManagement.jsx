@@ -31,8 +31,11 @@ function AdminCustomerManagement() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    fetchCustomers(page);
-  }, [page]);
+    if (adminToken) {
+      // Only fetch if adminToken is available
+      fetchCustomers(page);
+    }
+  }, [page, adminToken]); // Add adminToken to dependency array
 
   // Fetch customers with pagination
   const fetchCustomers = async (pageNum = 1) => {
@@ -42,7 +45,12 @@ function AdminCustomerManagement() {
       const res = await fetch(
         `http://localhost:5000/api/admin/customers?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
-        }`
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
       );
       if (!res.ok) throw new Error("Failed to fetch customers");
       const data = await res.json();
@@ -69,7 +77,12 @@ function AdminCustomerManagement() {
     setModalError("");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/orders?user_id=${customer.id}`
+        `http://localhost:5000/api/orders?user_id=${customer.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
       ); // fallback if not available, use /api/orders/user/:userId with admin token or remove auth for admin
       let data;
       if (res.ok) {
@@ -85,7 +98,11 @@ function AdminCustomerManagement() {
 
         if (!data.length || !data[0].user_id) {
           // fallback: fetch all orders and filter client-side
-          const allRes = await fetch("http://localhost:5000/api/orders");
+          const allRes = await fetch("http://localhost:5000/api/orders", {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+            },
+          });
           if (allRes.ok) {
             const allOrders = await allRes.json();
             // Check if allOrders is an object with an 'orders' array property
@@ -102,26 +119,30 @@ function AdminCustomerManagement() {
           } else {
             throw new Error("Failed to fetch orders in fallback");
           }
-        }
-      } else {
-        // Initial fetch by user_id failed, go directly to fallback
-        // fallback: fetch all orders and filter client-side
-        const allRes = await fetch("http://localhost:5000/api/orders");
-        if (allRes.ok) {
-          const allOrders = await allRes.json();
-          // Check if allOrders is an object with an 'orders' array property
-          if (allOrders && Array.isArray(allOrders.orders)) {
-            data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
-          } else if (Array.isArray(allOrders)) {
-            // Fallback if API just returns an array
-            data = allOrders.filter((o) => o.user_id === customer.id);
-          } else {
-            // Unexpected format
-            data = [];
-            console.error("Unexpected data format from /api/orders fallback");
-          }
         } else {
-          throw new Error("Failed to fetch orders in fallback");
+          // If initial fetch by user_id failed, go directly to fallback
+          // fallback: fetch all orders and filter client-side
+          const allRes = await fetch("http://localhost:5000/api/orders", {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+            },
+          });
+          if (allRes.ok) {
+            const allOrders = await allRes.json();
+            // Check if allOrders is an object with an 'orders' array property
+            if (allOrders && Array.isArray(allOrders.orders)) {
+              data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
+            } else if (Array.isArray(allOrders)) {
+              // Fallback if API just returns an array
+              data = allOrders.filter((o) => o.user_id === customer.id);
+            } else {
+              // Unexpected format
+              data = [];
+              console.error("Unexpected data format from /api/orders fallback");
+            }
+          } else {
+            throw new Error("Failed to fetch orders in fallback");
+          }
         }
       }
 
@@ -143,7 +164,10 @@ function AdminCustomerManagement() {
     try {
       await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({ status: editingStatus[orderId] }),
       });
       // Refresh orders in modal
@@ -162,7 +186,10 @@ function AdminCustomerManagement() {
         `http://localhost:5000/api/admin/customers/${userId}/status`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
           body: JSON.stringify({ status: newStatus }),
         }
       );
