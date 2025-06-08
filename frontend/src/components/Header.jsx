@@ -1,12 +1,12 @@
 import React, { useEffect, useContext, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext"; // Import useCart hook
-import AuthContext from "../context/AuthContext"; // Import AuthContext
+import { useCart } from "../context/CartContext";
+import AuthContext from "../context/AuthContext";
 import { useCategories } from "../context/CategoryContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import CategoryMegaDropdown from "./CategoryMegaDropdown";
 import "flag-icons/css/flag-icons.min.css";
-import { useTranslation } from "react-i18next"; // Import useTranslation
+import { useTranslation } from "react-i18next";
 import {
   getUserNotifications,
   markNotificationAsRead,
@@ -26,8 +26,6 @@ function Header({ showMegaDropdown }) {
   const [notificationOpen, setNotificationOpen] = useState(false); // State for notification dropdown
   const [notifications, setNotifications] = useState([]); // State to store notifications
   const [unreadCount, setUnreadCount] = useState(0); // State to store unread notification count
-
-  // No need to manually fetch or refresh here due to useEffect in CartContext
 
   const handleLogout = () => {
     logout(); // Call the customer logout function from AuthContext
@@ -64,7 +62,6 @@ function Header({ showMegaDropdown }) {
     };
 
     fetchNotifications();
-    // Poll for new notifications every 30 seconds (adjust as needed)
     const pollingInterval = setInterval(fetchNotifications, 10000);
 
     return () => clearInterval(pollingInterval); // Cleanup interval on unmount
@@ -177,12 +174,16 @@ function Header({ showMegaDropdown }) {
     <>
       <header className="bg-gray-800 text-white p-4 shadow-md sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
-          {/* Logo Area - now clickable */}
           <Link
             to="/"
-            className="text-3xl font-bold mr-6 hover:opacity-80 transition-opacity"
+            className="flex items-center mr-6 hover:opacity-80 transition-opacity"
           >
-            MR.IT
+            <img
+              src="https://res.cloudinary.com/dgfk0ljyq/image/upload/v1749228072/web_icon_t8i1f2.png"
+              alt="MR.IT Logo"
+              className="h-14 w-14 rounded-full mr-2"
+            />
+            <span className="text-3xl font-bold">MR.IT</span>
           </Link>
 
           {/* Search Bar Area - more refined styling */}
@@ -311,6 +312,7 @@ function Header({ showMegaDropdown }) {
                     </span>
                   )}
                 </button>
+                <span className="cursor-pointer">{t("notifications")}</span>
                 {/* Notification Dropdown Menu */}
                 <div
                   className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
@@ -402,7 +404,7 @@ function Header({ showMegaDropdown }) {
                       d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  <span>{user.username}</span>
+                  <span>{user.customer.name}</span>
                   <svg
                     className="h-4 w-4 ml-1"
                     fill="none"

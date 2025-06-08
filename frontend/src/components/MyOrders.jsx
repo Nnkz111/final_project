@@ -92,6 +92,12 @@ function MyOrders() {
                 >
                   {t("view_details_button")}
                 </Link>
+                <Link
+                  to={`/invoice/${order.id}`}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-center"
+                >
+                  {t("view_invoice_button")}
+                </Link>
               </div>
             ))}
           </div>

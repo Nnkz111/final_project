@@ -41,6 +41,7 @@ import SearchResultsPage from "./pages/SearchResultsPage";
 import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 import AdminUserManagement from "./components/AdminUserManagement";
 import Footer from "./components/Footer";
+import InvoicePage from "./components/InvoicePage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
 
@@ -196,6 +197,7 @@ function App() {
 
               {/* Top-level route for Search Results */}
               <Route path="/search" element={<SearchResultsPage />} />
+              <Route path="/invoice/:orderId" element={<InvoicePage />} />
 
               {/* Admin Area Routes using AdminAreaLayout */}
               <Route path="/admin" element={<AdminAreaLayout />}>

@@ -126,6 +126,7 @@
   "created_label": "Created",
   "items_label": "Items",
   "total_label": "Total",
+  "total_amount_label": "Total",
   "view_details_button": "View Details",
 
   "order_confirmation_title": "Thank you for your order!",
@@ -465,7 +466,31 @@
 
   "notification.customer_order_placed": "Your order #{{orderId}} has been placed successfully.",
 
+  "sort_by_price_title": "Sort by Price",
+  "sort_none": "None",
+  "sort_low_to_high": "Price: Low to High",
+  "sort_high_to_low": "Price: High to Low",
+
   "Confirm": "Confirm",
   "Cancel": "Cancel",
-  "Confirm Action": "Confirm Action"
+  "Confirm Action": "Confirm Action",
+
+  "view_invoice_button": "View Invoice",
+  "invoice_title": "Invoice",
+  "store_address": "Ban Viengmai, Luang Prabang, Laos",
+  "print_invoice_button": "Print",
+  "invoice_details_title": "Invoice Details",
+  "invoice_number_label": "Invoice Order ID",
+  "invoice_date_label": "Date",
+  "bill_info": "Info",
+  "customer_name_label": "Name",
+  "customer_email_label": "Email",
+  "customer_phone_label": "Phone",
+  "shipping_address_label": "Shipping",
+  "items_ordered_title": "Items Details",
+  "table_header_item": "Name",
+  "table_header_qty": "Quantity",
+  "table_header_unit_price": "Price",
+  "table_header_total": "Total",
+  "thank_you_message": "Thank You for Using Our Service"
 }

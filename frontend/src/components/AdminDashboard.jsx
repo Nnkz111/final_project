@@ -44,26 +44,31 @@ function AdminDashboard() {
             currency: "LAK",
           }),
       icon: "dollar",
+      color: "bg-blue-200",
     },
     {
       title: t("admin_dashboard.total_orders"),
       value: stats.loading ? "..." : stats.totalOrders,
       icon: "cart",
+      color: "bg-green-200",
     },
     {
       title: t("admin_dashboard.total_customers"),
       value: stats.loading ? "..." : stats.totalCustomers,
       icon: "user",
+      color: "bg-yellow-200",
     },
     {
       title: t("admin_dashboard.total_products"),
       value: stats.loading ? "..." : stats.totalProducts,
       icon: "box",
+      color: "bg-red-200",
     },
     {
       title: t("admin_dashboard.pending_orders"),
       value: stats.loading ? "..." : stats.pendingOrders,
       icon: "clock",
+      color: "bg-purple-200",
     },
   ];
 
@@ -81,6 +86,7 @@ function AdminDashboard() {
             title={stat.title}
             value={stat.value}
             icon={stat.icon}
+            color={stat.color}
           />
         ))}
       </div>

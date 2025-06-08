@@ -207,40 +207,51 @@ function AdminOrderManagement() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[8%]">
                       {t("admin_order_management.table_header_order_id")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[15%]">
+                      ຊື່
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[10%]">
                       {t("admin_order_management.table_header_user")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[12%]">
                       {t("admin_order_management.table_header_status")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[15%]">
                       {t("admin_order_management.table_header_created")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[5%]">
                       {t("admin_order_management.table_header_items")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[10%]">
                       {t("admin_order_management.table_header_total")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-[10%]">
                       {t("admin_order_management.table_header_payment")}
                     </th>
-                    <th className="px-4 py-3"></th>
+                    <th className="px-4 py-3 w-[15%]"></th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-green-50 transition">
-                      <td className="px-4 py-3 font-mono">#{order.id}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 font-mono w-[8%]">
+                        #{order.id}
+                      </td>
+                      <td className="px-4 py-3 w-[15%]">
+                        {/* Display customer_name if available, fallback to shipping_name or guest user */}
+                        {order.customer_name ||
+                          order.shipping_name ||
+                          t("admin_order_management.guest_user")}
+                      </td>
+                      <td className="px-4 py-3 w-[10%]">
                         {order.username ||
                           order.user_id ||
                           t("admin_order_management.guest_user")}
                       </td>
-                      <td className="px-4 py-3 capitalize font-semibold text-green-700">
+                      <td className="px-4 py-3 capitalize font-semibold text-green-700 w-[12%]">
                         <select
                           className="border rounded px-2 py-1 bg-white"
                           value={editingStatus[order.id] ?? order.status}
@@ -273,18 +284,18 @@ function AdminOrderManagement() {
                           {/* Translate button text */}
                         </button>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-[15%]">
                         {order.created_at &&
                           new Date(order.created_at).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3">{order.item_count}</td>
-                      <td className="px-4 py-3 font-bold text-green-700">
+                      <td className="px-4 py-3 w-[5%]">{order.item_count}</td>
+                      <td className="px-4 py-3 font-bold text-green-700 w-[10%]">
                         {parseFloat(order.total).toLocaleString("lo-LA", {
                           style: "currency",
                           currency: "LAK",
                         })}
                       </td>
-                      <td className="px-4 py-3 capitalize">
+                      <td className="px-4 py-3 capitalize w-[10%]">
                         {order.payment_type
                           ? t(
                               `payment_type_${order.payment_type}`,
@@ -293,13 +304,12 @@ function AdminOrderManagement() {
                           : t("admin_order_management.not_specified")}{" "}
                         {/* Translate payment type */}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-[15%]">
                         <button
                           className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm"
                           onClick={() => openOrderModal(order)}
                         >
                           {t("admin_order_management.view_button")}{" "}
-                          {/* Translate button text */}
                         </button>
                         <button
                           className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow text-center text-sm ml-2"
@@ -309,7 +319,6 @@ function AdminOrderManagement() {
                           {deleting[order.id]
                             ? t("admin_order_management.deleting_button")
                             : t("admin_order_management.delete_button")}{" "}
-                          {/* Translate button text */}
                         </button>
                       </td>
                     </tr>
@@ -369,9 +378,7 @@ function AdminOrderManagement() {
             ) : modalOrderDetails ? (
               <>
                 <div className="mb-2">
-                  <span className="font-semibold">
-                    {t("admin_order_management.detail_user_label")}:
-                  </span>{" "}
+                  <span className="font-semibold">ຊື່:</span>{" "}
                   {modalOrderDetails.username ||
                     modalOrderDetails.shipping_name ||
                     t("admin_order_management.not_specified")}
@@ -412,9 +419,9 @@ function AdminOrderManagement() {
                   <span className="font-semibold">
                     {t("admin_order_management.detail_shipping_label")}:
                   </span>{" "}
-                  {modalOrderDetails.shipping_name
-                    ? `${modalOrderDetails.shipping_name}, ${modalOrderDetails.shipping_address}, ${modalOrderDetails.shipping_phone}, ${modalOrderDetails.shipping_email}`
-                    : t("admin_order_management.not_specified")}
+                  {modalOrderDetails.shipping_address},{" "}
+                  {modalOrderDetails.shipping_phone},{" "}
+                  {modalOrderDetails.shipping_email}
                 </div>
 
                 <div className="mb-2">

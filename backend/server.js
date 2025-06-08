@@ -1094,11 +1094,12 @@ app.get("/api/orders", async (req, res) => {
   const offset = parseInt(req.query.offset, 10) || 0;
   try {
     const ordersResult = await pool.query(
-      `SELECT o.*, u.username, 
+      `SELECT o.*, u.username,
         (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
         (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
        FROM orders o
        LEFT JOIN users u ON o.user_id = u.id
+       LEFT JOIN customers c ON o.user_id = c.user_id
        ORDER BY o.created_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset]

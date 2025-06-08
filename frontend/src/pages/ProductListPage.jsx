@@ -10,6 +10,9 @@ const ProductListPage = () => {
   const [productsPerPage] = useState(8);
   const { t } = useTranslation();
 
+  // State for price sorting
+  const [sortOrder, setSortOrder] = useState("none"); // 'none', 'asc', 'desc'
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -31,16 +34,28 @@ const ProductListPage = () => {
     fetchProducts();
   }, []); // Empty dependency array means this effect runs once on mount
 
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-
   const totalPages = Math.ceil(products.length / productsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Sort products based on sortOrder
+  const sortedProducts = [...products].sort((a, b) => {
+    const priceA = parseFloat(a.price);
+    const priceB = parseFloat(b.price);
+    if (sortOrder === "asc") {
+      return priceA - priceB;
+    } else if (sortOrder === "desc") {
+      return priceB - priceA;
+    }
+    return 0; // No sorting
+  });
+
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = sortedProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
 
   if (loading) {
     return (
@@ -67,6 +82,27 @@ const ProductListPage = () => {
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">
         {t("all_products")}
       </h1>
+
+      {/* Price Sorting Control */}
+      <div className="flex items-center gap-4 mb-6">
+        <label
+          htmlFor="sortOrder"
+          className="block text-sm font-medium text-gray-700"
+        >
+          {t("sort_by_price_title")}
+        </label>
+        <select
+          id="sortOrder"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="mt-1 block rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+        >
+          <option value="none">{t("sort_none")}</option>
+          <option value="asc">{t("sort_low_to_high")}</option>
+          <option value="desc">{t("sort_high_to_low")}</option>
+        </select>
+      </div>
+
       {/* Using Grid for responsive columns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6">
         {/* Use items-stretch to make cards same height */}

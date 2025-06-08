@@ -1,6 +1,6 @@
 import React from "react";
 
-function StatCard({ title, value, icon }) {
+function StatCard({ title, value, icon, color }) {
   const renderIcon = (iconName) => {
     switch (iconName) {
       case "dollar":
@@ -103,14 +103,18 @@ function StatCard({ title, value, icon }) {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md flex items-center justify-between flex-1">
+    <div
+      className={`${color} flex items-center justify-between p-4 rounded-lg shadow-md`}
+    >
       {" "}
       {/* Card container */}
       <div>
         <h4 className="text-gray-500 text-sm font-medium">{title}</h4>
         <p className="text-gray-900 text-2xl font-semibold mt-1">{value}</p>
       </div>
-      <div className="p-3 bg-gray-200 rounded-full">{renderIcon(icon)}</div>
+      <div className="flex items-center justify-center p-3 rounded-full bg-opacity-50 bg-gray-200 text-gray-800">
+        {renderIcon(icon)}
+      </div>
     </div>
   );
 }

@@ -18,6 +18,7 @@ function OrderConfirmation() {
         const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
         if (!res.ok) throw new Error("Failed to fetch order details");
         const data = await res.json();
+
         setOrder(data);
       } catch (err) {
         setError(err.message);
@@ -83,6 +84,10 @@ function OrderConfirmation() {
                   <span className="font-mono">#{order.id}</span>
                 </div>
                 <div className="mb-2">
+                  <span className="font-semibold">{t("name_label")}:</span>{" "}
+                  <span className=""> {order.shipping_name} </span>
+                </div>
+                <div className="mb-2">
                   <span className="font-semibold">
                     {t("status_label_details")}:
                   </span>{" "}
@@ -100,8 +105,8 @@ function OrderConfirmation() {
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">{t("shipping_label")}:</span>{" "}
-                  {order.shipping_name}, {order.shipping_address},{" "}
-                  {order.shipping_phone}, {order.shipping_email}
+                  {order.shipping_address}, {order.shipping_phone},{" "}
+                  {order.shipping_email}
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
@@ -134,6 +139,20 @@ function OrderConfirmation() {
                     )}
                   </ul>
                 </div>
+              </div>
+              {/* Total Amount Section */}
+              <div className="w-full mt-4 pt-4 border-t border-gray-200 text-right">
+                <span className="text-xl font-bold text-gray-800">
+                  {t("total_amount_label")}:
+                </span>
+                <span className="text-2xl font-extrabold text-green-700 ml-2">
+                  {order.total
+                    ? parseFloat(order.total).toLocaleString("lo-LA", {
+                        style: "currency",
+                        currency: "LAK",
+                      })
+                    : "N/A"}
+                </span>
               </div>
             </div>
           ) : null}

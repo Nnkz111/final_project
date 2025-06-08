@@ -391,7 +391,8 @@ function AdminProductManagement() {
         {/* Add/Edit Product Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-            <div className="relative p-8 bg-white rounded-3xl shadow-2xl max-w-md mx-auto">
+            {/* Main modal container with max height and flex column */}
+            <div className="relative p-8 bg-white rounded-3xl shadow-2xl max-w-xl mx-auto w-full max-h-screen flex flex-col">
               <button
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl"
                 onClick={() => {
@@ -406,7 +407,8 @@ function AdminProductManagement() {
               >
                 &times;
               </button>
-              <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8 border border-green-100">
+              {/* Modal content area - now flex-grow and scrollable */}
+              <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8 border border-green-100 flex-grow overflow-y-auto">
                 <h3 className="text-xl font-bold text-green-700 mb-4 text-center">
                   {formTitle}
                 </h3>
@@ -426,8 +428,11 @@ function AdminProductManagement() {
                     {t("admin_product_management.update_success")}
                   </div>
                 )}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="mb-4">
+                <form
+                  onSubmit={handleSubmit}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div className="md:col-span-1">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="name"
@@ -444,7 +449,7 @@ function AdminProductManagement() {
                       required
                     />
                   </div>
-                  <div className="mb-4">
+                  <div className="md:col-span-1">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="description"
@@ -459,7 +464,7 @@ function AdminProductManagement() {
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     ></textarea>
                   </div>
-                  <div className="mb-4">
+                  <div className="md:col-span-1">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="price"
@@ -477,7 +482,7 @@ function AdminProductManagement() {
                       required
                     />
                   </div>
-                  <div className="mb-4">
+                  <div className="md:col-span-1">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="stock_quantity"
@@ -494,7 +499,7 @@ function AdminProductManagement() {
                       required
                     />
                   </div>
-                  <div className="mb-4">
+                  <div className="md:col-span-1">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="category_id"
@@ -514,7 +519,7 @@ function AdminProductManagement() {
                       {renderCategoryOptions(hierarchicalCategories)}
                     </select>
                   </div>
-                  <div className="mb-4">
+                  <div className="md:col-span-2">
                     <label
                       className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="productImage"
@@ -558,7 +563,7 @@ function AdminProductManagement() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between md:col-span-2">
                     <button
                       type="submit"
                       className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -628,6 +633,9 @@ function AdminProductManagement() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-auto">
+                    ລຳດັບ
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase w-1/3">
                     {t("admin_product_management.table_header_name")}
                   </th>
@@ -646,8 +654,11 @@ function AdminProductManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {products.map((product) => (
+                {products.map((product, index) => (
                   <tr key={product.id} className="hover:bg-green-50 transition">
+                    <td className="px-4 py-3 align-middle">
+                      {(page - 1) * pageSize + index + 1}
+                    </td>
                     <td className="px-4 py-3 align-middle">{product.name}</td>
                     <td className="px-4 py-3 align-middle">{product.price}</td>
                     <td className="px-4 py-3 align-middle">

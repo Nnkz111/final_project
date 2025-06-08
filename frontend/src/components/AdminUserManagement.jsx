@@ -218,7 +218,7 @@ function AdminUserManagement() {
         >
           <input
             type="text"
-            placeholder="Search by username or email..."
+            placeholder="ຄົ້ນຫາດ້ວຍຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວ"
             value={search}
             onChange={handleSearchChange}
             className="border rounded px-3 py-2 w-full md:w-80"
