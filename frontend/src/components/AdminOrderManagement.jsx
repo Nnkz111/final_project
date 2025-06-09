@@ -47,7 +47,7 @@ function AdminOrderManagement() {
           },
         }
       );
-      if (!res.ok) throw new Error(t("admin_order_management.fetch_failed")); // Translate error
+      if (!res.ok) throw new Error(t("admin_order_management.fetch_failed"));
       const data = await res.json();
       setOrders(data.orders);
       setTotal(data.total);
@@ -489,6 +489,17 @@ function AdminOrderManagement() {
                       {t("admin_order_management.no_image")}
                     </span>
                   )}
+                </div>
+                {/* Print Invoice Button */}
+                <div className="flex justify-end mt-4">
+                  <a
+                    href={`/invoice/${modalOrderDetails.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-center text-sm"
+                  >
+                    ພິມໃບບິນ
+                  </a>
                 </div>
               </>
             ) : null}

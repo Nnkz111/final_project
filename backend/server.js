@@ -889,7 +889,6 @@ app.post("/api/auth/login", async (req, res) => {
       // Passwords do not match
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    console.log("User authenticated. is_admin from DB:", user.is_admin); // Debugging line
 
     // Passwords match, create a JWT token
     const tokenPayload = {
@@ -897,7 +896,7 @@ app.post("/api/auth/login", async (req, res) => {
       email: user.email,
       is_admin: user.is_admin,
     };
-    console.log("JWT Payload:", tokenPayload); // Debugging line
+
     const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "2d" });
 
     res.status(200).json({

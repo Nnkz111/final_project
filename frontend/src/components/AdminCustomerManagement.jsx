@@ -231,7 +231,7 @@ function AdminCustomerManagement() {
       setCustomers((prev) =>
         prev.filter((customer) => customer.id !== customerId)
       );
-      console.log("Customer deleted successfully");
+
       setIsConfirmModalOpen(false);
       setActionToConfirm(null);
     } catch (err) {

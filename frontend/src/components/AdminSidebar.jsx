@@ -230,7 +230,13 @@ function AdminSidebar() {
               >
                 {t("adminSidebar.sellingReportLink")}
               </Link>
-
+              {/* in case they're asking during presentation */}
+              {/*<Link
+                to="/admin/products"
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+              >
+                ເມນູໃໝ່ 2025
+              </Link>*/}
               {/* Add more report links here in the future */}
             </div>
           )}
