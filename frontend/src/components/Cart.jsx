@@ -14,6 +14,7 @@ function Cart() {
   const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [hasStockIssues, setHasStockIssues] = useState(false);
 
   // Function to fetch cart items from the backend
   const fetchCartItems = async () => {
@@ -40,6 +41,9 @@ function Cart() {
         price: parseFloat(item.price), // Convert price to number
       }));
       setCartItems(itemsWithParsedPrice);
+      setHasStockIssues(
+        itemsWithParsedPrice.some((item) => item.quantity > item.stock_quantity)
+      );
     } catch (error) {
       setError(error);
       console.error(`Error fetching cart for user ${userId}:`, error);
@@ -152,6 +156,19 @@ function Cart() {
                       </span>{" "}
                       <span className="text-xs"></span>
                     </p>
+                    {item.stock_quantity === 0 && (
+                      <p className="text-red-500 text-sm font-semibold mt-1">
+                        {t("out_of_stock")}
+                      </p>
+                    )}
+                    {item.quantity > item.stock_quantity &&
+                      item.stock_quantity > 0 && (
+                        <p className="text-orange-500 text-sm font-semibold mt-1">
+                          {t("insufficient_stock_for_quantity", {
+                            available: item.stock_quantity,
+                          })}
+                        </p>
+                      )}
                   </div>
                   {/* Quantity Controls */}
                   <div className="flex items-center gap-2">
@@ -246,9 +263,19 @@ function Cart() {
                   })}
               </div>
             </div>
+            {hasStockIssues && (
+              <p className="text-red-600 text-center font-semibold mt-2">
+                {t("out_of_stock")}
+              </p>
+            )}
             <button
-              className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 w-full mt-2 shadow-md"
+              className={`px-6 py-3 rounded-lg text-lg font-semibold transition duration-300 w-full mt-2 shadow-md ${
+                hasStockIssues
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
               onClick={() => navigate("/checkout")}
+              disabled={hasStockIssues}
             >
               {t("proceed_to_checkout_button")}
             </button>

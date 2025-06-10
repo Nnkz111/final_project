@@ -330,6 +330,23 @@ const Breadcrumbs = () => {
         isLoading: false,
       });
     }
+  } else if (
+    pathSegments[0] === "order-confirmation" &&
+    pathSegments.length === 2
+  ) {
+    // Handle /order-confirmation/:id path
+    breadcrumbItems.push({
+      name: t("my_orders"), // Translate "My Orders"
+      routeTo: "/my-orders",
+      isLast: false,
+      isLoading: false,
+    });
+    breadcrumbItems.push({
+      name: t("Orders"), // Translate "Order Confirmation"
+      routeTo: location.pathname, // Link to the current order confirmation page
+      isLast: true,
+      isLoading: false,
+    });
   } else if (pathSegments.length > 0) {
     // Handle general paths
     let cumulativePath = "";

@@ -592,38 +592,73 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
   const { productId, quantity = 1 } = req.body; // Remove userId from body
   const authenticatedUserId = req.user.userId; // Get user ID from authenticated token
 
-  // No need to check userId in body against authenticatedUserId here,
-  // as we will directly use authenticatedUserId for the database operation.
-  // Basic validation for productId and quantity remains.
-
-  if (!productId) {
-    // Only check productId and quantity
-    return res.status(400).json({ error: "productId is required" });
+  if (!productId || quantity <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Product ID and a positive quantity are required" });
   }
-  // Quantity validation is already present
 
   try {
-    // Check if the item already exists for the authenticated user
-    const existingItem = await pool.query(
-      "SELECT * FROM cart_items WHERE user_id = $1 AND product_id = $2",
-      [authenticatedUserId, productId]
-    );
+    const client = await pool.connect(); // Use a client from the pool for transactions
+    try {
+      await client.query("BEGIN");
 
-    if (existingItem.rows.length > 0) {
-      // If item exists, update the quantity for the authenticated user
-      const updatedQuantity = existingItem.rows[0].quantity + quantity;
-      await pool.query(
-        "UPDATE cart_items SET quantity = $1 WHERE user_id = $2 AND product_id = $3",
-        [updatedQuantity, authenticatedUserId, productId]
+      // Get product stock information
+      const productResult = await client.query(
+        "SELECT stock_quantity FROM products WHERE id = $1",
+        [productId]
       );
-      res.status(200).json({ message: "Cart item quantity updated" });
-    } else {
-      // If item doesn't exist, insert a new item for the authenticated user
-      await pool.query(
-        "INSERT INTO cart_items (user_id, product_id, quantity) VALUES ($1, $2, $3)",
-        [authenticatedUserId, productId, quantity]
+
+      if (productResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const availableStock = productResult.rows[0].stock_quantity;
+
+      // Check if the item already exists for the authenticated user
+      const existingItem = await client.query(
+        "SELECT quantity FROM cart_items WHERE user_id = $1 AND product_id = $2",
+        [authenticatedUserId, productId]
       );
-      res.status(201).json({ message: "Product added to cart" });
+
+      let newTotalQuantity = quantity;
+
+      if (existingItem.rows.length > 0) {
+        // If item exists, calculate the new total quantity
+        newTotalQuantity = existingItem.rows[0].quantity + quantity;
+      }
+
+      // Validate against available stock
+      if (newTotalQuantity > availableStock) {
+        await client.query("ROLLBACK");
+        return res
+          .status(400)
+          .json({ error: "Requested quantity exceeds available stock" });
+      }
+
+      if (existingItem.rows.length > 0) {
+        // If item exists, update the quantity for the authenticated user
+        await client.query(
+          "UPDATE cart_items SET quantity = $1 WHERE user_id = $2 AND product_id = $3",
+          [newTotalQuantity, authenticatedUserId, productId]
+        );
+        res.status(200).json({ message: "Cart item quantity updated" });
+      } else {
+        // If item doesn't exist, insert a new item for the authenticated user
+        await client.query(
+          "INSERT INTO cart_items (user_id, product_id, quantity) VALUES ($1, $2, $3)",
+          [authenticatedUserId, productId, quantity]
+        );
+        res.status(201).json({ message: "Product added to cart" });
+      }
+
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err; // Re-throw the error to be caught by the outer catch block
+    } finally {
+      client.release();
     }
   } catch (err) {
     console.error(
@@ -692,35 +727,69 @@ app.put("/api/cart/update/:cartItemId", authenticateToken, async (req, res) => {
   }
 
   try {
-    // First, get the user_id of the cart item to ensure the authenticated user owns it
-    const cartItemResult = await pool.query(
-      "SELECT user_id FROM cart_items WHERE id = $1",
-      [cartItemId]
-    );
-    if (cartItemResult.rows.length === 0) {
-      return res.status(404).json({ error: "Cart item not found" });
-    }
-    const cartItemUserId = cartItemResult.rows[0].user_id;
+    const client = await pool.connect(); // Use a client for transactions
+    try {
+      await client.query("BEGIN");
+      // First, get the product_id and current quantity of the cart item, and its user_id
+      const cartItemResult = await client.query(
+        "SELECT user_id, product_id, quantity FROM cart_items WHERE id = $1",
+        [cartItemId]
+      );
+      if (cartItemResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Cart item not found" });
+      }
+      const {
+        user_id: cartItemUserId,
+        product_id,
+        quantity: currentQuantity,
+      } = cartItemResult.rows[0];
 
-    // Ensure the authenticated user owns the cart item they are trying to update
-    if (cartItemUserId !== authenticatedUserId) {
-      return res.sendStatus(403); // Forbidden
-    }
+      // Ensure the authenticated user owns the cart item they are trying to update
+      if (cartItemUserId !== authenticatedUserId) {
+        await client.query("ROLLBACK");
+        return res.sendStatus(403); // Forbidden
+      }
 
-    // Update the cart item quantity since the user is authorized
-    const result = await pool.query(
-      "UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id",
-      [quantity, cartItemId]
-    );
+      // Get product stock information
+      const productResult = await client.query(
+        "SELECT stock_quantity FROM products WHERE id = $1",
+        [product_id]
+      );
 
-    if (result.rows.length > 0) {
-      res.status(200).json({ message: "Cart item quantity updated" });
-    } else {
-      // This case should ideally not be reached if the previous check passed,
-      // but included for robustness.
-      res
-        .status(404)
-        .json({ error: "Cart item not found after authorization check" });
+      if (productResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const availableStock = productResult.rows[0].stock_quantity;
+
+      // Validate against available stock
+      if (quantity > availableStock) {
+        await client.query("ROLLBACK");
+        return res
+          .status(400)
+          .json({ error: "Requested quantity exceeds available stock" });
+      }
+
+      // Update the cart item quantity since the user is authorized
+      const result = await client.query(
+        "UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id",
+        [quantity, cartItemId]
+      );
+
+      await client.query("COMMIT");
+
+      if (result.rows.length > 0) {
+        res.status(200).json({ message: "Cart item quantity updated" });
+      } else {
+        res.status(500).json({ error: "Failed to update cart item quantity" });
+      }
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err; // Re-throw the error to be caught by the outer catch block
+    } finally {
+      client.release();
     }
   } catch (err) {
     console.error(`Error updating cart item ${cartItemId} quantity:`, err);
@@ -984,6 +1053,30 @@ app.post(
         const orderId = orderResult.rows[0].id;
         // Insert order items
         for (const item of items) {
+          // Get product stock information
+          const productResult = await client.query(
+            "SELECT stock_quantity, name FROM products WHERE id = $1",
+            [item.product_id || item.id]
+          );
+
+          if (productResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({
+              error: `Product with ID ${item.product_id || item.id} not found`,
+            });
+          }
+
+          const availableStock = productResult.rows[0].stock_quantity;
+          const productName = productResult.rows[0].name;
+
+          // Validate against available stock
+          if (item.quantity > availableStock) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({
+              error: `Insufficient stock for ${productName}. Available: ${availableStock}, Requested: ${item.quantity}`,
+            });
+          }
+
           await client.query(
             `INSERT INTO order_items (order_id, product_id, quantity, price)
            VALUES ($1, $2, $3, $4)`,

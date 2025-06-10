@@ -247,14 +247,10 @@ function AdminOrderManagement() {
                       </td>
                       <td className="px-4 py-3 w-[15%]">
                         {/* Display customer_name if available, fallback to shipping_name or guest user */}
-                        {order.customer_name ||
-                          order.shipping_name ||
-                          t("admin_order_management.guest_user")}
+                        {order.customer_name || order.shipping_name}
                       </td>
                       <td className="px-4 py-3 w-[10%]">
-                        {order.username ||
-                          order.user_id ||
-                          t("admin_order_management.guest_user")}
+                        {order.username || order.user_id}
                       </td>
                       <td className="px-4 py-3 capitalize font-semibold text-green-700 w-[12%]">
                         <select
