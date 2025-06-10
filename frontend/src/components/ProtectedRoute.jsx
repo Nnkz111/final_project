@@ -12,7 +12,7 @@ const ProtectedRoute = ({
   const { adminUser, isLoadingAdmin } = useContext(AdminAuthContext);
 
   if (isLoading || isLoadingAdmin) {
-    return <div>Loading authentication...</div>;
+    return <div></div>;
   }
 
   if (adminOnly) {

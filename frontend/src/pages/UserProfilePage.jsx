@@ -90,7 +90,7 @@ function UserProfilePage() {
     setEditProfileLoading(true);
     setEditProfileError(null);
     setEditProfileSuccess(false);
-    console.log("Submitting profile changes...", profileFormData);
+
     try {
       const response = await fetch("http://localhost:5000/api/profile", {
         method: "PUT",
@@ -98,7 +98,12 @@ function UserProfilePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("customerToken")}`,
         },
-        body: JSON.stringify(profileFormData),
+        body: JSON.stringify({
+          email: profileFormData.email,
+          name: profileFormData.name,
+          phone: profileFormData.phone,
+          address: profileFormData.address,
+        }),
       });
 
       if (!response.ok) {
@@ -109,7 +114,14 @@ function UserProfilePage() {
       const updatedUser = await response.json();
       setEditProfileSuccess(true);
       setIsEditingProfile(false);
-      updateUser(updatedUser);
+      updateUser({
+        ...user,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        customer_name: updatedUser.customer?.name,
+        customer_phone: updatedUser.customer?.phone,
+        customer_address: updatedUser.customer?.address,
+      });
     } catch (err) {
       setEditProfileError(err.message);
     } finally {
@@ -127,11 +139,10 @@ function UserProfilePage() {
     setChangePasswordLoading(true);
     setChangePasswordError(null);
     setChangePasswordSuccess(false);
-    console.log("Submitting password change...");
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/change-password",
+        "http://localhost:5000/api/auth/change-password",
         {
           method: "PUT",
           headers: {

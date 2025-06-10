@@ -37,23 +37,19 @@ function AdminUserManagement() {
     setLoading(true);
     setError("");
     try {
-      // Using the existing /api/admin/customers endpoint as it returns user details
-      // Remove the search parameter from the fetch call
       const res = await fetch(
-        `http://localhost:5000/api/admin/customers?limit=${pageSize}&offset=${
+        `http://localhost:5000/api/admin/users?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
         }`,
         {
           headers: {
-            // Assuming admin endpoints require token
             Authorization: `Bearer ${adminToken}`,
           },
         }
       );
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      // The /api/admin/customers endpoint returns 'customers', but it contains user data
-      setUsers(data.customers); // Set the users state with the fetched data
+      setUsers(data.users); // Set the users state with the fetched data
       setTotal(data.total); // Keep the total count from the backend for pagination
     } catch (err) {
       setError(err.message);
@@ -162,12 +158,15 @@ function AdminUserManagement() {
     setError(""); // Clear previous errors
 
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${userId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/admin/users/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
 
       if (!res.ok) {
         const errorData = await res.json();

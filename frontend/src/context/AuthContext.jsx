@@ -17,7 +17,20 @@ export const AuthProvider = ({ children }) => {
       const parsedUser = JSON.parse(storedUser);
       if (!parsedUser.is_admin) {
         setToken(storedToken);
-        setUser(parsedUser);
+        // Ensure customer data is nested when loaded from localStorage
+        const userToSet = {
+          ...parsedUser,
+          customer: {
+            name: parsedUser.customer_name || parsedUser.customer?.name || null,
+            phone: parsedUser.phone || parsedUser.customer?.phone || null,
+            address: parsedUser.address || parsedUser.customer?.address || null,
+          },
+        };
+        // Clean up old flattened properties if they exist
+        delete userToSet.customer_name;
+        delete userToSet.customer_phone;
+        delete userToSet.customer_address;
+        setUser(userToSet);
       } else {
         // If an admin token/user was somehow stored here, clear it
         localStorage.removeItem("customerToken");
@@ -47,9 +60,33 @@ export const AuthProvider = ({ children }) => {
       }
 
       setToken(receivedToken);
-      setUser(userInfo);
+      // Ensure customer data is nested after login
+      setUser({
+        id: userInfo.id,
+        email: userInfo.email,
+        username: userInfo.username,
+        is_admin: userInfo.is_admin,
+        customer: {
+          name: userInfo.customer_name || userInfo.customer?.name || null,
+          phone: userInfo.phone || userInfo.customer?.phone || null,
+          address: userInfo.address || userInfo.customer?.address || null,
+        },
+      });
       localStorage.setItem("customerToken", receivedToken); // Use customerToken
-      localStorage.setItem("customerUser", JSON.stringify(userInfo)); // Use customerUser
+      localStorage.setItem(
+        "customerUser",
+        JSON.stringify({
+          id: userInfo.id,
+          email: userInfo.email,
+          username: userInfo.username,
+          is_admin: userInfo.is_admin,
+          customer: {
+            name: userInfo.customer_name || userInfo.customer?.name || null,
+            phone: userInfo.phone || userInfo.customer?.phone || null,
+            address: userInfo.address || userInfo.customer?.address || null,
+          },
+        })
+      ); // Use customerUser
       return { success: true, isAdmin: userInfo.is_admin };
     } catch (error) {
       console.error(
@@ -104,8 +141,7 @@ export const AuthProvider = ({ children }) => {
       value={{ user, token, isLoading, login, register, logout, updateUser }}
     >
       {!isLoading && children}
-      {isLoading && <div>Loading user...</div>}{" "}
-      {/* Optional loading indicator */}
+      {isLoading && <div></div>} {/* Optional loading indicator */}
     </AuthContext.Provider>
   );
 };

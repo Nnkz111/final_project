@@ -67,7 +67,10 @@ function AdminProductManagement() {
       setTotal(response.data.total);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching products:", err);
+      console.error(
+        "Error fetching products for admin:",
+        err.response?.data || err
+      );
       setError(t("admin_product_management.fetch_error")); // Translate error message
       setLoading(false);
     }

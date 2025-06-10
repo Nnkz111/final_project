@@ -25,55 +25,6 @@ function Checkout() {
 
   const [modalImageUrl, setModalImageUrl] = useState(null);
 
-  useEffect(() => {
-    // Update form state if user and customer data are available
-    if (user?.customer) {
-      setForm((prevForm) => ({
-        ...prevForm,
-        name: user.customer.name || "",
-        address: user.customer.address || "",
-        phone: user.customer.phone || "",
-        email: user.email || "",
-      }));
-    }
-  }, [user]); // Depend on the user object for context changes
-
-  // Add useEffect to fetch fresh user data when component mounts or user changes
-  useEffect(() => {
-    const fetchFreshUserData = async () => {
-      const token = localStorage.getItem("customerToken");
-      if (!user || !token) {
-        // User not logged in, form will remain with initial empty state
-        return;
-      }
-
-      try {
-        const response = await fetch("http://localhost:5000/api/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const freshUser = await response.json();
-          setForm((prevForm) => ({
-            ...prevForm,
-            name: freshUser.customer?.name || "",
-            address: freshUser.customer?.address || "",
-            phone: freshUser.customer?.phone || "",
-            email: freshUser.email || "",
-          }));
-        } else {
-          console.error("Failed to fetch fresh user data:", response.status);
-        }
-      } catch (error) {
-        console.error("Error fetching fresh user data:", error);
-      }
-    };
-
-    fetchFreshUserData();
-  }, [user]); // Also depend on user here, though mainly for initial load/login
-
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "payment_proof") {
@@ -141,6 +92,42 @@ function Checkout() {
   const closeModal = () => {
     setModalImageUrl(null);
   };
+
+  // Add useEffect to fetch fresh user data when component mounts or user changes
+  useEffect(() => {
+    const fetchFreshUserData = async () => {
+      const token = localStorage.getItem("customerToken");
+      if (!user || !token) {
+        // User not logged in, form will remain with initial empty state
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const freshUser = await response.json();
+          setForm((prevForm) => ({
+            ...prevForm,
+            name: freshUser.customer?.name || "",
+            address: freshUser.customer?.address || "",
+            phone: freshUser.customer?.phone || "",
+            email: freshUser.email || "",
+          }));
+        } else {
+          console.error("Failed to fetch fresh user data:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching fresh user data:", error);
+      }
+    };
+
+    fetchFreshUserData();
+  }, [user]); // Also depend on user here, though mainly for initial load/login
 
   return (
     <div className="container mx-auto mt-8 p-2 md:p-8 flex flex-col md:flex-row gap-8">

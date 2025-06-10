@@ -52,7 +52,7 @@ function HeroSlider() {
   if (loading) {
     return (
       <div className="hero-banner w-full md:w-3/4 lg:w-4/5 bg-gray-200 h-64 flex items-center justify-center">
-        <p className="text-gray-600 text-xl">{t("loading_top_products")}</p>
+        <p className="text-gray-600 text-xl"></p>
       </div>
     );
   }

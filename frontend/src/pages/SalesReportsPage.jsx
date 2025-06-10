@@ -73,7 +73,7 @@ function SalesReportsPage() {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ລາຍງານການຂາຍສິນຄ້າ</title>
+            <title>ລາຍງານການສັ່ງຊື້ສິນຄ້າ</title>
             <style>
                 body { font-family: 'Noto Sans Lao', sans-serif; margin: 20px; color: #333; }
                 button {font-family: 'Noto Sans Lao';}
@@ -122,7 +122,7 @@ function SalesReportsPage() {
                         mrit.laos@gmail.com
                     </p>
                 </div>
-                <h1 style="text-align: center;">ລາຍງານຂໍ້ມູນການຂາຍສິນຄ້າ</h1>
+                <h1 style="text-align: center;">ລາຍງານຂໍ້ມູນການສັ່ງຊື້ສິນຄ້າ</h1>
                  <h1 style="text-align: center; margin-top: -15px; margin-bottom: 20px;">
                    ${
                      startDate
@@ -220,7 +220,9 @@ function SalesReportsPage() {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md flex flex-col items-center justify-center min-h-[70vh]">
-      <h2 className="text-2xl font-semibold mb-6">ລາຍງານການຂາຍສິນຄ້າ</h2>
+      <h2 className="text-2xl font-semibold mb-6">
+        ລາຍງານຂໍ້ມູນການສັ່ງຊື້ສິນຄ້າ
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full max-w-4xl">
         {/* Status Filter */}

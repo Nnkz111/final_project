@@ -116,14 +116,14 @@ function AdminOrderManagement() {
     setModalOrderDetails(null);
     setModalLoading(true);
     setModalError("");
+
     try {
-      // We need to send the authorization token with the request
-      const token = localStorage.getItem("adminToken"); // Get admin token from local storage
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(`http://localhost:5000/api/orders/${order.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok)
-        throw new Error(t("admin_order_management.fetch_details_failed")); // Translate error
+        throw new Error(t("admin_order_management.fetch_details_failed"));
       const data = await res.json();
       setModalOrderDetails(data);
     } catch (err) {
@@ -486,8 +486,8 @@ function AdminOrderManagement() {
                     </span>
                   )}
                 </div>
-                {/* Print Invoice Button */}
-                <div className="flex justify-end mt-4">
+                {/* Action buttons for view mode */}
+                <div className="flex justify-end mt-4 gap-2">
                   <a
                     href={`/invoice/${modalOrderDetails.id}`}
                     target="_blank"
@@ -502,10 +502,9 @@ function AdminOrderManagement() {
           </div>
         </div>
       )}
-      {/* Confirmation Modal */}
       <ConfirmationModal
-        message={confirmMessage} // This message is already translated via confirm functions
         isOpen={isConfirmModalOpen}
+        message={confirmMessage}
         onConfirm={handleConfirm}
         onCancel={handleCancelConfirm}
       />

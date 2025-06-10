@@ -45,7 +45,7 @@ function TopSellingProducts() {
         <ul className="divide-y divide-gray-200">
           {topProducts.map((product, idx) => (
             <li
-              key={product.id}
+              key={product.name}
               className="flex items-center justify-between py-3 px-2"
             >
               <span className="font-medium text-gray-800">

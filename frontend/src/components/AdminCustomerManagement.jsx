@@ -37,15 +37,15 @@ function AdminCustomerManagement() {
     }
   }, [page, adminToken]); // Add adminToken to dependency array
 
-  // Fetch customers with pagination
+  // Fetch customers with pagination and search
   const fetchCustomers = async (pageNum = 1) => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/customers?limit=${pageSize}&offset=${
+        `http://localhost:5000/api/admin/users?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
-        }`,
+        }${search ? `&search=${search}` : ""}`,
         {
           headers: {
             Authorization: `Bearer ${adminToken}`,
@@ -54,7 +54,7 @@ function AdminCustomerManagement() {
       );
       if (!res.ok) throw new Error("Failed to fetch customers");
       const data = await res.json();
-      setCustomers(data.customers);
+      setCustomers(data.users);
       setTotal(data.total);
     } catch (err) {
       setError(err.message);
@@ -63,11 +63,16 @@ function AdminCustomerManagement() {
     }
   };
 
-  const filtered = customers.filter(
-    (c) =>
-      c.username?.toLowerCase().includes(search.toLowerCase()) ||
-      c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Add a useEffect for search to re-fetch data
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (adminToken) {
+        fetchCustomers(1); // Fetch from page 1 when search term changes
+      }
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, adminToken]); // Depend on search term
 
   // Fetch orders for a customer and open modal
   const openOrdersModal = async (customer) => {
@@ -289,7 +294,7 @@ function AdminCustomerManagement() {
           <div className="text-red-500 text-center">
             {t("customerManagement.error", { error: error })}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : customers.length === 0 ? (
           <div className="text-gray-500 text-center">
             {t("customerManagement.noCustomersFound")}
           </div>
@@ -329,7 +334,7 @@ function AdminCustomerManagement() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filtered.map((c) => (
+                  {customers.map((c) => (
                     <tr key={c.id} className="hover:bg-green-50 transition">
                       <td className="px-4 py-3 font-mono">{c.id}</td>
                       <td className="px-4 py-3">{c.customer_name || "-"}</td>
@@ -344,16 +349,20 @@ function AdminCustomerManagement() {
                           {c.status || "N/A"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">{c.order_count}</td>
-                      <td className="px-4 py-3 font-bold text-green-700">
-                        {parseFloat(c.total_spent).toLocaleString("lo-LA", {
-                          style: "currency",
-                          currency: "LAK",
-                        })}
+                      <td className="px-4 py-3 text-center">
+                        {c.total_orders !== undefined ? c.total_orders : "N/A"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 font-bold text-green-700">
+                        {c.total_spent !== undefined
+                          ? parseFloat(c.total_spent).toLocaleString("lo-LA", {
+                              style: "currency",
+                              currency: "LAK",
+                            })
+                          : "N/A"}
+                      </td>
+                      <td className="px-4 py-3 flex items-center">
                         <button
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mr-2"
+                          className="w-20 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm mr-2"
                           onClick={() => openOrdersModal(c)}
                         >
                           {t("view_details_button")}

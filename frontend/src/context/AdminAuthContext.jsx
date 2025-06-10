@@ -72,7 +72,7 @@ export const AdminAuthProvider = ({ children }) => {
       value={{ adminUser, adminToken, isLoadingAdmin, adminLogin, adminLogout }}
     >
       {!isLoadingAdmin && children}
-      {isLoadingAdmin && <div>Loading admin authentication...</div>}{" "}
+      {isLoadingAdmin && <div></div>}{" "}
     </AdminAuthContext.Provider>
   );
 };

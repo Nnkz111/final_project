@@ -29,7 +29,7 @@ function CustomerReportPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/customers`, {
+      const res = await fetch(`http://localhost:5000/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${adminToken}`,
         },
@@ -38,7 +38,7 @@ function CustomerReportPage() {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
-      const customers = data.customers; // Assuming the API returns { customers: [], total: X }
+      const customers = data.users; // Assuming the API returns { users: [], total: X }
 
       // Get current date and time for the report
       const now = new Date();
@@ -140,7 +140,7 @@ function CustomerReportPage() {
                 <td>${escapeHtml(customer.customer_name || "ບໍ່ມີຂໍ້ມູນ")}</td>
                 <td>${escapeHtml(customer.username)}</td>
                 <td>${escapeHtml(customer.email)}</td>
-                <td>${escapeHtml(customer.phone_number || "ບໍ່ມີຂໍ້ມູນ")}</td>
+                <td>${escapeHtml(customer.phone || "ບໍ່ມີຂໍ້ມູນ")}</td>
                 <td>${escapeHtml(customer.address || "ບໍ່ມີຂໍ້ມູນ")}</td>
             </tr>
           `;

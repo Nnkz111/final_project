@@ -228,7 +228,7 @@ function AdminSidebar() {
                 className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
                 onClick={() => setIsReportsDropdownOpen(false)}
               >
-                {t("adminSidebar.sellingReportLink")}
+                ລາຍງານຂໍ້ມູນການສັ່ງຊື້ສິນຄ້າ
               </Link>
               {/* in case they're asking during presentation */}
               {/*<Link
