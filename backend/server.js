@@ -20,8 +20,19 @@ const app = express();
 
 console.log("Backend server starting..."); // New log here
 
-// Use cors middleware to allow cross-origin requests
-app.use(cors());
+// Use cors middleware with proper configuration
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [
+            "https://test-project-frontend.onrender.com",
+            process.env.FRONTEND_URL,
+          ].filter(Boolean)
+        : "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 // Middleware to parse JSON requests
 app.use(express.json());
