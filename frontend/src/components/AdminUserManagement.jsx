@@ -145,7 +145,7 @@ function AdminUserManagement() {
 
   // Open Confirmation Modal for Delete
   const confirmDelete = (user) => {
-    setConfirmMessage(`${t("delete_user_confirmation")} "${user.username}"?`);
+    setConfirmMessage(`ທ່ານຕ້ອງການລົບຜູ້ໃຊ້ນີ້ "${user.username}"?`);
     setActionToConfirm(() => () => handleDeleteUser(user.id)); // Store delete action
     setIsConfirmModalOpen(true);
   };
@@ -331,7 +331,7 @@ function AdminUserManagement() {
                 &times;
               </button>
               <h3 className="text-2xl font-bold mb-4 text-green-700">
-                Edit User
+                ແກ້ໄຂຂໍ້ມູນຜູ້ໃຊ້ລະບົບ
               </h3>
               <form>
                 <div className="mb-4">
@@ -339,7 +339,7 @@ function AdminUserManagement() {
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="username"
                   >
-                    Username
+                    ຊື່ຜູ້ໃຊ້
                   </label>
                   <input
                     type="text"
@@ -355,7 +355,7 @@ function AdminUserManagement() {
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="email"
                   >
-                    Email
+                    ອີເມວ
                   </label>
                   <input
                     type="email"
@@ -372,7 +372,7 @@ function AdminUserManagement() {
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="status"
                   >
-                    Status
+                    ສະຖານະ
                   </label>
                   <select
                     id="status"
@@ -381,7 +381,9 @@ function AdminUserManagement() {
                     onChange={handleEditFormChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   >
-                    <option value="">Select Status</option>
+                    <option value="" disabled>
+                      ເລືອກສະຖານະ
+                    </option>
                     {USER_STATUS_OPTIONS.map((status) => (
                       <option key={status} value={status}>
                         {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -400,7 +402,7 @@ function AdminUserManagement() {
                     className="mr-2 leading-tight"
                   />
                   <label className="text-sm text-gray-700" htmlFor="is_admin">
-                    Is Admin
+                    ແອັດມິນ
                   </label>
                 </div>
                 <div className="flex items-center justify-end gap-4">
@@ -409,7 +411,7 @@ function AdminUserManagement() {
                     onClick={closeEditModal}
                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   >
-                    Cancel
+                    ຍົກເລິກ
                   </button>
                   <button
                     type="button"
@@ -417,7 +419,7 @@ function AdminUserManagement() {
                     disabled={saving}
                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {saving ? "Saving..." : "Save Changes"}
+                    {saving ? "ບັນທຶກ" : "ບັນທຶກ"}
                   </button>
                 </div>
               </form>

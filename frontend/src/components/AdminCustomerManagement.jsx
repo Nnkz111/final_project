@@ -216,12 +216,15 @@ function AdminCustomerManagement() {
     if (!customerId || !token) return;
     setDeleting((prev) => ({ ...prev, [customerId]: true }));
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${customerId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/admin/users/${customerId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
         const errorText = await res.text();

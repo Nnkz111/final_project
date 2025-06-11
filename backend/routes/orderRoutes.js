@@ -3,19 +3,93 @@ const router = express.Router();
 const pool = require("../config/db"); // Import the database pool
 const cloudinary = require("../config/cloudinary"); // Import Cloudinary configuration
 const authenticateToken = require("../middleware/authMiddleware"); // Import authentication middleware
+const { body, param, validationResult } = require("express-validator"); // Import body, param, and validationResult
 
 // Place this after cart routes, before app.listen
 // Removed Multer middleware from order creation route
 // const uploadOrderProof = multer({ storage: storage });
 router.post(
   "/",
+  (req, res, next) => {
+    try {
+      // Parse stringified JSON fields from FormData
+      if (req.body.items && typeof req.body.items === "string") {
+        req.body.items = JSON.parse(req.body.items);
+      }
+      if (req.body.shipping && typeof req.body.shipping === "string") {
+        req.body.shipping = JSON.parse(req.body.shipping);
+      }
+      next();
+    } catch (e) {
+      return res.status(400).json({
+        errors: [{ msg: "Invalid JSON format for items or shipping data." }],
+      });
+    }
+  },
   // Removed uploadOrderProof.single("payment_proof"),
+  [
+    body("userId")
+      .isInt()
+      .withMessage("User ID must be an integer")
+      .notEmpty()
+      .withMessage("User ID is required"),
+    body("items")
+      .isArray({ min: 1 })
+      .withMessage("Items must be a non-empty array"),
+    body("items.*.product_id")
+      .isInt()
+      .withMessage("Product ID in items must be an integer"),
+    body("items.*.quantity")
+      .isInt({ min: 1 })
+      .withMessage("Quantity in items must be a positive integer"),
+    body("items.*.price")
+      .isFloat({ gt: 0 })
+      .withMessage("Price in items must be a positive number"),
+    body("shipping.name")
+      .trim()
+      .notEmpty()
+      .withMessage("Shipping name is required")
+      .isLength({ max: 255 })
+      .withMessage("Shipping name cannot exceed 255 characters"),
+    body("shipping.address")
+      .trim()
+      .notEmpty()
+      .withMessage("Shipping address is required")
+      .isLength({ max: 500 })
+      .withMessage("Shipping address cannot exceed 500 characters"),
+    body("shipping.phone")
+      .trim()
+      .notEmpty()
+      .withMessage("Shipping phone is required")
+      .isLength({ max: 50 })
+      .withMessage("Shipping phone cannot exceed 50 characters"),
+    body("shipping.email")
+      .isEmail()
+      .withMessage("Shipping email must be a valid email address")
+      .normalizeEmail()
+      .notEmpty()
+      .withMessage("Shipping email is required")
+      .isLength({ max: 255 })
+      .withMessage("Shipping email cannot exceed 255 characters"),
+    body("payment_type")
+      .trim()
+      .notEmpty()
+      .withMessage("Payment type is required")
+      .isLength({ max: 50 })
+      .withMessage("Payment type cannot exceed 50 characters"),
+  ],
   async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.error("Validation errors in order placement:", errors.array());
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
       // Parse fields from FormData
       const userId = req.body.userId;
-      const items = JSON.parse(req.body.items);
-      const shipping = JSON.parse(req.body.shipping);
+      const items = req.body.items;
+      const shipping = req.body.shipping;
       const payment_type = req.body.payment_type;
 
       let payment_proof = null;
@@ -262,7 +336,7 @@ router.get("/", authenticateToken, async (req, res) => {
               (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS total
        FROM orders o
        LEFT JOIN users u ON o.user_id = u.id
-       LEFT JOIN customers c ON o.user_id = c.id
+       LEFT JOIN customers c ON o.user_id = c.user_id
        ${where}
        ORDER BY o.created_at DESC
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
@@ -284,80 +358,87 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Update order status (Admin only)
-router.put("/status/:id", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403); // Forbidden if not an admin
-  }
-
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!status) {
-    return res.status(400).json({ error: "Order status is required" });
-  }
-
-  try {
-    const result = await pool.query(
-      "UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, status",
-      [status, id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Order not found" });
+// Update order status by ID (Admin only)
+router.put(
+  "/:id/status",
+  authenticateToken,
+  [
+    param("id").isInt().withMessage("Order ID must be an integer"),
+    body("status")
+      .trim()
+      .notEmpty()
+      .withMessage("Status is required")
+      .isIn(["pending", "paid", "shipped", "completed", "cancelled"])
+      .withMessage("Invalid order status"),
+  ],
+  async (req, res) => {
+    if (!req.user || !req.user.is_admin) {
+      return res.sendStatus(403);
     }
 
-    // Get the user_id associated with the order to send a notification
-    const orderUserIdResult = await pool.query(
-      "SELECT user_id FROM orders WHERE id = $1",
-      [id]
-    );
-    const orderUserId = orderUserIdResult.rows[0]?.user_id;
-
-    if (orderUserId) {
-      // Insert notification for customer when order status changes
-      const notificationType = "order_status_update";
-      const notificationMessageKey = `notification.order_status.${status}`;
-      await pool.query(
-        "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
-        [orderUserId, notificationType, id, notificationMessageKey]
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.error(
+        "Validation errors in order status update:",
+        errors.array()
       );
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(`Error updating order ${id} status:`, err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    const { id } = req.params;
+    const { status } = req.body;
 
-// Delete an order (Admin only)
-router.delete("/:id", authenticateToken, async (req, res) => {
+    try {
+      const result = await pool.query(
+        `UPDATE orders SET status = $1 WHERE id = $2 RETURNING *`,
+        [status, id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Insert notification for status change (Customer Notification)
+      const order = result.rows[0];
+      if (order.user_id) {
+        const notificationType = "order_status_update";
+        const notificationMessage = "notification.order_status_update";
+        await pool.query(
+          "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
+          [order.user_id, notificationType, order.id, notificationMessage]
+        );
+      }
+
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error(`Error updating order ${id} status:`, err);
+      res.status(500).json({ error: "Failed to update order status" });
+    }
+  }
+);
+
+// Delete order by ID (Admin only)
+router.delete("/delete/:id", authenticateToken, async (req, res) => {
   if (!req.user || !req.user.is_admin) {
-    return res.status(403).json({ error: "Admin access required" });
+    return res.sendStatus(403);
   }
-
   const { id } = req.params;
   const client = await pool.connect();
-
   try {
     await client.query("BEGIN");
 
-    // Delete related notifications first
-    await client.query("DELETE FROM notifications WHERE order_id = $1", [id]);
-
-    // Delete order items (if cascading delete is not set up on order_items table)
-    // If order_items has ON DELETE CASCADE from orders, this step is not strictly necessary
-    // but it's safer to include explicitly if not sure or for clarity.
+    // Delete related order items first
     await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
 
-    // Then delete the order
-    const deleteResult = await client.query(
-      "DELETE FROM orders WHERE id = $1 RETURNING id",
+    // Delete related notifications second (to satisfy foreign key constraint)
+    await client.query("DELETE FROM notifications WHERE order_id = $1", [id]);
+
+    // Then delete the order itself
+    const result = await client.query(
+      "DELETE FROM orders WHERE id = $1 RETURNING *",
       [id]
     );
 
-    if (deleteResult.rows.length === 0) {
+    if (result.rows.length === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Order not found" });
     }
@@ -366,59 +447,10 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     res.status(200).json({ message: "Order deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(`Error deleting order with ID ${id}:`, err);
-    res
-      .status(500)
-      .json({ error: "Failed to delete order", details: err.message });
+    console.error(`Error deleting order ${id}:`, err);
+    res.status(500).json({ error: "Failed to delete order" });
   } finally {
     client.release();
-  }
-});
-
-// Update order status (Admin only)
-router.put("/:id/status", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
-    return res.status(403).json({ error: "Admin access required" });
-  }
-
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!status) {
-    return res.status(400).json({ error: "Order status is required" });
-  }
-
-  try {
-    const result = await pool.query(
-      `UPDATE orders SET status = $1 WHERE id = $2 RETURNING *`,
-      [status, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-
-    // Get the user_id associated with the order to send a notification
-    const orderUserIdResult = await pool.query(
-      "SELECT user_id FROM orders WHERE id = $1",
-      [id]
-    );
-    const orderUserId = orderUserIdResult.rows[0]?.user_id;
-
-    if (orderUserId) {
-      // Insert notification for customer when order status changes
-      const notificationType = "order_status_update";
-      const notificationMessage = `notification.order_status_update`;
-      await pool.query(
-        "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
-        [orderUserId, notificationType, id, notificationMessage]
-      );
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(`Error updating order status for ID ${id}:`, err);
-    res.status(500).json({ error: "Failed to update order status" });
   }
 });
 

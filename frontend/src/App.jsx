@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import {
   Routes,
   Route,
@@ -9,44 +9,60 @@ import {
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ProductList from "./components/ProductList";
-import ProductDetails from "./components/ProductDetails";
-import Cart from "./components/Cart";
-import AddProductForm from "./components/AddProductForm";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import ProtectedRoute from "./components/ProtectedRoute";
+
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import { CategoryProvider } from "./context/CategoryContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
-import AdminLayout from "./components/AdminLayout";
-import AdminDashboard from "./components/AdminDashboard";
-import AdminLogin from "./components/AdminLogin";
-import AdminProductManagement from "./components/AdminProductManagement";
-import AdminCategoryManagement from "./components/AdminCategoryManagement";
-import HeroSlider from "./components/HeroSlider";
-import Checkout from "./components/Checkout";
-import OrderConfirmation from "./components/OrderConfirmation";
-import MyOrders from "./components/MyOrders";
-import AdminOrderManagement from "./components/AdminOrderManagement";
-import AdminCustomerManagement from "./components/AdminCustomerManagement";
-import AdminIncomeReportPage from "./components/AdminIncomeReportPage";
-import CategoryPage from "./components/CategoryPage";
-import UserProfilePage from "./pages/UserProfilePage";
 import Breadcrumbs from "./components/Breadcrumbs";
-import CategoryListPage from "./pages/CategoryListPage";
-import ProductListPage from "./pages/ProductListPage";
 import MegaSidebar from "./components/MegaSidebar";
-import SearchResultsPage from "./pages/SearchResultsPage";
-import AdminNotificationsPage from "./pages/AdminNotificationsPage";
-import AdminUserManagement from "./components/AdminUserManagement";
 import Footer from "./components/Footer";
-import InvoicePage from "./components/InvoicePage";
-import ProductsReportPage from "./pages/ProductsReportPage";
-import CustomerReportPage from "./pages/CustomerReportPage";
-import SalesReportsPage from "./pages/SalesReportsPage";
 
 import "./App.css"; // Keep this for any custom styles if needed, or remove if fully using Tailwind
+
+const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
+const CustomerReportPage = lazy(() => import("./pages/CustomerReportPage"));
+const SalesReportsPage = lazy(() => import("./pages/SalesReportsPage"));
+const ProductsReportPage = lazy(() => import("./pages/ProductsReportPage"));
+const ProductListPage = lazy(() => import("./pages/ProductListPage"));
+const AdminNotificationsPage = lazy(() =>
+  import("./pages/AdminNotificationsPage")
+);
+const SearchResultsPage = lazy(() => import("./pages/SearchResultsPage"));
+const CategoryListPage = lazy(() => import("./pages/CategoryListPage"));
+const ProductDetails = lazy(() => import("./components/ProductDetails"));
+const Cart = lazy(() => import("./components/Cart"));
+const AddProductForm = lazy(() => import("./components/AddProductForm"));
+const Login = lazy(() => import("./components/Login"));
+const Register = lazy(() => import("./components/Register"));
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const AdminLayout = lazy(() => import("./components/AdminLayout"));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+const AdminLogin = lazy(() => import("./components/AdminLogin"));
+const AdminProductManagement = lazy(() =>
+  import("./components/AdminProductManagement")
+);
+const AdminCategoryManagement = lazy(() =>
+  import("./components/AdminCategoryManagement")
+);
+const HeroSlider = lazy(() => import("./components/HeroSlider"));
+const Checkout = lazy(() => import("./components/Checkout"));
+const OrderConfirmation = lazy(() => import("./components/OrderConfirmation"));
+const MyOrders = lazy(() => import("./components/MyOrders"));
+const AdminOrderManagement = lazy(() =>
+  import("./components/AdminOrderManagement")
+);
+const AdminCustomerManagement = lazy(() =>
+  import("./components/AdminCustomerManagement")
+);
+const AdminIncomeReportPage = lazy(() =>
+  import("./components/AdminIncomeReportPage")
+);
+const CategoryPage = lazy(() => import("./components/CategoryPage"));
+const AdminUserManagement = lazy(() =>
+  import("./components/AdminUserManagement")
+);
+const InvoicePage = lazy(() => import("./components/InvoicePage"));
 
 // Create layout components
 const CustomerLayout = () => {
@@ -141,110 +157,118 @@ function App() {
       <AdminAuthProvider>
         <CartProvider>
           <CategoryProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
 
-              {/* Customer Area Routes using CustomerLayout */}
-              <Route path="/" element={<CustomerLayout />}>
-                {" "}
-                {/* Parent route for customer area */}
-                <Route index element={<ProductList />} />{" "}
-                {/* Root customer page */}
-                <Route path="categories" element={<CategoryListPage />} />
-                <Route path="products" element={<ProductListPage />} />
-                <Route path="products/:id" element={<ProductDetails />} />
-                <Route path="search" element={<SearchResultsPage />} />
-                <Route
-                  path="cart"
-                  element={
-                    <ProtectedRoute customerOnly={true}>
-                      <Cart />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="checkout"
-                  element={
-                    <ProtectedRoute customerOnly={true}>
-                      <Checkout />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="order-confirmation/:orderId"
-                  element={<OrderConfirmation />}
-                />
-                <Route
-                  path="my-orders"
-                  element={
-                    <ProtectedRoute customerOnly={true}>
-                      <MyOrders />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="category/*" element={<CategoryPage />} />
-                <Route
-                  path="profile"
-                  element={
-                    <ProtectedRoute customerOnly={true}>
-                      <UserProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Fallback for unknown routes within customer area - will show "Customer Page Not Found" */}
-                <Route path="*" element={<div>Customer Page Not Found</div>} />
-              </Route>
+                {/* Customer Area Routes using CustomerLayout */}
+                <Route path="/" element={<CustomerLayout />}>
+                  {" "}
+                  {/* Parent route for customer area */}
+                  <Route index element={<ProductList />} />{" "}
+                  {/* Root customer page */}
+                  <Route path="categories" element={<CategoryListPage />} />
+                  <Route path="products" element={<ProductListPage />} />
+                  <Route path="products/:id" element={<ProductDetails />} />
+                  <Route path="search" element={<SearchResultsPage />} />
+                  <Route
+                    path="cart"
+                    element={
+                      <ProtectedRoute customerOnly={true}>
+                        <Cart />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="checkout"
+                    element={
+                      <ProtectedRoute customerOnly={true}>
+                        <Checkout />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="order-confirmation/:orderId"
+                    element={<OrderConfirmation />}
+                  />
+                  <Route
+                    path="my-orders"
+                    element={
+                      <ProtectedRoute customerOnly={true}>
+                        <MyOrders />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="category/*" element={<CategoryPage />} />
+                  <Route
+                    path="profile"
+                    element={
+                      <ProtectedRoute customerOnly={true}>
+                        <UserProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Fallback for unknown routes within customer area - will show "Customer Page Not Found" */}
+                  <Route
+                    path="*"
+                    element={<div>Customer Page Not Found</div>}
+                  />
+                </Route>
 
-              {/* Top-level route for Search Results */}
-              <Route path="/search" element={<SearchResultsPage />} />
-              <Route path="/invoice/:orderId" element={<InvoicePage />} />
+                {/* Top-level route for Search Results */}
+                <Route path="/search" element={<SearchResultsPage />} />
+                <Route path="/invoice/:orderId" element={<InvoicePage />} />
 
-              {/* Admin Area Routes using AdminAreaLayout */}
-              <Route path="/admin" element={<AdminAreaLayout />}>
-                {" "}
-                {/* Parent route for admin area */}
-                <Route index element={<AdminDashboard />} />{" "}
-                {/* Admin Dashboard as the index route for /admin */}
-                <Route
-                  path="analytics"
-                  element={<div>Admin Analytics Page</div>}
-                />
-                <Route path="products" element={<AdminProductManagement />} />
-                <Route
-                  path="categories"
-                  element={<AdminCategoryManagement />}
-                />
-                <Route path="orders" element={<AdminOrderManagement />} />
-                <Route path="customers" element={<AdminCustomerManagement />} />
-                <Route path="users" element={<AdminUserManagement />} />
-                <Route
-                  path="notifications"
-                  element={<AdminNotificationsPage />}
-                />
-                <Route path="sales" element={<AdminIncomeReportPage />} />
-                <Route
-                  path="/admin/reports/products"
-                  element={<ProductsReportPage />}
-                />
-                <Route
-                  path="/admin/reports/customers"
-                  element={<CustomerReportPage />}
-                />
-                <Route
-                  path="/admin/reports/sales"
-                  element={<SalesReportsPage />}
-                />
-                {/* Add other admin routes here (e.g., users, orders, settings) */}
-                {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}
-                <Route path="*" element={<div>Admin Page Not Found</div>} />
-              </Route>
+                {/* Admin Area Routes using AdminAreaLayout */}
+                <Route path="/admin" element={<AdminAreaLayout />}>
+                  {" "}
+                  {/* Parent route for admin area */}
+                  <Route index element={<AdminDashboard />} />{" "}
+                  {/* Admin Dashboard as the index route for /admin */}
+                  <Route
+                    path="analytics"
+                    element={<div>Admin Analytics Page</div>}
+                  />
+                  <Route path="products" element={<AdminProductManagement />} />
+                  <Route
+                    path="categories"
+                    element={<AdminCategoryManagement />}
+                  />
+                  <Route path="orders" element={<AdminOrderManagement />} />
+                  <Route
+                    path="customers"
+                    element={<AdminCustomerManagement />}
+                  />
+                  <Route path="users" element={<AdminUserManagement />} />
+                  <Route
+                    path="notifications"
+                    element={<AdminNotificationsPage />}
+                  />
+                  <Route path="sales" element={<AdminIncomeReportPage />} />
+                  <Route
+                    path="/admin/reports/products"
+                    element={<ProductsReportPage />}
+                  />
+                  <Route
+                    path="/admin/reports/customers"
+                    element={<CustomerReportPage />}
+                  />
+                  <Route
+                    path="/admin/reports/sales"
+                    element={<SalesReportsPage />}
+                  />
+                  {/* Add other admin routes here (e.g., users, orders, settings) */}
+                  {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}
+                  <Route path="*" element={<div>Admin Page Not Found</div>} />
+                </Route>
 
-              {/* Catch-all for unmatched routes outside the defined structures - will show "Page Not Found - Global" */}
-              <Route path="*" element={<div>Page Not Found - Global</div>} />
-            </Routes>
+                {/* Catch-all for unmatched routes outside the defined structures - will show "Page Not Found - Global" */}
+                <Route path="*" element={<div>Page Not Found - Global</div>} />
+              </Routes>
+            </Suspense>
           </CategoryProvider>
         </CartProvider>
       </AdminAuthProvider>

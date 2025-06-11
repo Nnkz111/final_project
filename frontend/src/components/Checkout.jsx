@@ -52,6 +52,9 @@ function Checkout() {
           email: form.email,
         })
       );
+
+      for (let [key, value] of data.entries()) {
+      }
       data.append("payment_type", form.payment_type);
       if (form.payment_type === "bank_transfer" && form.payment_proof) {
         data.append("payment_proof", form.payment_proof);

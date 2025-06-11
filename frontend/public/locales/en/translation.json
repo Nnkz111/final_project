@@ -219,6 +219,7 @@
   "register_login_link": "Login here",
   "register_success_message": "Registration successful! Please log in.",
   "register_failed_message": "Registration failed: {{error}}",
+  "register_failed_validation_message": "Password must be more than 6",
   "register_alert_close_button": "Close",
 
   "admin_dashboard": {

@@ -38,7 +38,7 @@
     "contact_us": "ຕິດຕໍ່ພວກເຮົາ",
     "follow_us": "ຕິດຕາມພວກເຮົາ",
     "location": "ທີ່ຕັ້ງຮ້ານ",
-    "address": "ບ້ານ ວຽງໃໝ່, ນະຄອນຫຼວງພະບາງ, ແຂວງ ຫຼວງພະບາງ, ລາວ",
+    "address": "ບ້ານ ວຽງໃໝ່, ນະຄອນຫຼວງພະບາງ, ແຂວງ ຫຼວງພະບາງ",
     "copyright": "ອອກແບບ ແລະ ພັດທະນາໂດຍນັກສຶກສາມະຫາວິທະຍາໄລສຸພານຸວົງ "
   },
 
@@ -221,6 +221,7 @@
   "register_login_link": "ເຂົ້າສູ່ລະບົບ",
   "register_success_message": "ລົງທະບຽນສຳເລັດ! ກະລຸນາເຂົ້າສູ່ລະບົບ.",
   "register_failed_message": "ຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວມີຜູ້ໃຊ້ງານແລ້ວ",
+  "register_failed_validation_message": "ລະຫັດຜ່ານຕ້ອງມີຄວາມຍາວກວ່າ 6 ໂຕ",
   "register_alert_close_button": "ປິດ",
 
   "admin_dashboard": {

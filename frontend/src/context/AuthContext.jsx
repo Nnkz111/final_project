@@ -117,8 +117,17 @@ export const AuthProvider = ({ children }) => {
       // login(email, password);
       return { success: true, data: response.data };
     } catch (error) {
-      console.error("Registration error:", error.response.data);
-      return { success: false, error: error.response.data.error };
+      console.error(
+        "Registration error:",
+        error.response?.data || error.message
+      );
+      return {
+        success: false,
+        error:
+          error.response?.data?.error ||
+          "An unexpected error occurred during registration.",
+        errors: error.response?.data?.errors || [], // Return the errors array
+      };
     }
   };
 

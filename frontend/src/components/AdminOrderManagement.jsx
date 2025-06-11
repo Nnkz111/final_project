@@ -84,16 +84,20 @@ function AdminOrderManagement() {
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!orderId) return;
+    if (!adminToken) return;
     setDeleting((prev) => ({ ...prev, [orderId]: true }));
     try {
-      await fetch(`http://localhost:5000/api/orders/${orderId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/orders/delete/${orderId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error(t("admin_order_management.delete_failed"));
       await fetchOrders();
       setIsConfirmModalOpen(false);
       setActionToConfirm(null);

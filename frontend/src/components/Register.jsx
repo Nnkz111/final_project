@@ -14,6 +14,9 @@ function Register() {
   const navigate = useNavigate(); // Initialize useNavigate
   const { t } = useTranslation(); // Initialize useTranslation
 
+  // State for form validation errors
+  const [formErrors, setFormErrors] = useState({});
+
   // State for custom alert modal
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -24,11 +27,15 @@ function Register() {
     setIsAlertModalOpen(false);
     setAlertMessage("");
     setAlertType("success"); // Reset to default
+    setFormErrors({}); // Clear form errors on modal close
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Remove axios call as it will be handled by AuthContext
+    setFormErrors({}); // Clear previous errors
+    setAlertMessage(""); // Clear previous alert message
+    setIsAlertModalOpen(false); // Close any existing alert modal
+
     const result = await register(email, password, username, name); // Pass name to register function
     if (result.success) {
       setAlertMessage(t("register_success_message")); // Use translation key
@@ -40,7 +47,17 @@ function Register() {
         navigate("/login"); // Redirect to login page on success
       }, 3000); // Auto-close and navigate after 3 seconds
     } else {
-      setAlertMessage(t("register_failed_message", { error: result.error })); // Use translation key with interpolation
+      if (result.errors && result.errors.length > 0) {
+        // Map validation errors to an object for easy access
+        const errors = {};
+        result.errors.forEach((err) => {
+          errors[err.param] = err.msg;
+        });
+        setFormErrors(errors);
+        setAlertMessage(t("register_failed_validation_message")); // Generic message for validation errors
+      } else {
+        setAlertMessage(t("register_failed_message", { error: result.error })); // Use translation key with interpolation
+      }
       setAlertType("error");
       setIsAlertModalOpen(true);
     }
@@ -77,12 +94,22 @@ function Register() {
               </label>
               <input
                 type="text"
+                id="username"
                 placeholder={t("register_username_placeholder")}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-200 ${
+                  formErrors.username
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
+              {formErrors.username && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.username}
+                </p>
+              )}
             </div>
             <div>
               {" "}
@@ -97,12 +124,20 @@ function Register() {
               </label>
               <input
                 type="text"
+                id="name"
                 placeholder={t("register_name_placeholder")}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-200 ${
+                  formErrors.name
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
+              {formErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+              )}
             </div>
             <div>
               {" "}
@@ -117,12 +152,20 @@ function Register() {
               </label>
               <input
                 type="email"
+                id="email"
                 placeholder={t("register_email_placeholder")}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-200 ${
+                  formErrors.email
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+              )}
             </div>
             <div>
               {" "}
@@ -137,12 +180,22 @@ function Register() {
               </label>
               <input
                 type="password"
+                id="password"
                 placeholder={t("register_password_placeholder")}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-200 ${
+                  formErrors.password
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {formErrors.password && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.password}
+                </p>
+              )}
             </div>
             <div className="flex items-baseline justify-center">
               {" "}
