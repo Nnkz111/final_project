@@ -164,6 +164,80 @@ function AdminOrderManagement() {
     setActionToConfirm(null);
   };
 
+  // State variables for shipping bill upload
+  const [selectedShippingBill, setSelectedShippingBill] = useState(null);
+  const [uploadingShippingBill, setUploadingShippingBill] = useState(false);
+
+  const handleShippingBillFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedShippingBill(file);
+    }
+  };
+
+  const handleUploadShippingBill = async () => {
+    if (!selectedShippingBill) return;
+    setUploadingShippingBill(true);
+    try {
+      const formData = new FormData();
+      formData.append("shipping_bill", selectedShippingBill);
+      const res = await fetch(
+        `http://localhost:5000/api/orders/${modalOrderDetails.id}/shipping-bill-upload`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: formData,
+        }
+      );
+      if (!res.ok) throw new Error("ຜິດພາດ");
+      await fetchOrders();
+      // Refresh the modal details after successful upload
+      if (modalOrder) {
+        await openOrderModal(modalOrder);
+      }
+      setSelectedShippingBill(null);
+      setUploadingShippingBill(false);
+    } catch (err) {
+      alert("ຜິດພາດ");
+      setSelectedShippingBill(null);
+      setUploadingShippingBill(false);
+    }
+  };
+
+  const handleRemoveShippingBill = async (orderId) => {
+    if (!adminToken) return;
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/orders/${orderId}/shipping-bill`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        }
+      );
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(
+          `Failed to remove shipping bill: ${res.status} - ${errorText}`
+        );
+        throw new Error("Failed to remove shipping bill");
+      }
+      await fetchOrders(); // Refresh orders to reflect the change
+      setModalOrderDetails((prev) => ({ ...prev, shipping_bill_url: null })); // Clear the URL in modal state
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
+      alert("Shipping bill removed successfully!");
+    } catch (err) {
+      console.error("Error removing shipping bill:", err);
+      alert("Failed to remove shipping bill.");
+      setIsConfirmModalOpen(false);
+      setActionToConfirm(null);
+    }
+  };
+
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
@@ -490,6 +564,58 @@ function AdminOrderManagement() {
                     </span>
                   )}
                 </div>
+
+                {/* Shipping Bill Upload Section */}
+                <div className="mb-4 pt-4 border-t border-gray-200 mt-4">
+                  <h4 className="text-lg font-bold mb-2">
+                    ອັບໂຫຼດບິນຝາກເຄື່ອງ
+                  </h4>
+                  {modalOrderDetails.shipping_bill_url ? (
+                    <div className="flex items-center gap-2">
+                      <p className="text-gray-700"> </p>
+                      <a
+                        href={modalOrderDetails.shipping_bill_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        ບິນຝາກເຄື່ອງ{" "}
+                      </a>
+                      <button
+                        onClick={() => {
+                          setConfirmMessage("ທ່ານຕ້ອງການລົບຮູບພາບນີ້?");
+                          setActionToConfirm(
+                            () => () =>
+                              handleRemoveShippingBill(modalOrderDetails.id)
+                          );
+                          setIsConfirmModalOpen(true);
+                        }}
+                        className="bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600"
+                      >
+                        ລົບຮູບພາບ
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleShippingBillFileChange}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      />
+                      <button
+                        onClick={handleUploadShippingBill}
+                        disabled={
+                          !selectedShippingBill || uploadingShippingBill
+                        }
+                        className="bg-green-600 w-32 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center text-sm disabled:opacity-50"
+                      >
+                        {uploadingShippingBill ? "ອັບໂຫຼດ" : "ອັບໂຫຼດ"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Action buttons for view mode */}
                 <div className="flex justify-end mt-4 gap-2">
                   <a

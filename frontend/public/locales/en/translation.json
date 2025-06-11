@@ -489,6 +489,7 @@
   "customer_email_label": "Email",
   "customer_phone_label": "Phone",
   "shipping_address_label": "Shipping",
+  "shipping_bill_label": "Shipping Bill",
   "items_ordered_title": "Items Details",
   "table_header_item": "Name",
   "table_header_qty": "Quantity",

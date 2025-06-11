@@ -493,6 +493,7 @@
   "customer_email_label": "ອີເມວ",
   "customer_phone_label": "ເບີໂທລະສັບ",
   "shipping_address_label": "ທີ່ຢູ່",
+  "shipping_bill_label": "ບິນຝາກເຄື່ອງ",
   "items_ordered_title": "ລາຍການສັ່ງຊຶ້",
   "table_header_item": "ຊື່",
   "table_header_qty": "ຈຳນວນ",

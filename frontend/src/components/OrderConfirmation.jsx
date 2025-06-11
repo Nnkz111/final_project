@@ -48,9 +48,21 @@ function OrderConfirmation() {
             />
           </svg>
         </div>
-        <h2 className="text-3xl font-extrabold text-green-700 mb-2">
-          {t("order_confirmation_title")}{" "}
-        </h2>
+        <div className="w-full flex justify-between items-center mb-4">
+          <h2 className="text-3xl font-extrabold text-green-700 text-center flex-grow">
+            {t("order_confirmation_title")}{" "}
+          </h2>
+          {orderId && (
+            <a
+              href={`/invoice/${orderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-center text-sm"
+            >
+              {t("view_invoice_button")}
+            </a>
+          )}
+        </div>
         {orderId ? (
           <p className="text-lg text-gray-700 mb-2">
             {t("order_id_message")}{" "}
@@ -65,6 +77,9 @@ function OrderConfirmation() {
           </p>
         )}
 
+        {/* Separator */}
+        <div className="w-full border-t border-gray-200 my-8"></div>
+
         {/* Order Details Section */}
         <div className="w-full mt-8 text-left">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -75,25 +90,18 @@ function OrderConfirmation() {
           ) : error ? (
             <div className="text-red-500">{error}</div>
           ) : order ? (
-            <div className="bg-gray-50 rounded-xl p-6 shadow flex flex-col md:flex-row gap-8">
-              <div className="flex-1">
-                <div className="mb-2">
-                  <span className="font-semibold">
-                    {t("order_id_label_details")}:
-                  </span>{" "}
-                  <span className="font-mono">#{order.id}</span>
-                </div>
+            <div className="bg-gray-50 rounded-xl p-6 shadow grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              {/* Left Column for textual details */}
+              <div className="md:col-span-1 flex flex-col">
                 <div className="mb-2">
                   <span className="font-semibold">{t("name_label")}:</span>{" "}
                   <span className=""> {order.shipping_name} </span>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
-                    {t("status_label_details")}:
+                    {t("order_id_label_details")}:
                   </span>{" "}
-                  <span className="capitalize font-semibold text-green-700">
-                    {t(`order_status_${order.status}`)}
-                  </span>
+                  <span className="font-mono">#{order.id}</span>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
@@ -104,9 +112,24 @@ function OrderConfirmation() {
                   </span>
                 </div>
                 <div className="mb-2">
+                  <span className="font-semibold">
+                    {t("status_label_details")}:
+                  </span>{" "}
+                  <span className="capitalize font-semibold text-green-700">
+                    {t(`order_status_${order.status}`)}
+                  </span>
+                </div>
+                <div className="mb-2">
                   <span className="font-semibold">{t("shipping_label")}:</span>{" "}
-                  {order.shipping_address}, {order.shipping_phone},{" "}
-                  {order.shipping_email}
+                  <p className="mr-2">{order.shipping_address}</p>
+                  <p className="mr-2">
+                    <span className="font-semibold">{t("phone_label")}:</span>{" "}
+                    {order.shipping_phone}
+                  </p>
+                  <p>
+                    <span className="font-semibold">{t("email_label")}:</span>{" "}
+                    {order.shipping_email}
+                  </p>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">
@@ -140,23 +163,48 @@ function OrderConfirmation() {
                   </ul>
                 </div>
               </div>
-              {/* Total Amount Section */}
-              <div className="w-full mt-4 pt-4 border-t border-gray-200 text-right">
-                <span className="text-xl font-bold text-gray-800">
-                  {t("total_amount_label")}:
-                </span>
-                <span className="text-2xl font-extrabold text-green-700 ml-2">
-                  {order.total
-                    ? parseFloat(order.total).toLocaleString("lo-LA", {
-                        style: "currency",
-                        currency: "LAK",
-                      })
-                    : "N/A"}
-                </span>
+              {/* Right Column for Shipping Bill and Total */}
+              <div className="md:col-span-1 flex flex-col md:items-end">
+                {order.shipping_bill_url && (
+                  <div className="mt-4 md:mt-0">
+                    <span className="font-semibold block mb-1">
+                      {t("shipping_bill_label")}:
+                    </span>
+                    <a
+                      href={order.shipping_bill_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={order.shipping_bill_url}
+                        alt={t("shipping_bill_alt_text")}
+                        className="w-48 h-48 object-contain rounded-lg border border-green-200 shadow"
+                      />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           ) : null}
         </div>
+
+        {/* Total Amount Display - Moved to top right of buttons */}
+        {order && order.total && (
+          <div className="w-full flex justify-end mb-4 pr-6">
+            <div className="text-right">
+              <span className="font-semibold text-lg">
+                {t("total_amount_label")}:
+              </span>{" "}
+              <span className="font-bold text-green-700 text-xl">
+                {parseFloat(order.total).toLocaleString("lo-LA", {
+                  style: "currency",
+                  currency: "LAK",
+                })}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mt-10">
           <Link

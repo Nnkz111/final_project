@@ -33,9 +33,9 @@ function CategoryMegaDropdown() {
   };
 
   return (
-    <div className="relative w-full z-40 sticky top-[87px]">
+    <div className="relative bg-gray-800 w-full z-40 sticky top-[87px]">
       <div
-        className="bg-gray-800 w-full text-white font-bold px-8 py-3 cursor-pointer flex items-center gap-2 select-none"
+        className="bg-gray-800 w-48 ml-32 text-white font-bold px-8 py-3 cursor-pointer flex items-center gap-2 select-none"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onClick={() => setOpen((o) => !o)}

@@ -4,6 +4,7 @@ const pool = require("../config/db"); // Import the database pool
 const cloudinary = require("../config/cloudinary"); // Import Cloudinary configuration
 const authenticateToken = require("../middleware/authMiddleware"); // Import authentication middleware
 const { body, param, validationResult } = require("express-validator"); // Import body, param, and validationResult
+const adminMiddleware = require("../middleware/adminMiddleware"); // Import adminMiddleware
 
 // Place this after cart routes, before app.listen
 // Removed Multer middleware from order creation route
@@ -417,42 +418,47 @@ router.put(
 );
 
 // Delete order by ID (Admin only)
-router.delete("/delete/:id", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403);
-  }
-  const { id } = req.params;
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    // Delete related order items first
-    await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
-
-    // Delete related notifications second (to satisfy foreign key constraint)
-    await client.query("DELETE FROM notifications WHERE order_id = $1", [id]);
-
-    // Then delete the order itself
-    const result = await client.query(
-      "DELETE FROM orders WHERE id = $1 RETURNING *",
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Order not found" });
+router.delete(
+  "/delete/:id",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res) => {
+    if (!req.user || !req.user.is_admin) {
+      return res.sendStatus(403);
     }
+    const { id } = req.params;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    await client.query("COMMIT");
-    res.status(200).json({ message: "Order deleted successfully" });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(`Error deleting order ${id}:`, err);
-    res.status(500).json({ error: "Failed to delete order" });
-  } finally {
-    client.release();
+      // Delete related order items first
+      await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+
+      // Delete related notifications second (to satisfy foreign key constraint)
+      await client.query("DELETE FROM notifications WHERE order_id = $1", [id]);
+
+      // Then delete the order itself
+      const result = await client.query(
+        "DELETE FROM orders WHERE id = $1 RETURNING *",
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      await client.query("COMMIT");
+      res.status(200).json({ message: "Order deleted successfully" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error(`Error deleting order ${id}:`, err);
+      res.status(500).json({ error: "Failed to delete order" });
+    } finally {
+      client.release();
+    }
   }
-});
+);
 
 // Update full order details (Admin only, more comprehensive update)
 router.put("/:id", authenticateToken, async (req, res) => {
@@ -524,5 +530,111 @@ router.put("/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to update order" });
   }
 });
+
+// New: Admin upload shipping bill to order
+router.put("/:id/shipping-bill-upload", authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+
+  const { id } = req.params; // Order ID
+
+  if (
+    !req.files ||
+    Object.keys(req.files).length === 0 ||
+    !req.files.shipping_bill
+  ) {
+    return res
+      .status(400)
+      .json({ error: "No file uploaded or file field is not 'shipping_bill'" });
+  }
+
+  const file = req.files.shipping_bill;
+
+  try {
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: "shipping_bills", // Dedicated folder for shipping bills
+      resource_type: "image", // Ensure it's treated as an image
+    });
+
+    const shippingBillUrl = result.url;
+
+    const updateResult = await pool.query(
+      "UPDATE orders SET shipping_bill_url = $1 WHERE id = $2 RETURNING *",
+      [shippingBillUrl, id]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.status(200).json({
+      message: "Shipping bill uploaded successfully",
+      order: updateResult.rows[0],
+    });
+  } catch (error) {
+    console.error("Error uploading shipping bill:", error);
+    res.status(500).json({ error: "Failed to upload shipping bill" });
+  }
+});
+
+// DELETE route to remove shipping bill
+router.delete(
+  "/:orderId/shipping-bill",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res) => {
+    const { orderId } = req.params;
+
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        // Get the current shipping_bill_url
+        const orderResult = await client.query(
+          "SELECT shipping_bill_url FROM orders WHERE id = $1",
+          [orderId]
+        );
+
+        if (orderResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ message: "Order not found." });
+        }
+
+        const currentShippingBillUrl = orderResult.rows[0].shipping_bill_url;
+
+        if (currentShippingBillUrl) {
+          // Extract public ID from Cloudinary URL
+          const publicId = currentShippingBillUrl
+            .split("/")
+            .pop()
+            .split(".")[0];
+          await cloudinary.uploader.destroy(`shipping_bills/${publicId}`); // Assuming folder structure
+        }
+
+        // Update the database to remove the shipping bill URL
+        await client.query(
+          "UPDATE orders SET shipping_bill_url = NULL WHERE id = $1",
+          [orderId]
+        );
+
+        await client.query("COMMIT");
+        res
+          .status(200)
+          .json({ message: "Shipping bill removed successfully." });
+      } catch (dbErr) {
+        await client.query("ROLLBACK");
+        console.error("Database error during shipping bill removal:", dbErr);
+        res.status(500).json({ message: "Failed to remove shipping bill." });
+      } finally {
+        client.release();
+      }
+    } catch (err) {
+      console.error("Error removing shipping bill:", err);
+      res.status(500).json({ message: "Failed to remove shipping bill." });
+    }
+  }
+);
 
 module.exports = router;
