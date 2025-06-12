@@ -45,10 +45,9 @@ export const AuthProvider = ({ children }) => {
       const payload = emailOrUsername.includes("@")
         ? { email: emailOrUsername, password }
         : { username: emailOrUsername, password };
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        payload
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await axios.post(`${API_URL}/auth/login`, payload);
       const { token: receivedToken, user: userInfo } = response.data;
 
       // Ensure the logged-in user is NOT an admin for this context
@@ -104,15 +103,14 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, username, name) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          email,
-          password,
-          username,
-          name,
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await axios.post(`${API_URL}/auth/register`, {
+        email,
+        password,
+        username,
+        name,
+      });
       // Optionally, log in the user automatically after successful registration
       // login(email, password);
       return { success: true, data: response.data };

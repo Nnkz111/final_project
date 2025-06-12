@@ -59,7 +59,7 @@ function AdminProductManagement() {
         : "";
       const searchQuery = searchTerm ? `&query=${searchTerm}` : "";
       const response = await axios.get(
-        `http://localhost:5000/api/products?limit=${pageSize}&offset=${
+        `${API_URL}/products?limit=${pageSize}&offset=${
           (page - 1) * pageSize
         }${categoryQuery}${searchQuery}`
       );
@@ -127,7 +127,9 @@ function AdminProductManagement() {
     try {
       // We need to send the authorization token with the request
       const token = localStorage.getItem("adminToken"); // Get admin token from local storage
-      await axios.post("http://localhost:5000/api/products", formData, {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      await axios.post(`${API_URL}/products`, formData, {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
           Authorization: `Bearer ${token}`,

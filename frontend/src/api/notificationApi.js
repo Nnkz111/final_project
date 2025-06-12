@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api"; // Replace with your backend API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Function to get notifications for a specific user
 export const getUserNotifications = async (userId, token) => {

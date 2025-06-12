@@ -82,7 +82,9 @@ function AdminCustomerManagement() {
     setModalError("");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/orders?user_id=${customer.id}`,
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+        }/orders?user_id=${customer.id}`,
         {
           headers: {
             Authorization: `Bearer ${adminToken}`,

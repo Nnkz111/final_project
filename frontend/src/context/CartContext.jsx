@@ -10,8 +10,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartItemCount, setCartItemCount] = useState(0);
   const { user, token, isLoading: isAuthLoading } = useContext(AuthContext);
-
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
   // Function to fetch cart items for the logged-in user
   const fetchCartItems = async () => {
