@@ -15,7 +15,7 @@ services:
     env: node
     plan: free
     buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run preview
+    startCommand: cd frontend && npx vite preview --host 0.0.0.0 --port 5173
     envVars:
       - key: VITE_API_URL
         value: https://test-backend-23z2.onrender.com

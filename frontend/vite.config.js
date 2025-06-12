@@ -15,7 +15,9 @@ export default defineConfig({
     },
   },
   preview: {
-    port: 4173,
+    port: 5173,
     host: true,
+    strictPort: true,
+    allowedHosts: ["test-project-32qx.onrender.com", ".onrender.com"],
   },
 });
