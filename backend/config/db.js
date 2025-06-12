@@ -4,16 +4,23 @@ let pool;
 
 if (process.env.DATABASE_URL) {
   console.log("Configuring database connection for production...");
+  const connectionString = process.env.DATABASE_URL;
+  console.log(
+    "Database URL format check:",
+    connectionString.startsWith("postgresql://")
+      ? "Valid format"
+      : "Invalid format"
+  );
+
   // Production configuration with SSL
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: {
       rejectUnauthorized: false,
-      require: true,
     },
     max: 2, // Reduced for free tier
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000, // Increased timeout
+    connectionTimeoutMillis: 10000, // Increased timeout further
   });
 } else {
   // Development configuration
@@ -28,6 +35,11 @@ if (process.env.DATABASE_URL) {
 
 pool.connect((err, client, release) => {
   if (err) {
+    console.error("Database connection error details:", {
+      code: err.code,
+      message: err.message,
+      stack: err.stack,
+    });
     return console.error("Error acquiring client", err.stack);
   }
   console.log("Database connected successfully!");
