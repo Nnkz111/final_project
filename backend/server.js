@@ -4,6 +4,17 @@ dotenv.config(); // Load environment variables from .env file immediately
 const cors = require("cors");
 const path = require("path");
 const fileUpload = require("express-fileupload");
+const pool = require("./config/db");
+
+// Test database connection immediately
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error("Error connecting to the database:", err.stack);
+  } else {
+    console.log("Successfully connected to database");
+    release();
+  }
+});
 
 const productRoutes = require("./routes/productRoutes");
 const authenticateToken = require("./middleware/authMiddleware");
@@ -51,8 +62,14 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the 'uploads' directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Define the port to run the server on
+// Define the port - Render requires port 10000 for web services
 const port = process.env.PORT || 5000;
+console.log(`Configured to use port: ${port}`);
+
+// Add health check endpoint
+app.get("/", (req, res) => {
+  res.send("Backend server is running");
+});
 
 // Use product routes
 app.use("/api/products", productRoutes);
@@ -80,3 +97,8 @@ app.use("/api/admin", adminRoutes);
 
 // Use profile routes
 app.use("/api/profile", profileRoutes);
+
+// Start the server
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on port ${port}`);
+});
