@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: test-backend-23z2
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://daophet:7yf4WBzh0PSXAX8Qzw6l3O80MzoClXcn@dpg-d14v7p8dl3ps73a2ip50-a.singapore-postgres.render.com/production_db_t6s5
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        value: https://test-project-32qx.onrender.com
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+  - type: web
+    name: test-project-32qx
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://test-backend-23z2.onrender.com
+
+databases:
+  - name: production_db_t6s5
+    databaseName: production_db_t6s5
+    plan: free

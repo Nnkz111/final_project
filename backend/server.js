@@ -4,6 +4,7 @@ dotenv.config(); // Load environment variables from .env file immediately
 const cors = require("cors");
 const path = require("path");
 const fileUpload = require("express-fileupload");
+
 const productRoutes = require("./routes/productRoutes");
 const authenticateToken = require("./middleware/authMiddleware");
 const categoryRoutes = require("./routes/categoryRoutes");
@@ -79,8 +80,3 @@ app.use("/api/admin", adminRoutes);
 
 // Use profile routes
 app.use("/api/profile", profileRoutes);
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
