@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 dotenv.config();
+dotenv.config();
 const cors = require("cors");
 const path = require("path");
 const fileUpload = require("express-fileupload");
@@ -53,6 +54,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
