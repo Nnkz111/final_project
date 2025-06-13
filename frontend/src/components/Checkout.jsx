@@ -59,7 +59,9 @@ function Checkout() {
       if (form.payment_type === "bank_transfer" && form.payment_proof) {
         data.append("payment_proof", form.payment_proof);
       }
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         body: data,
       });
@@ -108,7 +110,7 @@ function Checkout() {
       try {
         const API_URL =
           import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-        const response = await fetch(`${API_URL}/profile`, {
+        const response = await fetch(`${API_URL}/api/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

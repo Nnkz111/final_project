@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
       return;
     }
     try {
-      const response = await axios.get(`${API_URL}/cart/${user.id}`, {
+      const response = await axios.get(`${API_URL}/api/cart/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -37,7 +37,7 @@ export const CartProvider = ({ children }) => {
       return;
     }
     try {
-      const response = await axios.get(`${API_URL}/cart/count/${user.id}`, {
+      const response = await axios.get(`${API_URL}/api/cart/count/${user.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -71,7 +71,7 @@ export const CartProvider = ({ children }) => {
     if (!user || !token) return;
     try {
       await axios.post(
-        `${API_URL}/cart/add`,
+        `${API_URL}/api/cart/add`,
         { productId, quantity },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -87,7 +87,7 @@ export const CartProvider = ({ children }) => {
     if (!user || !token) return;
     try {
       await axios.put(
-        `${API_URL}/cart/update/${cartItemId}`,
+        `${API_URL}/api/cart/update/${cartItemId}`,
         { quantity },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -102,7 +102,7 @@ export const CartProvider = ({ children }) => {
   const removeCartItem = async (cartItemId) => {
     if (!user || !token) return;
     try {
-      await axios.delete(`${API_URL}/cart/remove/${cartItemId}`, {
+      await axios.delete(`${API_URL}/api/cart/remove/${cartItemId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       refreshCart();
@@ -114,7 +114,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (!user || !token) return;
     try {
-      await axios.delete(`${API_URL}/cart/clear`, {
+      await axios.delete(`${API_URL}/api/cart/clear`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       refreshCart();

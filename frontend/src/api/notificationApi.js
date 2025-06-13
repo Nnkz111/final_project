@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 export const getUserNotifications = async (userId, token) => {
   try {
     const response = await axios.get(
-      `${API_URL}/notifications/user/${userId}`,
+      `${API_URL}/api/notifications/user/${userId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

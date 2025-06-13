@@ -42,8 +42,10 @@ function AdminCustomerManagement() {
     setLoading(true);
     setError("");
     try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await fetch(
-        `http://localhost:5000/api/admin/users?limit=${pageSize}&offset=${
+        `${API_URL}/api/admin/users?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
         }${search ? `&search=${search}` : ""}`,
         {
@@ -80,76 +82,65 @@ function AdminCustomerManagement() {
     setModalOrders([]);
     setModalLoading(true);
     setModalError("");
+
     try {
-      const res = await fetch(
-        `${
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-        }/orders?user_id=${customer.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${adminToken}`,
-          },
-        }
-      ); // fallback if not available, use /api/orders/user/:userId with admin token or remove auth for admin
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/orders?user_id=${customer.id}`, {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+
       let data;
       if (res.ok) {
         data = await res.json();
-        // If filtering by user_id is not supported, fallback to filter client-side
-        // Check if data is an object with an 'orders' array property
         if (data && Array.isArray(data.orders)) {
-          data = data.orders.filter((o) => o.user_id === customer.id); // Use data.orders
+          data = data.orders.filter((o) => o.user_id === customer.id);
         } else if (!Array.isArray(data)) {
-          // If it's not an array and not the expected object format, treat as empty
           data = [];
-        } // If it's already an array, no change needed
+        }
 
         if (!data.length || !data[0].user_id) {
-          // fallback: fetch all orders and filter client-side
-          const allRes = await fetch("http://localhost:5000/api/orders", {
+          const allRes = await fetch(`${API_URL}/api/orders`, {
             headers: {
               Authorization: `Bearer ${adminToken}`,
             },
           });
+
           if (allRes.ok) {
             const allOrders = await allRes.json();
-            // Check if allOrders is an object with an 'orders' array property
             if (allOrders && Array.isArray(allOrders.orders)) {
-              data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
+              data = allOrders.orders.filter((o) => o.user_id === customer.id);
             } else if (Array.isArray(allOrders)) {
-              // Fallback if API just returns an array
               data = allOrders.filter((o) => o.user_id === customer.id);
             } else {
-              // Unexpected format
               data = [];
               console.error("Unexpected data format from /api/orders fallback");
             }
           } else {
             throw new Error("Failed to fetch orders in fallback");
+          }
+        }
+      } else {
+        const allRes = await fetch(`${API_URL}/api/orders`, {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
+
+        if (allRes.ok) {
+          const allOrders = await allRes.json();
+          if (allOrders && Array.isArray(allOrders.orders)) {
+            data = allOrders.orders.filter((o) => o.user_id === customer.id);
+          } else if (Array.isArray(allOrders)) {
+            data = allOrders.filter((o) => o.user_id === customer.id);
+          } else {
+            data = [];
+            console.error("Unexpected data format from /api/orders fallback");
           }
         } else {
-          // If initial fetch by user_id failed, go directly to fallback
-          // fallback: fetch all orders and filter client-side
-          const allRes = await fetch("http://localhost:5000/api/orders", {
-            headers: {
-              Authorization: `Bearer ${adminToken}`,
-            },
-          });
-          if (allRes.ok) {
-            const allOrders = await allRes.json();
-            // Check if allOrders is an object with an 'orders' array property
-            if (allOrders && Array.isArray(allOrders.orders)) {
-              data = allOrders.orders.filter((o) => o.user_id === customer.id); // Use allOrders.orders
-            } else if (Array.isArray(allOrders)) {
-              // Fallback if API just returns an array
-              data = allOrders.filter((o) => o.user_id === customer.id);
-            } else {
-              // Unexpected format
-              data = [];
-              console.error("Unexpected data format from /api/orders fallback");
-            }
-          } else {
-            throw new Error("Failed to fetch orders in fallback");
-          }
+          throw new Error("Failed to fetch orders in fallback");
         }
       }
 
@@ -169,7 +160,9 @@ function AdminCustomerManagement() {
   const handleUpdateStatus = async (orderId) => {
     setUpdating((prev) => ({ ...prev, [orderId]: true }));
     try {
-      await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      await fetch(`${API_URL}/api/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -189,17 +182,16 @@ function AdminCustomerManagement() {
   // Add this handler for user status update
   const handleUpdateUserStatus = async (userId, newStatus) => {
     try {
-      await fetch(
-        `http://localhost:5000/api/admin/customers/${userId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      await fetch(`${API_URL}/api/admin/customers/${userId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
       setCustomers((prev) =>
         prev.map((c) => (c.id === userId ? { ...c, status: newStatus } : c))
       );
@@ -218,15 +210,14 @@ function AdminCustomerManagement() {
     if (!customerId || !token) return;
     setDeleting((prev) => ({ ...prev, [customerId]: true }));
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/admin/users/${customerId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/admin/users/${customerId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) {
         const errorText = await res.text();

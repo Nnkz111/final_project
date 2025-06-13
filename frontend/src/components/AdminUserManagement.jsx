@@ -37,8 +37,10 @@ function AdminUserManagement() {
     setLoading(true);
     setError("");
     try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await fetch(
-        `http://localhost:5000/api/admin/users?limit=${pageSize}&offset=${
+        `${API_URL}/api/admin/users?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
         }`,
         {
@@ -113,19 +115,16 @@ function AdminUserManagement() {
     setError(""); // Clear previous errors
 
     try {
-      // ** This is where we'd use the new backend endpoint **
-      // Since we don't have it yet, this call will likely fail or do nothing as expected
-      const res = await fetch(
-        `http://localhost:5000/api/admin/users/${editingUser.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-          body: JSON.stringify(editFormData), // Send updated data
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/admin/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(editFormData), // Send updated data
+      });
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -158,15 +157,14 @@ function AdminUserManagement() {
     setError(""); // Clear previous errors
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/admin/users/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${adminToken}`,
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
 
       if (!res.ok) {
         const errorData = await res.json();

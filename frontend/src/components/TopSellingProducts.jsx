@@ -13,9 +13,9 @@ function TopSellingProducts() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/admin/top-selling-products"
-        );
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const res = await fetch(`${API_URL}/api/admin/top-selling-products`);
         if (!res.ok) throw new Error("Failed to fetch top selling products");
         const data = await res.json();
         setTopProducts(data);

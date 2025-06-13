@@ -1,12 +1,11 @@
 const express = require("express");
 const dotenv = require("dotenv");
-dotenv.config(); // Load environment variables from .env file immediately
+dotenv.config();
 const cors = require("cors");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const pool = require("./config/db");
 
-// Test database connection immediately
 pool.connect((err, client, release) => {
   if (err) {
     console.error("Error connecting to the database:", err.stack);
@@ -35,14 +34,12 @@ console.log("Backend server starting..."); // New log here
 // Use cors middleware with proper configuration
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [
-            "https://test-project-frontend.onrender.com",
-            process.env.FRONTEND_URL,
-          ].filter(Boolean)
-        : "http://localhost:5173",
+    origin: [, "http://localhost:5173", process.env.FRONTEND_URL].filter(
+      Boolean
+    ),
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

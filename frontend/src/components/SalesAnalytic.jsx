@@ -39,8 +39,10 @@ function SalesAnalytic() {
         ]
           .filter(Boolean)
           .join("&");
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const res = await fetch(
-          `http://localhost:5000/api/admin/sales-analytics?${params}`
+          `${API_URL}/api/admin/sales-analytics?${params}`
         );
         if (!res.ok) throw new Error("Failed to fetch sales analytics");
         const result = await res.json();

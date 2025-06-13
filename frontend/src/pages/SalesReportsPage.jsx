@@ -41,7 +41,9 @@ function SalesReportsPage() {
         queryParams.append("end_date", endDate);
       }
 
-      const url = `http://localhost:5000/api/orders?${queryParams.toString()}`;
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const url = `${API_URL}/api/orders?${queryParams.toString()}`;
 
       const res = await fetch(url, {
         headers: {

@@ -37,8 +37,10 @@ function AdminOrderManagement() {
     setLoading(true);
     setError("");
     try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await fetch(
-        `http://localhost:5000/api/orders?limit=${pageSize}&offset=${
+        `${API_URL}/api/orders?limit=${pageSize}&offset=${
           (pageNum - 1) * pageSize
         }`,
         {
@@ -65,9 +67,10 @@ function AdminOrderManagement() {
   const handleUpdateStatus = async (orderId) => {
     setUpdating((prev) => ({ ...prev, [orderId]: true }));
     try {
-      // We need to send the authorization token with the request
-      const token = localStorage.getItem("adminToken"); // Get admin token from local storage
-      await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const token = localStorage.getItem("adminToken");
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      await fetch(`${API_URL}/api/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -87,16 +90,15 @@ function AdminOrderManagement() {
     if (!adminToken) return;
     setDeleting((prev) => ({ ...prev, [orderId]: true }));
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/orders/delete/${orderId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/orders/delete/${orderId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
       if (!res.ok) throw new Error(t("admin_order_management.delete_failed"));
       await fetchOrders();
       setIsConfirmModalOpen(false);
@@ -123,7 +125,9 @@ function AdminOrderManagement() {
 
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`http://localhost:5000/api/orders/${order.id}`, {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/orders/${order.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok)
@@ -181,8 +185,10 @@ function AdminOrderManagement() {
     try {
       const formData = new FormData();
       formData.append("shipping_bill", selectedShippingBill);
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await fetch(
-        `http://localhost:5000/api/orders/${modalOrderDetails.id}/shipping-bill-upload`,
+        `${API_URL}/api/orders/${modalOrderDetails.id}/shipping-bill-upload`,
         {
           method: "PUT",
           headers: {
@@ -209,8 +215,10 @@ function AdminOrderManagement() {
   const handleRemoveShippingBill = async (orderId) => {
     if (!adminToken) return;
     try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await fetch(
-        `http://localhost:5000/api/orders/${orderId}/shipping-bill`,
+        `${API_URL}/api/orders/${orderId}/shipping-bill`,
         {
           method: "DELETE",
           headers: {

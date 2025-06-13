@@ -29,14 +29,13 @@ function AdminHeader() {
       }
 
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/notifications",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(` ${API_URL}/api/notifications`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch notifications.");
         }
@@ -81,16 +80,15 @@ function AdminHeader() {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/notifications/${id}/read`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/notifications/${id}/read`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.ok) {
         // Update the local state to mark the notification as read
