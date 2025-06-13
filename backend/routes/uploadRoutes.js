@@ -24,37 +24,43 @@ router.post("/", async (req, res) => {
     const maxSize = 5 * 1024 * 1024; // 5 MB
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.",
-        });
+      return res.status(400).json({
+        error:
+          "Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.",
+      });
     }
 
     if (file.size > maxSize) {
-      return res
-        .status(400)
-        .json({
-          error: `File size exceeds the limit of ${
-            maxSize / (1024 * 1024)
-          } MB.`,
-        });
+      return res.status(400).json({
+        error: `File size exceeds the limit of ${maxSize / (1024 * 1024)} MB.`,
+      });
     }
 
-    // Upload the file to Cloudinary
+    // Upload the file to Cloudinary with WebP conversion
     const result = await cloudinary.uploader.upload(file.tempFilePath, {
       folder: "category_images", // Optional: specify a folder in Cloudinary
+      format: "webp", // Force WebP format
+      quality: "auto", // Automatic quality optimization
+      fetch_format: "auto", // Deliver in WebP when browser supports it
+      flags: "lossy", // Use lossy compression for better optimization
+      transformation: [
+        {
+          fetch_format: "webp",
+          quality: "auto",
+        },
+      ],
     });
 
     // The result object contains information about the uploaded image
     const imageUrl = result.url; // This is the public URL of the uploaded image
     const publicId = result.public_id; // This is the public ID of the image in Cloudinary
 
-    // You might want to save the imageUrl and/or publicId to your database
-    // For this example, we'll just return the URL.
-
-    res.json({ url: imageUrl, publicId: publicId });
+    // Return the WebP URL
+    res.json({
+      url: imageUrl,
+      publicId: publicId,
+      format: "webp",
+    });
   } catch (error) {
     console.error("Error uploading image to Cloudinary:", error);
     res

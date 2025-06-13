@@ -16,12 +16,11 @@ function MyOrders() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/orders/user/${user.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const res = await fetch(`${API_URL}/api/orders/user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) throw new Error("Failed to fetch orders");
         const data = await res.json();
         setOrders(data);

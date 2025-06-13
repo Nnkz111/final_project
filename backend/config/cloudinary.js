@@ -6,4 +6,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Set default upload parameters for all uploads
+cloudinary.config({
+  upload_preset: {
+    transformation: [{ format: "webp", quality: "auto" }],
+  },
+});
+
 module.exports = cloudinary;

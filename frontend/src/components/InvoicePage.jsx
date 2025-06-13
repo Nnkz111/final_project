@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 function InvoicePage() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -15,7 +15,7 @@ function InvoicePage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+        const res = await fetch(`${API_URL}/api/orders/${orderId}`);
         if (!res.ok) throw new Error("Failed to fetch order details");
         const data = await res.json();
         setOrder(data);

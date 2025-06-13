@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-// We will no longer directly use useCart to modify cart state here,
-// but might use it later to refresh cart data after adding.
-// import { useCart } from '../context/CartContext';
 import AuthContext from "../context/AuthContext"; // Import AuthContext
 import { useCart } from "../context/CartContext"; // Import useCart hook
 import { useCategories } from "../context/CategoryContext";
@@ -14,8 +11,8 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user, token } = useContext(AuthContext); // Get user and token from AuthContext
-  const { refreshCart } = useCart(); // Get refreshCart from CartContext
+  const { user, token } = useContext(AuthContext);
+  const { refreshCart } = useCart();
   const { hierarchicalCategories } = useCategories();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -24,8 +21,6 @@ function ProductDetails() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Fetch product details from the backend using the ID
-        // We will create this backend endpoint next
         const API_URL =
           import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const response = await fetch(`${API_URL}/api/products/${id}`);
@@ -33,11 +28,19 @@ function ProductDetails() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setProduct(data);
+
+        const formattedProduct = {
+          ...data,
+          id: Number(data.id),
+          price: Number(data.price),
+          stock_quantity: Number(data.stock_quantity),
+          old_price: data.old_price ? Number(data.old_price) : null,
+        };
+        setProduct(formattedProduct);
         setSelectedImage(
-          data.images && data.images.length > 0
-            ? data.images[0]
-            : data.image_url
+          formattedProduct.images && formattedProduct.images.length > 0
+            ? formattedProduct.images[0]
+            : formattedProduct.image_url
         );
       } catch (error) {
         setError(error);
@@ -48,24 +51,39 @@ function ProductDetails() {
     };
 
     fetchProduct();
-  }, [id]); // Re-run effect if the ID changes
+  }, [id]);
 
-  // Function to handle adding a product to the persistent cart
   const handleAddToCart = async () => {
     if (!user || !token) {
-      // Redirect to login page if not logged in
       navigate("/login");
       return;
     }
 
-    // Check if product is out of stock before adding
-    if (product && product.stock_quantity <= 0) {
-      alert("Product is out of stock.");
+    if (!product || !product.id) {
+      console.error("Invalid product:", product);
+      alert(t("error_invalid_product"));
       return;
     }
 
-    const productId = product.id;
-    // Use the quantity state variable here
+    const parsedQuantity = parseInt(quantity);
+    if (isNaN(parsedQuantity) || parsedQuantity < 1) {
+      console.error("Invalid quantity:", quantity, "Parsed:", parsedQuantity);
+      alert(t("error_invalid_quantity"));
+      return;
+    }
+
+    if (!user.id) {
+      console.error("Missing user ID:", user);
+      alert(t("error_invalid_user"));
+      return;
+    }
+
+    const requestData = {
+      productId: parseInt(product.id), // Changed from product_id to match backend
+      quantity: parsedQuantity,
+      // Removed user_id as it's handled by the backend via token
+    };
+
     try {
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -73,22 +91,28 @@ function ProductDetails() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Add Authorization header
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ productId, quantity }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        console.error("Server response:", errorData);
+        throw new Error(
+          errorData.message ||
+            errorData.error ||
+            `HTTP error! status: ${response.status}`
+        );
       }
 
-      // Optional: Provide user feedback (e.g., a small notification)
+      const responseData = await response.json();
 
-      // Optional: Refresh the cart data in the header/cart page after adding
-      refreshCart(); // Refresh the cart data after adding
+      // Refresh the cart data after adding
+      refreshCart();
     } catch (error) {
       console.error("Error adding product to cart:", error);
-      // Optional: Display an error message to the user
+      alert(error.message || t("error_adding_to_cart"));
     }
   };
 
@@ -283,15 +307,6 @@ function ProductDetails() {
           </div>
         </div>
       </div>
-
-      {/* Related Products Section (Optional) */}
-      {/* <div className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          // Example related product cards
-          // <ProductCard product={...} />
-        </div>
-      </div> */}
     </div>
   );
 }
