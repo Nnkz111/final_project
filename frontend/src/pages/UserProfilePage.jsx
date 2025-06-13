@@ -38,7 +38,9 @@ function UserProfilePage() {
       }
 
       try {
-        const response = await fetch("http://localhost:5000/api/profile", {
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/api/profile`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("customerToken")}`,
           },
@@ -92,7 +94,9 @@ function UserProfilePage() {
     setEditProfileSuccess(false);
 
     try {
-      const response = await fetch("http://localhost:5000/api/profile", {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -141,20 +145,19 @@ function UserProfilePage() {
     setChangePasswordSuccess(false);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/auth/change-password",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("customerToken")}`,
-          },
-          body: JSON.stringify({
-            currentPassword: passwordFormData.currentPassword,
-            newPassword: passwordFormData.newPassword,
-          }),
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/profile/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("customerToken")}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordFormData.currentPassword,
+          newPassword: passwordFormData.newPassword,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

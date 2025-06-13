@@ -16,8 +16,9 @@ const ProductListPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Replace with your backend API URL if it's different
-        const response = await fetch("http://localhost:5000/api/products");
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/api/products`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

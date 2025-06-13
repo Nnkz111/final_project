@@ -25,14 +25,13 @@ function ProductsReportPage() {
     try {
       // Add low_stock_only parameter if checkbox is checked
       const lowStockQuery = showLowStockOnly ? "&low_stock=true" : "";
-      const res = await fetch(
-        `http://localhost:5000/api/products?${lowStockQuery}`,
-        {
-          headers: {
-            Authorization: `Bearer ${adminToken}`,
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/products?${lowStockQuery}`, {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }

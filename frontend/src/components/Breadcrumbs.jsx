@@ -17,7 +17,9 @@ const Breadcrumbs = () => {
     // *** Replace this with your actual product data fetching logic ***
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`);
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/products/${id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

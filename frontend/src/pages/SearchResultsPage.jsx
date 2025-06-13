@@ -21,8 +21,10 @@ function SearchResultsPage() {
 
       try {
         setLoading(true);
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const response = await fetch(
-          `http://localhost:5000/api/products/search?query=${encodeURIComponent(
+          `${API_URL}/api/products/search?query=${encodeURIComponent(
             searchTerm
           )}${sortByPrice ? `&sort_by_price=${sortByPrice}` : ""}`
         );

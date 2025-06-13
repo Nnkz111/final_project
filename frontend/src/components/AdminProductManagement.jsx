@@ -54,12 +54,14 @@ function AdminProductManagement() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const categoryQuery = selectedCategory
         ? `&category_id=${selectedCategory}`
         : "";
       const searchQuery = searchTerm ? `&query=${searchTerm}` : "";
       const response = await axios.get(
-        `${API_URL}/products?limit=${pageSize}&offset=${
+        `${API_URL}/api/products?limit=${pageSize}&offset=${
           (page - 1) * pageSize
         }${categoryQuery}${searchQuery}`
       );
@@ -129,7 +131,7 @@ function AdminProductManagement() {
       const token = localStorage.getItem("adminToken"); // Get admin token from local storage
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-      await axios.post(`${API_URL}/products`, formData, {
+      await axios.post(`${API_URL}/api/products`, formData, {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
           Authorization: `Bearer ${token}`,
@@ -196,8 +198,10 @@ function AdminProductManagement() {
 
     try {
       const token = localStorage.getItem("adminToken");
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       await axios.put(
-        `http://localhost:5000/api/products/${editingProduct.id}`,
+        `${API_URL}/api/products/${editingProduct.id}`,
         formData,
         {
           headers: {
@@ -292,7 +296,9 @@ function AdminProductManagement() {
   const handleDeleteProduct = async (id) => {
     try {
       const token = localStorage.getItem("adminToken");
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      await axios.delete(`${API_URL}/api/products/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

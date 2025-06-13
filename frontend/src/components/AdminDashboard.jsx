@@ -19,7 +19,9 @@ function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/stats");
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const res = await fetch(`${API_URL}/api/admin/stats`);
         const data = await res.json();
         // Removed separate fetch for pending orders, now included in /api/admin/stats
         setStats({

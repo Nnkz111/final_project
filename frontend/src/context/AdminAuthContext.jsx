@@ -27,7 +27,7 @@ export const AdminAuthProvider = ({ children }) => {
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const response = await axios.post(
-        `${API_URL}/auth/login`, // Still using the same login endpoint
+        `${API_URL}/api/auth/login`, // Still using the same login endpoint
         payload
       );
       const { token: receivedToken, user: userInfo } = response.data;

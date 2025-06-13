@@ -1,12 +1,11 @@
 const express = require("express");
 const dotenv = require("dotenv");
-dotenv.config(); // Load environment variables from .env file immediately
+dotenv.config();
 const cors = require("cors");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const pool = require("./config/db");
 
-// Test database connection immediately
 pool.connect((err, client, release) => {
   if (err) {
     console.error("Error connecting to the database:", err.stack);
@@ -33,16 +32,29 @@ const app = express();
 console.log("Backend server starting..."); // New log here
 
 // Use cors middleware with proper configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_DEV_URL || "http://localhost:5173",
+].filter(Boolean);
+
+console.log("Allowed CORS origins:", allowedOrigins); // For debugging
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [
-            "https://test-project-frontend.onrender.com",
-            process.env.FRONTEND_URL,
-          ].filter(Boolean)
-        : "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        console.log("Blocked origin:", origin); // For debugging
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

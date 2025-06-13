@@ -26,9 +26,9 @@ function ProductDetails() {
       try {
         // Fetch product details from the backend using the ID
         // We will create this backend endpoint next
-        const response = await fetch(
-          `http://localhost:5000/api/products/${id}`
-        );
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/api/products/${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -67,7 +67,9 @@ function ProductDetails() {
     const productId = product.id;
     // Use the quantity state variable here
     try {
-      const response = await fetch("http://localhost:5000/api/cart/add", {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/cart/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

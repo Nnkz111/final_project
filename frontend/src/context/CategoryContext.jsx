@@ -32,12 +32,12 @@ export const CategoryProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${API_URL}/categories`);
+        const response = await axios.get(`${API_URL}/api/categories`);
         setCategories(response.data); // Store flat list
         setHierarchicalCategories(buildCategoryTree(response.data)); // Build and store hierarchical list
       } catch (err) {

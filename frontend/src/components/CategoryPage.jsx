@@ -46,8 +46,10 @@ function CategoryPage() {
     // Only fetch products if the current category has no direct children
     if (directChildren.length === 0 && cat) {
       setLoading(true);
-      setProducts([]); // Clear previous products
-      let apiUrl = `http://localhost:5000/api/products?category_id=${currentCategoryId}`;
+      setProducts([]);
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      let apiUrl = `${API_URL}/api/products?category_id=${currentCategoryId}`;
       if (sortByPrice) {
         apiUrl += `&sort_by_price=${sortByPrice}`;
       }

@@ -26,7 +26,9 @@ function Cart() {
     }
     const userId = user.id; // Use user.id from context
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`, {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/cart/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`, // Add Authorization header
         },

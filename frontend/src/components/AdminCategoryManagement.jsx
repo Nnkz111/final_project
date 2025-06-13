@@ -148,7 +148,9 @@ function AdminCategoryManagement() {
   // Fetch categories from the backend
   const fetchCategories = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/categories");
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/categories`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -192,7 +194,9 @@ function AdminCategoryManagement() {
       const formData = new FormData();
       formData.append("image", file);
       try {
-        const response = await fetch("http://localhost:5000/api/upload", {
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/api/upload`, {
           method: "POST",
           body: formData,
           headers: { Authorization: `Bearer ${adminToken}` },
@@ -235,11 +239,11 @@ function AdminCategoryManagement() {
     if (!categoryName.trim()) return;
 
     // Image upload already happened on file select, categoryImageUrl should hold the backend URL
-
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
     const method = editingCategory ? "PUT" : "POST";
     const url = editingCategory
-      ? `http://localhost:5000/api/categories/${editingCategory.id}`
-      : "http://localhost:5000/api/categories";
+      ? `${API_URL}/api/categories/${editingCategory.id}`
+      : `${API_URL}/api/categories`;
 
     try {
       const response = await fetch(url, {
@@ -291,15 +295,14 @@ function AdminCategoryManagement() {
   const handleDeleteCategory = async (categoryId) => {
     if (!categoryId) return;
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/categories/${categoryId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${adminToken}`,
-          },
-        }
-      );
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/api/categories/${categoryId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         : { username: emailOrUsername, password };
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-      const response = await axios.post(`${API_URL}/auth/login`, payload);
+      const response = await axios.post(`${API_URL}/api/auth/login`, payload);
       const { token: receivedToken, user: userInfo } = response.data;
 
       // Ensure the logged-in user is NOT an admin for this context
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
         email,
         password,
         username,
