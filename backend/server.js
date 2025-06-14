@@ -7,6 +7,15 @@ const path = require("path");
 const fileUpload = require("express-fileupload");
 const pool = require("./config/db");
 
+// Request timeout middleware
+const timeout = require('connect-timeout');
+const TIMEOUT_DURATION = '30s';
+
+// Timeout handler
+const haltOnTimedout = (req, res, next) => {
+  if (!req.timedout) next();
+};
+
 pool.connect((err, client, release) => {
   if (err) {
     console.error("Error connecting to the database:", err.stack);
@@ -29,6 +38,10 @@ const profileRoutes = require("./routes/profileRoutes");
 
 // Create an Express application
 const app = express();
+
+// Add timeout middleware
+app.use(timeout(TIMEOUT_DURATION));
+app.use(haltOnTimedout);
 
 console.log("Backend server starting..."); // New log here
 
