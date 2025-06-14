@@ -3,14 +3,16 @@ import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],  server: {
+  plugins: [react()],
+  base: "/",
+  server: {
     port: parseInt(process.env.VITE_PORT || "5173"),
     proxy: {
       "/api": {
         target: process.env.VITE_API_URL || "http://localhost:5000",
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
+        rewrite: (path) => path.replace(/^\/api/, ""),
         changeOrigin: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: true,
       },
     },
   },
@@ -18,6 +20,17 @@ export default defineConfig({
     port: 5173,
     host: true,
     strictPort: true,
-    allowedHosts: [process.env.VITE_ALLOWED_HOST || ".onrender.com"],
+  },
+  build: {
+    sourcemap: true,
+    outDir: "dist",
+    assetsDir: "assets",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+        },
+      },
+    },
   },
 });

@@ -36,7 +36,11 @@ console.log("Backend server starting..."); // New log here
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_DEV_URL || "http://localhost:5173",
+  process.env.FRONTEND_PROD_URL,
 ].filter(Boolean);
+
+// Log the current environment
+console.log("Current environment:", process.env.NODE_ENV);
 
 console.log("Allowed CORS origins:", allowedOrigins); // For debugging
 
