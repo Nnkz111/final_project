@@ -7,8 +7,9 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
+import MobileHeader from "./components/MobileHeader";
 import ProductList from "./components/ProductList";
+import MobileNavbar from "./components/MobileNavbar";
 
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -91,62 +92,78 @@ const CustomerLayout = () => {
     }
   }, [isHomePage]); // Re-measure if homepage status changes
 
+  const shouldShowHeroSection =
+    !isProductDetail &&
+    !isCart &&
+    !isCheckout &&
+    !isOrderConfirmation &&
+    !isMyOrders &&
+    !isCategoryPage &&
+    !isProfilePage &&
+    !isCategoryListPage &&
+    !isProductListPage &&
+    !location.pathname.startsWith("/search");
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {" "}
-      {/* Customer layout container */}
-      <Header showMegaDropdown={!isHomePage} />
-      {/* Display Breadcrumbs on non-homepage pages */}
+      {/* Responsive Header */}
+      <div className="hidden md:block">
+        <Header showMegaDropdown={!isHomePage} />
+      </div>
+      <div className="md:hidden">
+        <MobileHeader />
+      </div>
+
+      {/* Breadcrumbs - Hide on mobile homepage */}
       {!isHomePage && (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto px-4 py-2 mt-0 md:mt-4">
           <Breadcrumbs />
         </div>
       )}
-      {/* Sidebar and HeroSlider in the same row/section */}
-      {/* Exclude sidebar and hero slider on specific pages like product detail, cart, etc., AND the category list page and product list page */}
-      {!isProductDetail &&
-        !isCart &&
-        !isCheckout &&
-        !isOrderConfirmation &&
-        !isMyOrders &&
-        !isCategoryPage &&
-        !isProfilePage &&
-        !isCategoryListPage &&
-        !isProductListPage &&
-        !location.pathname.startsWith("/search") && (
-          <div
-            className="container mx-auto flex flex-row items-start relative"
-            ref={bannerContainerRef}
-          >
-            {" "}
-            {/* Use flexbox, align items to start, and add relative positioning */}
-            <MegaSidebar
-              className="w-64 flex-shrink-0"
-              bannerHeight={bannerHeight}
-            />{" "}
-            {/* Use MegaSidebar, fixed width, and prevent shrinking */}
-            <HeroSlider className="flex-grow" />{" "}
-            {/* HeroSlider takes remaining width */}
-          </div>
+
+      <main className="flex-1 flex flex-col">
+        {shouldShowHeroSection && (
+          <>
+            {/* Desktop Layout */}
+            <div className="hidden md:block container mx-auto px-4">
+              <div className="flex gap-6 my-6">
+                <div className="w-64 flex-shrink-0">
+                  <MegaSidebar />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {" "}
+                  {/* min-w-0 prevents flex item from overflowing */}
+                  <HeroSlider />
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Layout */}
+            <div className="md:hidden container mx-auto px-4 mt-2 mb-4">
+              <HeroSlider />
+            </div>
+          </>
         )}
-      {/* Product list and other content below */}
-      {/* Adjusted padding for sticky header and dropdown */}
-      <div className="container mx-auto flex-1 p-4">
-        <Outlet />
-      </div>
+
+        <div className="container mx-auto px-4 py-4 flex-1">
+          <Outlet />
+        </div>
+      </main>
+
       <Footer />
+
+      {/* Mobile Navigation - Only show on mobile */}
+      <div className="md:hidden">
+        <MobileNavbar />
+      </div>
     </div>
   );
 };
 
 const AdminAreaLayout = () => (
   <ProtectedRoute adminOnly={true}>
-    {" "}
-    {/* Protect the entire admin area */}
     <AdminLayout>
-      {" "}
-      {/* Admin layout container */}
-      <Outlet /> {/* Renders the matched child route component */}
+      <Outlet />
     </AdminLayout>
   </ProtectedRoute>
 );
@@ -164,12 +181,9 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
 
-                {/* Customer Area Routes using CustomerLayout */}
+                {/* Customer Area Routes */}
                 <Route path="/" element={<CustomerLayout />}>
-                  {" "}
-                  {/* Parent route for customer area */}
-                  <Route index element={<ProductList />} />{" "}
-                  {/* Root customer page */}
+                  <Route index element={<ProductList />} />
                   <Route path="categories" element={<CategoryListPage />} />
                   <Route path="products" element={<ProductListPage />} />
                   <Route path="products/:id" element={<ProductDetails />} />
@@ -211,27 +225,12 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  {/* Fallback for unknown routes within customer area - will show "Customer Page Not Found" */}
-                  <Route
-                    path="*"
-                    element={<div>Customer Page Not Found</div>}
-                  />
+                  <Route path="*" element={<div>Page Not Found</div>} />
                 </Route>
 
-                {/* Top-level route for Search Results */}
-                <Route path="/search" element={<SearchResultsPage />} />
-                <Route path="/invoice/:orderId" element={<InvoicePage />} />
-
-                {/* Admin Area Routes using AdminAreaLayout */}
+                {/* Admin Area Routes */}
                 <Route path="/admin" element={<AdminAreaLayout />}>
-                  {" "}
-                  {/* Parent route for admin area */}
-                  <Route index element={<AdminDashboard />} />{" "}
-                  {/* Admin Dashboard as the index route for /admin */}
-                  <Route
-                    path="analytics"
-                    element={<div>Admin Analytics Page</div>}
-                  />
+                  <Route index element={<AdminDashboard />} />
                   <Route path="products" element={<AdminProductManagement />} />
                   <Route
                     path="categories"
@@ -249,24 +248,18 @@ function App() {
                   />
                   <Route path="sales" element={<AdminIncomeReportPage />} />
                   <Route
-                    path="/admin/reports/products"
+                    path="reports/products"
                     element={<ProductsReportPage />}
                   />
                   <Route
-                    path="/admin/reports/customers"
+                    path="reports/customers"
                     element={<CustomerReportPage />}
                   />
-                  <Route
-                    path="/admin/reports/sales"
-                    element={<SalesReportsPage />}
-                  />
-                  {/* Add other admin routes here (e.g., users, orders, settings) */}
-                  {/* Fallback for unknown routes within admin area - will show "Admin Page Not Found" */}
+                  <Route path="reports/sales" element={<SalesReportsPage />} />
                   <Route path="*" element={<div>Admin Page Not Found</div>} />
                 </Route>
 
-                {/* Catch-all for unmatched routes outside the defined structures - will show "Page Not Found - Global" */}
-                <Route path="*" element={<div>Page Not Found - Global</div>} />
+                <Route path="*" element={<div>Page Not Found</div>} />
               </Routes>
             </Suspense>
           </CategoryProvider>

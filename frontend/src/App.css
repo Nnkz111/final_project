@@ -1,16 +1,109 @@
 /* Clear out all default styles */
 
 .container {
-  display: flex;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-aside {
-  width: 200px; /* Adjust sidebar width as needed */
-  padding: 20px;
-  border-right: 1px solid #ccc; /* Optional separator */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 2rem;
+  }
 }
 
-main {
-  flex-grow: 1;
-  padding: 20px;
+/* Hero slider adjustments */
+.hero-slide {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  aside {
+    width: 100%;
+    border-right: none;
+    padding: 10px;
+  }
+
+  main {
+    padding: 10px;
+  }
+
+  .hero-slider {
+    height: 200px;
+  }
+}
+
+/* Shadow for bottom navigation */
+.shadow-up {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Add padding to the bottom of the page on mobile to account for bottom navbar */
+@media (max-width: 768px) {
+  .pb-safe {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Slick slider overrides */
+.slick-slider {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.slick-list {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.slick-slide {
+  float: left;
+  height: 100%;
+  min-height: 1px;
+  display: none;
+}
+
+.slick-slide.slick-active {
+  display: block;
+}
+
+/* Desktop specific styles */
+@media (min-width: 768px) {
+  .slick-slider {
+    margin: 0;
+    width: 100%;
+  }
+
+  .slick-track {
+    display: flex !important;
+  }
+
+  .slick-slide {
+    height: auto;
+  }
+
+  .slick-slide > div {
+    height: 100%;
+  }
+}
+
+/* Mobile specific styles */
+@media (max-width: 767px) {
+  .slick-slider {
+    margin: 0 -1rem;
+  }
 }
