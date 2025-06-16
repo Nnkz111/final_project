@@ -4,7 +4,6 @@ import { useCart } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
 import { useCategories } from "../context/CategoryContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import CategoryMegaDropdown from "./CategoryMegaDropdown";
 import "flag-icons/css/flag-icons.min.css";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,20 +11,18 @@ import {
   markNotificationAsRead,
 } from "../api/notificationApi"; // Import API functions
 
-function Header({ showMegaDropdown }) {
+function Header() {
   const { cartItemCount } = useCart(); // Get count from context
   const { user, logout, token } = useContext(AuthContext); // Get user, logout, AND token from AuthContext
   const [profileOpen, setProfileOpen] = useState(false);
-  const { hierarchicalCategories, loading } = useCategories();
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const location = useLocation();
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const { t, i18n } = useTranslation(); // Get the t and i18n instance
   const [langDropdownOpen, setLangDropdownOpen] = useState(false); // State for language dropdown
   const [notificationOpen, setNotificationOpen] = useState(false); // State for notification dropdown
   const [notifications, setNotifications] = useState([]); // State to store notifications
   const [unreadCount, setUnreadCount] = useState(0); // State to store unread notification count
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout(); // Call the customer logout function from AuthContext
@@ -94,100 +91,22 @@ function Header({ showMegaDropdown }) {
     }
   };
 
-  // Dropdown menu for categories
-  const renderCategoryDropdown = () => (
-    <nav
-      className="w-full bg-white border-b border-gray-200 shadow-sm z-40 sticky top-[64px]"
-      style={{ outline: "2px solid red" }}
-    >
-      <div className="container mx-auto flex flex-row items-stretch relative">
-        <ul className="flex flex-row gap-2 py-2 w-full overflow-x-auto">
-          {hierarchicalCategories.map((cat) => (
-            <li
-              key={cat.id}
-              className="relative group"
-              onMouseEnter={() => setActiveDropdown(cat.id)}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <Link
-                to={`/category/${cat.id}`}
-                className={`px-4 py-2 rounded font-medium text-gray-700 hover:bg-green-100 hover:text-green-700 transition whitespace-nowrap ${
-                  location.pathname === `/category/${cat.id}`
-                    ? "bg-green-100 text-green-700"
-                    : ""
-                }`}
-              >
-                {cat.name}
-              </Link>
-              {cat.children &&
-                cat.children.length > 0 &&
-                activeDropdown === cat.id && (
-                  <div className="absolute left-0 top-full mt-1 bg-white shadow-lg rounded border z-50 min-w-[200px] animate-fade-in">
-                    <ul className="py-2">
-                      {cat.children.map((sub) => (
-                        <li key={sub.id} className="relative group">
-                          <Link
-                            to={`/category/${sub.id}`}
-                            className="block px-4 py-2 text-gray-700 hover:bg-green-100 hover:text-green-700 whitespace-nowrap"
-                          >
-                            {sub.name}
-                          </Link>
-                          {/* Nested subcategories */}
-                          {sub.children && sub.children.length > 0 && (
-                            <div className="absolute left-full top-0 ml-1 bg-white shadow-lg rounded border z-50 min-w-[200px] animate-fade-in">
-                              <ul className="py-2">
-                                {sub.children.map((subsub) => (
-                                  <li key={subsub.id}>
-                                    <Link
-                                      to={`/category/${subsub.id}`}
-                                      className="block px-4 py-2 text-gray-700 hover:bg-green-100 hover:text-green-700 whitespace-nowrap"
-                                    >
-                                      {subsub.name}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease;
-        }
-      `}</style>
-    </nav>
-  );
-
   return (
-    <>
-      <header className="bg-gray-800 text-white p-4 shadow-md sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center mr-6 hover:opacity-80 transition-opacity"
-          >
-            <img
-              src="https://res.cloudinary.com/dgfk0ljyq/image/upload/v1749228072/web_icon_t8i1f2.png"
-              alt="MR.IT Logo"
-              className="h-14 w-14 rounded-full mr-2"
-            />
-            <span className="text-3xl font-bold">MR.IT</span>
-          </Link>
+    <div className="w-full">
+      <div className="container mx-auto">
+        <header className="flex items-center justify-between p-4 text-white">
+          <div className="w-1/8 flex-shrink-0">
+            <Link to="/" className="flex items-center">
+              <img
+                src="https://res.cloudinary.com/dgfk0ljyq/image/upload/v1749228072/web_icon_t8i1f2.png"
+                alt="MR.IT Logo"
+                className="h-14 w-14 rounded-full"
+              />
+              <span className="text-3xl font-bold ml-2">MR.IT</span>
+            </Link>
+          </div>
 
-          {/* Search Bar Area - more refined styling */}
-          <div className="flex-grow mx-4 flex items-center bg-white rounded-md overflow-hidden">
+          <div className="w-1/2 flex items-center bg-white rounded-md overflow-hidden">
             <input
               type="text"
               placeholder={t("search_placeholder")}
@@ -198,7 +117,6 @@ function Header({ showMegaDropdown }) {
                 if (e.key === "Enter") handleSearch(e);
               }}
             />
-            {/* Search Icon Placeholder */}
             <button
               className="px-4 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300"
               onClick={handleSearch}
@@ -218,8 +136,8 @@ function Header({ showMegaDropdown }) {
             </button>
           </div>
 
-          {/* User/Cart Icons Area - using flex and spacing */}
-          <div className="flex items-center space-x-6 ml-6">
+          {/* User/Cart Icons Area - fixed width */}
+          <div className="w-1/3 flex items-center justify-end space-x-6">
             {/* Language Switcher Dropdown */}
             <div
               className="relative"
@@ -527,13 +445,9 @@ function Header({ showMegaDropdown }) {
               )}
             </Link>
           </div>
-        </div>
-      </header>
-      {/* Conditionally render CategoryMegaDropdown based on showMegaDropdown prop */}
-      {showMegaDropdown && (
-        <CategoryMegaDropdown style={{ outline: "2px solid red" }} />
-      )}
-    </>
+        </header>
+      </div>
+    </div>
   );
 }
 

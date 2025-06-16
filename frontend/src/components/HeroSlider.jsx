@@ -89,7 +89,7 @@ function HeroSlider() {
           </div>
         ))}
       </Slider>
-      <style jsx>{`
+      <style>{`
         .slick-container {
           margin: 0 auto;
           position: relative;

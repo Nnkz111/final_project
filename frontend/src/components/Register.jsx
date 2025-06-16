@@ -1,9 +1,11 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom"; // Import useNavigate and Link
-import AuthContext from "../context/AuthContext"; // Import AuthContext
-import Header from "./Header"; // Import the Header component
-import { useTranslation } from "react-i18next"; // Import useTranslation
+import { useNavigate, Link } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
+import Header from "./Header";
+import MobileHeader from "./MobileHeader";
+import MobileNavbar from "./MobileNavbar";
+import { useTranslation } from "react-i18next";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -62,14 +64,18 @@ function Register() {
       setIsAlertModalOpen(true);
     }
   };
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      {" "}
-      {/* Changed classes for layout */}
-      <Header showMegaDropdown={false} /> {/* Add the Header component */}
-      <div className="flex-grow flex items-center justify-center">
-        {" "}
+      {/* Desktop Header */}
+      <div className="hidden md:block sticky top-0 z-50 bg-gray-800 border-b border-gray-200">
+        <Header showMegaDropdown={false} hideCart={true} hideAccount={true} />
+      </div>
+
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50">
+        <MobileHeader showBackButton={true} title={t("register_page_title")} />{" "}
+      </div>
+      <div className="flex-grow flex items-center justify-center mt-16 md:mt-4">
         {/* New container for centering form */}
         <div className="px-8 py-6 mt-4 text-left bg-white shadow-xl rounded-lg w-full max-w-md">
           {" "}

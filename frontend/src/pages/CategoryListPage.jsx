@@ -38,11 +38,11 @@ const CategoryListPage = () => {
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow flex flex-col">
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">
+      <h1 className="text-3xl mt-4 font-bold text-gray-800 border-b pb-4">
         {t("category_list_title")}
       </h1>
       {/* Using Grid for 3 columns per row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6 items-stretch">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-4 items-stretch">
         {topLevelCategories.map((category) => (
           <Link
             key={category.id}

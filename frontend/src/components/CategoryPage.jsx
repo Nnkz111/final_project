@@ -3,17 +3,46 @@ import { useParams, Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext";
 import { useTranslation } from "react-i18next";
 function getDescendantCategoryIds(categories, parentId) {
-  // This helper is now unused as we are not fetching products on this page
-  return [parseInt(parentId)]; // Simplified return for clarity if still called elsewhere
+  return [parseInt(parentId)];
 }
 
+const SubcategoryGrid = ({ categories }) => {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols- gap-4">
+      {categories.map((category) => (
+        <Link
+          key={category.id}
+          to={`/category/${category.id}`}
+          className="bg-white rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md transition-shadow"
+        >
+          {" "}
+          <div className="w-28 h-28 mb-3 flex items-center justify-center">
+            {category.image_url ? (
+              <img
+                src={category.image_url}
+                alt={category.name}
+                className="w-full h-full object-contain rounded-lg"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+                <span className="text-gray-400">No image</span>
+              </div>
+            )}
+          </div>
+          <h3 className="text-lg font-medium text-center">{category.name}</h3>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 function CategoryPage() {
-  const params = useParams(); // Get all parameters
-  const wildcardPath = params["*"] || ""; // Get the wildcard path string
+  const params = useParams();
+  const wildcardPath = params["*"] || "";
   const pathSegments = wildcardPath
     .split("/")
-    .filter((segment) => segment !== ""); // Split into segments and filter empty ones
-  const currentCategoryId = pathSegments[pathSegments.length - 1]; // The last segment should be the current category ID
+    .filter((segment) => segment !== "");
+  const currentCategoryId = pathSegments[pathSegments.length - 1];
   const { t } = useTranslation();
 
   const { categories, hierarchicalCategories } = useCategories();
@@ -88,7 +117,6 @@ function CategoryPage() {
   //   if (!groupedProducts[catId]) groupedProducts[catId] = [];
   //   groupedProducts[catId].push(product);
   // });
-
   if (!category) {
     return (
       <div className="p-8 text-center text-gray-500">
@@ -96,6 +124,49 @@ function CategoryPage() {
       </div>
     );
   }
+
+  return (
+    <div className="container mx-auto px-4 py-4">
+      <h1 className="text-xl sm:text-2xl font-bold mb-6">{category.name}</h1>
+
+      {children.length > 0 && <SubcategoryGrid categories={children} />}
+
+      {children.length === 0 && !loading && products.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              to={`/products/${product.id}`}
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-2"
+            >
+              <div className="aspect-square mb-2">
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+              <h3 className="text-md font-medium line-clamp-2">
+                {product.name}
+              </h3>
+              <p className="text-lg font-bold text-green-600 mt-1">
+                {new Intl.NumberFormat("lo-LA", {
+                  style: "currency",
+                  currency: "LAK",
+                }).format(product.price)}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      )}
+    </div>
+  );
 
   // Removed loading check based on product fetching
   // if (loading) {
@@ -105,7 +176,7 @@ function CategoryPage() {
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow">
       {/* Category Title matching CategoryListPage structure */}
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-4">
+      <h1 className="text-3xl mt-2 font-bold text-gray-800 border-b pb-4 mb-4 ">
         {t(`category_${category.name}`, category.name)}
       </h1>
       {/* Flex container for sidebar and main content */}
@@ -145,7 +216,7 @@ function CategoryPage() {
             // Display Subcategories with Images in a Grid
             <section className="">
               {/* Ensure grid within main content spans available width */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 w-full">
                 {children.map((child) => (
                   <Link
                     key={child.id}
@@ -173,7 +244,7 @@ function CategoryPage() {
             <>
               {/* Products Section */}
               <section className="">
-                <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
+                <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-6">
                   {t("category_page_products_title")}
                 </h2>
                 {loading ? (
@@ -181,7 +252,7 @@ function CategoryPage() {
                     {t("category_page_loading_products")}
                   </div>
                 ) : products.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
                     {products.map((product) => (
                       <Link
                         key={product.id}

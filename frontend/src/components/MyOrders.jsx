@@ -2,6 +2,10 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import {
+  markNotificationAsRead,
+  getUserNotifications,
+} from "../api/notificationApi";
 
 function MyOrders() {
   const { user, token } = useContext(AuthContext);
@@ -9,6 +13,23 @@ function MyOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { t } = useTranslation();
+  const markOrderAsRead = async (orderId) => {
+    if (!user || !token) return;
+    try {
+      // Get all notifications first
+      const notifications = await getUserNotifications(user.id, token);
+      // Find the notification related to this order
+      const orderNotification = notifications.find(
+        (n) => n.order_id === orderId && !n.is_read
+      );
+      // If we found an unread notification for this order, mark it as read
+      if (orderNotification) {
+        await markNotificationAsRead(orderNotification.id, token);
+      }
+    } catch (err) {
+      console.error("Error marking order notification as read:", err);
+    }
+  };
 
   useEffect(() => {
     if (!user || !token) return;
@@ -33,6 +54,11 @@ function MyOrders() {
     fetchOrders();
   }, [user, token]);
 
+  // Function to handle viewing order details
+  const handleViewDetails = (orderId) => {
+    markOrderAsRead(orderId);
+  };
+
   return (
     <div className="min-h-[70vh] w-full flex flex-col items-center bg-gradient-to-br from-green-50 to-white py-12 px-2">
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-8 border border-green-100">
@@ -50,54 +76,53 @@ function MyOrders() {
             {t("no_orders_message")}
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
+          <div className="space-y-4">
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-gray-50 rounded-xl shadow p-6 flex flex-col md:flex-row md:items-center gap-4 border border-gray-200"
+                className="p-6 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow"
               >
-                <div className="flex-1">
-                  <div className="mb-1 font-semibold">
-                    {t("order_id_label")}:{" "}
-                    <span className="font-mono">#{order.id}</span>
-                  </div>
-                  <div className="mb-1">
-                    {t("status_label")}:{" "}
-                    <span className="capitalize font-semibold text-green-700">
-                      {t(`order_status_${order.status}`)}
-                    </span>
-                  </div>
-                  <div className="mb-1">
-                    {t("created_label")}:{" "}
-                    {order.created_at &&
-                      new Date(order.created_at).toLocaleString()}
-                  </div>
-                  <div className="mb-1">
-                    {t("items_label")}: {order.item_count}
-                  </div>
-                  <div className="mb-1">
-                    {t("total_label")}:{" "}
-                    <span className="font-bold text-green-600">
-                      {parseFloat(order.total).toLocaleString("lo-LA", {
-                        style: "currency",
-                        currency: "LAK",
-                      })}
-                    </span>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {t("order_id_label")} #{order.id}
+                    </h3>
+                    <p className="text-gray-600">
+                      {t("created_at_label")}:{" "}
+                      {new Date(order.created_at).toLocaleString()}
+                    </p>
+                    <p className="text-gray-600">
+                      {t("status_label")}:{" "}
+                      <span className="capitalize">
+                        {t(`order_status_${order.status}`)}
+                      </span>
+                    </p>
+                    {order.total && (
+                      <p className="text-gray-600">
+                        {t("total_amount_label")}:{" "}
+                        {parseFloat(order.total).toLocaleString("lo-LA", {
+                          style: "currency",
+                          currency: "LAK",
+                        })}
+                      </p>
+                    )}
+                  </div>{" "}
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <Link
+                      to={`/order-confirmation/${order.id}`}
+                      onClick={() => handleViewDetails(order.id)}
+                      className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 text-center"
+                    >
+                      {t("view_details_button")}
+                    </Link>
+                    <Link
+                      to={`/invoice/${order.id}`}
+                      className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 text-center"
+                    >
+                      {t("view_invoice_button")}
+                    </Link>
                   </div>
                 </div>
-                <Link
-                  to={`/order-confirmation/${order.id}`}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow text-center"
-                >
-                  {t("view_details_button")}
-                </Link>
-                <Link
-                  to={`/invoice/${order.id}`}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-center"
-                  target="_blank"
-                >
-                  {t("view_invoice_button")}
-                </Link>
               </div>
             ))}
           </div>

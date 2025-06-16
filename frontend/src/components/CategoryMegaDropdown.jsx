@@ -1,139 +1,120 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext";
-import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-function CategoryMegaDropdown() {
-  const { hierarchicalCategories } = useCategories();
-  const [open, setOpen] = useState(false);
+function CategoryMegaDropdown({ onCategoryClick }) {
+  const { hierarchicalCategories, loading } = useCategories();
   const [activeCategory, setActiveCategory] = useState(null);
-  const location = useLocation();
   const { t } = useTranslation();
+  const timeoutRef = useRef();
+  const containerRef = useRef();
 
-  // Helper to render nested subcategories vertically within a column
-  const renderVerticalChildren = (category) => {
-    if (!category.children || category.children.length === 0) return null;
-    return (
-      <ul className="mt-2 space-y-1">
-        {category.children.map((sub) => (
-          <li key={sub.id}>
-            <Link
-              to={`/category/${sub.id}`}
-              className="text-gray-600 hover:text-blue-700 transition-colors block px-2 py-1 rounded hover:bg-blue-50 text-sm"
-              onClick={() => setOpen(false)}
-            >
-              {sub.name}
-            </Link>
-            {/* Recursively render further nested children vertically */}
-            {renderVerticalChildren(sub)}
-          </li>
-        ))}
-      </ul>
-    );
+  // Handle mouse movement within the dropdown
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setActiveCategory(null);
+    }, 100);
   };
 
+  const handleMouseEnter = (categoryId) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setActiveCategory(categoryId);
+  };
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (loading) {
+    return <div className="text-white p-4">Loading...</div>;
+  }
+
   return (
-    <div className="relative bg-gray-800 w-full z-40 sticky top-[87px]">
-      <div
-        className="bg-gray-800 w-48 ml-32 text-white font-bold px-8 py-3 cursor-pointer flex items-center gap-2 select-none"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="text-lg">{t("category_megadropdown_categories")}</span>
-        <svg
-          className={`w-5 h-5 ml-2 transition-transform ${
-            open ? "rotate-180" : "rotate-0"
-          }`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </div>
-      {open && (
-        <div
-          className="absolute left-0 w-full bg-white shadow-2xl rounded-b-xl border-t border-gray-200 flex mt-0 animate-fade-in"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-        >
-          {/* Left: Category list (Top-level) */}
-          <div className="w-64 bg-white border-r p-4 max-h-[420px] overflow-y-auto">
-            <ul className="space-y-1">
-              {hierarchicalCategories.map((cat) => (
-                <li key={cat.id}>
-                  <Link
-                    to={`/category/${cat.id}`}
-                    className={`flex items-center w-full px-3 py-2 rounded text-left transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-600 ${
-                      activeCategory === cat.id
-                        ? "bg-blue-50 text-blue-600"
-                        : ""
-                    }`}
-                    onMouseEnter={() => setActiveCategory(cat.id)}
-                    onFocus={() => setActiveCategory(cat.id)}
-                    onClick={() => setOpen(false)}
-                  >
-                    {t(`category_${cat.name}`, cat.name)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* Right: Direct Subcategories in Horizontal Columns, with their children Vertical */}
-          <div className="flex-1 p-6 min-h-[420px]">
-            {activeCategory ? (
-              <>
-                {/* Direct children of the active category (Horizontal Columns) */}
-                <div className="flex flex-row gap-8">
-                  {hierarchicalCategories
-                    .find((c) => c.id === activeCategory)
-                    ?.children.map((directChild) => (
-                      <div key={directChild.id} className="flex-shrink-0 w-48">
-                        {/* Link for the direct child (Column Header) */}
-                        <Link
-                          to={`/category/${directChild.id}`}
-                          className="font-bold text-gray-800 hover:text-blue-700 transition-colors block px-2 py-1 rounded hover:bg-blue-50"
-                          onClick={() => setOpen(false)}
-                        >
-                          {t(`category_${directChild.name}`, directChild.name)}
-                        </Link>
-                        {/* Render nested children vertically under this direct child */}
-                        {renderVerticalChildren(directChild)}
-                      </div>
-                    ))}
-                  {/* Handle case where a top-level category has no direct children but might have products */}
-                  {hierarchicalCategories.find((c) => c.id === activeCategory)
-                    ?.children.length === 0 && (
-                    <div className="text-gray-500">
-                      {t("category_megadropdown_no_subcategories")}
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="text-gray-400 text-lg flex items-center h-full">
-                {t("category_megadropdown_hover_prompt")}
-              </div>
-            )}
-          </div>
+    <nav className="w-full" ref={containerRef}>
+      <div className="container mx-auto flex">
+        {/* Left side - Parent categories */}
+        <div className="w-1/4 border-r border-gray-700">
+          <ul className="py-4">
+            {hierarchicalCategories.map((category) => (
+              <li
+                key={category.id}
+                className="relative"
+                onMouseEnter={() => handleMouseEnter(category.id)}
+              >
+                <Link
+                  to={`/category/${category.id}`}
+                  className={`block px-6 py-3 text-white hover:text-green-400 hover:bg-gray-700/50 transition-colors duration-200 ${
+                    activeCategory === category.id
+                      ? "bg-gray-700/50 text-green-400"
+                      : ""
+                  }`}
+                  onClick={onCategoryClick}
+                >
+                  {t(`category_${category.name}`, category.name)}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease;
-        }
-      `}</style>
-    </div>
+
+        {/* Right side - Subcategories */}
+        <div
+          className="w-3/4 min-h-[300px]"
+          onMouseEnter={() => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+          }}
+        >
+          {hierarchicalCategories.map(
+            (category) =>
+              activeCategory === category.id &&
+              category.children && (
+                <div key={category.id} className="p-6 grid grid-cols-3 gap-8">
+                  {category.children.map((subCategory) => (
+                    <div key={subCategory.id} className="space-y-4">
+                      <Link
+                        to={`/category/${subCategory.id}`}
+                        className="text-white hover:text-green-400 font-medium block"
+                        onClick={onCategoryClick}
+                      >
+                        {t(`category_${subCategory.name}`, subCategory.name)}
+                      </Link>
+                      {subCategory.children &&
+                        subCategory.children.length > 0 && (
+                          <ul className="space-y-2">
+                            {subCategory.children.map((subSubCategory) => (
+                              <li key={subSubCategory.id}>
+                                <Link
+                                  to={`/category/${subSubCategory.id}`}
+                                  className="text-gray-400 hover:text-green-400 text-sm block"
+                                  onClick={onCategoryClick}
+                                >
+                                  {t(
+                                    `category_${subSubCategory.name}`,
+                                    subSubCategory.name
+                                  )}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              )
+          )}
+        </div>
+      </div>
+    </nav>
   );
 }
 

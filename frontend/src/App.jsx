@@ -6,10 +6,12 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Header from "./components/Header";
 import MobileHeader from "./components/MobileHeader";
 import ProductList from "./components/ProductList";
 import MobileNavbar from "./components/MobileNavbar";
+import CategoryMegaDropdown from "./components/CategoryMegaDropdown";
 
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -68,6 +70,7 @@ const InvoicePage = lazy(() => import("./components/InvoicePage"));
 // Create layout components
 const CustomerLayout = () => {
   const location = useLocation();
+  const isHomePage = location.pathname === "/"; // Check if it's the homepage
   const isProductDetail = location.pathname.startsWith("/products/");
   const isCart = location.pathname.startsWith("/cart");
   const isCheckout = location.pathname.startsWith("/checkout");
@@ -77,13 +80,16 @@ const CustomerLayout = () => {
   const isMyOrders = location.pathname.startsWith("/my-orders");
   const isCategoryPage = location.pathname.startsWith("/category/");
   const isProfilePage = location.pathname.startsWith("/profile");
-  const isHomePage = location.pathname === "/"; // Check if it's the homepage
   const isCategoryListPage = location.pathname === "/categories"; // Check if it's the category list page
   const isProductListPage = location.pathname === "/products"; // Check if it's the product list page
   const navigate = useNavigate();
 
   const [bannerHeight, setBannerHeight] = useState(0); // State to store banner height
   const bannerContainerRef = useRef(null); // Ref for the banner container
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const buttonRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const { t } = useTranslation();
 
   // Measure banner height after render
   useEffect(() => {
@@ -91,6 +97,24 @@ const CustomerLayout = () => {
       setBannerHeight(bannerContainerRef.current.offsetHeight);
     }
   }, [isHomePage]); // Re-measure if homepage status changes
+
+  useEffect(() => {
+    function handleMouseMove(e) {
+      if (categoryDropdownOpen) {
+        // Check if mouse is over button or dropdown
+        const isOverButton = buttonRef.current?.contains(e.target);
+        const isOverDropdown = dropdownRef.current?.contains(e.target);
+
+        // Close dropdown if mouse is not over either
+        if (!isOverButton && !isOverDropdown) {
+          setCategoryDropdownOpen(false);
+        }
+      }
+    }
+
+    document.addEventListener("mouseover", handleMouseMove);
+    return () => document.removeEventListener("mouseover", handleMouseMove);
+  }, [categoryDropdownOpen]);
 
   const shouldShowHeroSection =
     !isProductDetail &&
@@ -105,56 +129,97 @@ const CustomerLayout = () => {
     !location.pathname.startsWith("/search");
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Responsive Header */}
-      <div className="hidden md:block">
-        <Header showMegaDropdown={!isHomePage} />
-      </div>
-      <div className="md:hidden">
-        <MobileHeader />
-      </div>
-
-      {/* Breadcrumbs - Hide on mobile homepage */}
-      {!isHomePage && (
-        <div className="container mx-auto px-4 py-2 mt-0 md:mt-4">
-          <Breadcrumbs />
-        </div>
-      )}
-
-      <main className="flex-1 flex flex-col">
-        {shouldShowHeroSection && (
-          <>
-            {/* Desktop Layout */}
-            <div className="hidden md:block container mx-auto px-4">
-              <div className="flex gap-6 my-6">
-                <div className="w-64 flex-shrink-0">
-                  <MegaSidebar />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {" "}
-                  {/* min-w-0 prevents flex item from overflowing */}
-                  <HeroSlider />
-                </div>
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      <div className="flex flex-col min-h-screen">
+        <div className="hidden md:block sticky top-0 z-50">
+          <div className="bg-gray-800">
+            <Header showMegaDropdown={!isHomePage} />
+          </div>
+          {!isHomePage && (
+            <div className="w-full bg-gray-800 border-t border-gray-700">
+              <div className="container mx-auto">
+                <button
+                  ref={buttonRef}
+                  className="text-white hover:text-green-400 transition-colors duration-200 flex items-center space-x-1 py-3 px-4 group"
+                  onMouseEnter={() => setCategoryDropdownOpen(true)}
+                >
+                  <span>{t("Category")}</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-4 w-4 transform transition-transform duration-200 ${
+                      categoryDropdownOpen ? "rotate-180" : ""
+                    } group-hover:translate-y-0.5`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {categoryDropdownOpen && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute left-0 w-full bg-gray-800 shadow-lg"
+                    onMouseLeave={() => setCategoryDropdownOpen(false)}
+                  >
+                    <CategoryMegaDropdown
+                      onCategoryClick={() => setCategoryDropdownOpen(false)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Mobile Layout */}
-            <div className="md:hidden container mx-auto px-4 mt-2 mb-4">
-              <HeroSlider />
-            </div>
-          </>
-        )}
-
-        <div className="container mx-auto px-4 py-4 flex-1">
-          <Outlet />
+          )}
         </div>
-      </main>
+        <div className="md:hidden">
+          <MobileHeader />
+        </div>{" "}
+        {!isHomePage && (
+          <div className="hidden md:block bg-gray-100 shadow-sm">
+            <div className="container mx-auto">
+              <div className="px-4 py-4 flex items-center justify-between">
+                <Breadcrumbs />
+              </div>
+            </div>
+          </div>
+        )}
+        <main className="flex-1 flex flex-col">
+          {shouldShowHeroSection && (
+            <>
+              <div className="hidden md:block container mx-auto px-4">
+                <div className="flex">
+                  {isHomePage && (
+                    <div className="w-64 flex-shrink-0">
+                      <MegaSidebar />
+                    </div>
+                  )}
+                  <div
+                    className={`flex-1 min-w-0 ${!isHomePage ? "w-full" : ""}`}
+                  >
+                    <HeroSlider />
+                  </div>
+                </div>
+              </div>
 
-      <Footer />
+              <div className="md:hidden container mx-auto px-4 mt-2 mb-4">
+                <HeroSlider />
+              </div>
+            </>
+          )}
 
-      {/* Mobile Navigation - Only show on mobile */}
-      <div className="md:hidden">
-        <MobileNavbar />
+          <div className="container mx-auto px-4 py-4 flex-1">
+            <Outlet />
+          </div>
+        </main>
+        <Footer />
+        <div className="md:hidden">
+          <MobileNavbar />
+        </div>
       </div>
     </div>
   );
@@ -180,6 +245,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/invoice/:orderId" element={<InvoicePage />} />
 
                 {/* Customer Area Routes */}
                 <Route path="/" element={<CustomerLayout />}>
@@ -215,7 +281,7 @@ function App() {
                         <MyOrders />
                       </ProtectedRoute>
                     }
-                  />
+                  />{" "}
                   <Route path="category/*" element={<CategoryPage />} />
                   <Route
                     path="profile"

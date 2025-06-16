@@ -34,7 +34,7 @@ const Footer = () => {
               020 59 450 123
             </a>{" "}
           </div>
-          <p>{t("footer.address")}</p>
+          <div className="flex items center">{t("footer.address")}</div>
         </div>
 
         {/* Follow Us Section */}

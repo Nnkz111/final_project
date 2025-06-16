@@ -189,9 +189,15 @@ const MobileHeader = () => {
             <div className="flex-1 overflow-y-auto">
               {/* Categories */}
               <div className="p-4">
-                <h3 className="text-lg font-semibold mb-2">
-                  {t("categories")}
-                </h3>
+                <Link
+                  to="/categories"
+                  className="block mb-4"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <h3 className="text-lg font-semibold mb-2">
+                    {t("Category")}
+                  </h3>
+                </Link>
                 <ul className="space-y-2">
                   {hierarchicalCategories.map((category) => (
                     <li key={category.id}>
@@ -208,13 +214,17 @@ const MobileHeader = () => {
               </div>
 
               {/* Language Switch */}
-              <div className="p-4 border-t">
+
+              <div className="p-4 border-t ">
+                <div classname=" flex items-center p-4 space-x-2 rounded-md">
+                  {t("change_language")}
+                </div>
                 <button
                   onClick={() => {
                     toggleLanguage();
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center space-x-2 text-gray-600"
+                  className="flex items-center space-x-2 text-gray-600 mt-2"
                 >
                   <span
                     className={`fi fi-${i18n.language === "en" ? "us" : "la"}`}

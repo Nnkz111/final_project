@@ -1,4 +1,3 @@
-// This is a test comment to trigger a refresh
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -92,51 +91,49 @@ function ProductList() {
   }
 
   return (
-    <main className="flex-1 p-6">
-      <h2 className="text-2xl font-bold mb-8 text-gray-800 border-b pb-2">
+    <main className="flex-1 px-3 py-4 md:p-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-8 text-gray-800 border-b pb-2">
         {t("featured_products_title")}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
         {products
           .slice(0, totalProducts > 10 ? 10 : totalProducts)
           .map((product) => (
             <Link key={product.id} to={`/products/${product.id}`}>
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 hover:shadow-xl cursor-pointer h-full flex flex-col">
-                <div className="w-full h-48 overflow-hidden">
+              <div className="bg-white rounded-lg md:rounded-xl shadow overflow-hidden transition-transform transform hover:scale-105 hover:shadow-lg cursor-pointer h-full flex flex-col">
+                <div className="relative pb-[100%] w-full overflow-hidden bg-gray-50">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                    <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs md:text-sm">
                       {t("no_image_available")}
                     </div>
                   )}
                 </div>
 
-                <div className="p-4 flex flex-col">
-                  <h3 className="text-base font-semibold text-gray-900 mb-2 truncate">
+                <div className="p-2 md:p-4 flex flex-col flex-grow">
+                  <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 min-h-[2.5em]">
                     {product.name}
                   </h3>
 
                   <div className="flex items-center justify-between mt-auto">
                     {product.stock_quantity > 0 ? (
-                      <p className="text-green-600 font-bold mt-auto">
+                      <p className="text-green-600 font-bold text-sm md:text-base">
                         {parseFloat(product.price).toLocaleString("lo-LA", {
                           style: "currency",
                           currency: "LAK",
                         })}
                       </p>
                     ) : (
-                      <p className="text-red-600 font-bold mt-auto">
+                      <p className="text-red-600 font-bold text-sm md:text-base">
                         {t("out_of_stock")}
                       </p>
                     )}
-
-                    {/* Removed Add to Cart button to match image design */}
                   </div>
                 </div>
               </div>

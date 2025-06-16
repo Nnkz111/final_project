@@ -1,8 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext"; // Use AuthContext
-import { useTranslation } from "react-i18next"; // Import useTranslation
-import Header from "./Header"; // Import the Header component
+import AuthContext from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
+import Header from "./Header";
+import MobileHeader from "./MobileHeader";
+import MobileNavbar from "./MobileNavbar";
 
 function Login() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -48,8 +50,17 @@ function Login() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      <Header showMegaDropdown={false} />
-      <div className="flex-grow flex items-center justify-center">
+      {/* Desktop Header */}
+      <div className="hidden md:block sticky top-0 z-50 bg-gray-800 border-b border-gray-200">
+        <Header showMegaDropdown={false} hideCart={true} hideAccount={true} />
+      </div>
+
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50">
+        <MobileHeader showBackButton={true} title={t("login_page_title")} />
+      </div>
+
+      <div className="flex-grow flex items-center justify-center mt-16 md:mt-4">
         <div className="px-8 py-6 mt-4 text-left bg-white shadow-xl rounded-lg w-full max-w-md">
           <h3 className="text-3xl font-bold text-center mb-6 text-gray-800">
             {t("login_page_title")}

@@ -107,3 +107,21 @@
     margin: 0 -1rem;
   }
 }
+
+/* Sticky header styles */
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Ensure proper stacking context */
+.relative {
+  position: relative;
+}
+
+/* Prevent any potential overflow issues */
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+}

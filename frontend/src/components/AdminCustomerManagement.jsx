@@ -310,6 +310,9 @@ function AdminCustomerManagement() {
                       {t("customerManagement.Username")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                      {t("customer_phone_label")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
                       {t("customerManagement.Email")}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
@@ -335,6 +338,7 @@ function AdminCustomerManagement() {
                       <td className="px-4 py-3 font-mono">{c.id}</td>
                       <td className="px-4 py-3">{c.customer_name || "-"}</td>
                       <td className="px-4 py-3">{c.username}</td>
+                      <td className="px-4 py-3">{c.phone}</td>
                       <td className="px-4 py-3">{c.email}</td>
                       <td className="px-4 py-3">
                         {c.created_at &&

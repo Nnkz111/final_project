@@ -24,7 +24,7 @@ export const getUserNotifications = async (userId, token) => {
 export const markNotificationAsRead = async (notificationId, token) => {
   try {
     const response = await axios.put(
-      `${API_URL}/notifications/user/${notificationId}/read`,
+      `${API_URL}/api/notifications/user/${notificationId}/read`,
       null,
       {
         headers: {

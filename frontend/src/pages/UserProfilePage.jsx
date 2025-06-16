@@ -5,8 +5,6 @@ import { useTranslation } from "react-i18next";
 
 function UserProfilePage() {
   const { user, updateUser } = useContext(AuthContext);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
     username: user?.username || "",
     email: user?.email || "",
@@ -14,14 +12,15 @@ function UserProfilePage() {
     phone: user?.customer?.phone || "",
     address: user?.customer?.address || "",
   });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordFormData, setPasswordFormData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmNewPassword: "",
   });
-  const [editProfileLoading, setEditProfileLoading] = useState(false);
-  const [editProfileError, setEditProfileError] = useState(null);
-  const [editProfileSuccess, setEditProfileSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState(null);
   const [changePasswordSuccess, setChangePasswordSuccess] = useState(false);
@@ -89,9 +88,9 @@ function UserProfilePage() {
 
   const handleSubmitProfile = async (e) => {
     e.preventDefault();
-    setEditProfileLoading(true);
-    setEditProfileError(null);
-    setEditProfileSuccess(false);
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
 
     try {
       const API_URL =
@@ -116,8 +115,7 @@ function UserProfilePage() {
       }
 
       const updatedUser = await response.json();
-      setEditProfileSuccess(true);
-      setIsEditingProfile(false);
+      setSuccess(true);
       updateUser({
         ...user,
         username: updatedUser.username,
@@ -126,10 +124,15 @@ function UserProfilePage() {
         customer_phone: updatedUser.customer?.phone,
         customer_address: updatedUser.customer?.address,
       });
+
+      // Show success message for 3 seconds
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
     } catch (err) {
-      setEditProfileError(err.message);
+      setError(err.message);
     } finally {
-      setEditProfileLoading(false);
+      setLoading(false);
     }
   };
 
@@ -190,182 +193,139 @@ function UserProfilePage() {
   }
 
   return (
-    <div className="w-full py-8">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">
           {t("user_profile_title")}
         </h1>
-        <div className="space-y-3">
-          <p>
-            <strong>{t("username_label")}:</strong> {profileFormData.username}
-          </p>
-          <p>
-            <strong>{t("email_label")}:</strong> {profileFormData.email}
-          </p>
-          {profileFormData.name && profileFormData.name !== "" && (
-            <p>
-              <strong>{t("name_label")}:</strong> {profileFormData.name}
-            </p>
-          )}
-          {profileFormData.phone && profileFormData.phone !== "" && (
-            <p>
-              <strong>{t("phone_label")}:</strong> {profileFormData.phone}
-            </p>
-          )}
-          {profileFormData.address && profileFormData.address !== "" && (
-            <p>
-              <strong>{t("address_label")}:</strong> {profileFormData.address}
-            </p>
-          )}
-        </div>
-        <div className="mt-6 space-x-4">
-          {!isEditingProfile && !isChangingPassword && (
-            <button
-              onClick={() => setIsEditingProfile(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+
+        <form onSubmit={handleSubmitProfile} className="space-y-4">
+          <div>
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-2"
+              htmlFor="username"
             >
-              {t("edit_profile_button")}
-            </button>
-          )}
-          {!isEditingProfile && !isChangingPassword && (
+              {t("username_label")}
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={profileFormData.username}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-2"
+              htmlFor="email"
+            >
+              {t("email_label")}
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={profileFormData.email}
+              onChange={handleProfileFormChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-2"
+              htmlFor="name"
+            >
+              {t("name_label")}
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={profileFormData.name}
+              onChange={handleProfileFormChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-2"
+              htmlFor="phone"
+            >
+              {t("phone_number_label")}
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={profileFormData.phone}
+              onChange={handleProfileFormChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-2"
+              htmlFor="address"
+            >
+              {t("address_label")}
+            </label>
+            <textarea
+              id="address"
+              name="address"
+              value={profileFormData.address}
+              onChange={handleProfileFormChange}
+              rows="3"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
             <button
-              onClick={() => setIsChangingPassword(true)}
-              className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition"
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? t("saving_changes_message") : t("save_changes_button")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsChangingPassword(!isChangingPassword)}
+              className="w-full sm:w-auto bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-200"
             >
               {t("change_password_button")}
             </button>
-          )}
-        </div>
-
-        {isEditingProfile && (
-          <div className="mt-6 p-4 border rounded-md bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
-              {t("edit_profile_title")}
-            </h2>
-            <form onSubmit={handleSubmitProfile}>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="username"
-                >
-                  {t("username_label")}:
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={profileFormData.username}
-                  onChange={handleProfileFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  readOnly
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="email"
-                >
-                  {t("email_label")}:
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={profileFormData.email}
-                  onChange={handleProfileFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="name"
-                >
-                  {t("name_label")}:
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={profileFormData.name}
-                  onChange={handleProfileFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="phone"
-                >
-                  {t("phone_number_label")}:
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={profileFormData.phone}
-                  onChange={handleProfileFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="address"
-                >
-                  {t("address_label")}:
-                </label>
-                <textarea
-                  id="address"
-                  name="address"
-                  value={profileFormData.address}
-                  onChange={handleProfileFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  rows="3"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  {t("save_changes_button")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingProfile(false)}
-                  className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-                >
-                  {t("cancel_button")}
-                </button>
-              </div>
-              {editProfileLoading && <p>{t("saving_changes_message")}</p>}
-              {editProfileError && (
-                <p className="text-red-500">
-                  {t("error_prefix")}: {editProfileError}
-                </p>
-              )}
-              {editProfileSuccess && (
-                <p className="text-green-500">
-                  {t("profile_updated_success_message")}
-                </p>
-              )}
-            </form>
           </div>
-        )}
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm mt-4">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm mt-4">
+              {t("profile_updated_success_message")}
+            </div>
+          )}
+        </form>
 
         {isChangingPassword && (
-          <div className="mt-6 p-4 border rounded-md bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="mt-8 pt-6 border-t">
+            <h2 className="text-lg font-bold mb-4">
               {t("change_password_title")}
             </h2>
-            <form onSubmit={handleSubmitPasswordChange}>
-              <div className="mb-4">
+            <form onSubmit={handleSubmitPasswordChange} className="space-y-4">
+              <div>
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-gray-700 text-sm font-semibold mb-2"
                   htmlFor="current-password"
                 >
-                  {t("current_password_label")}:
+                  {t("current_password_label")}
                 </label>
                 <input
                   type="password"
@@ -373,15 +333,16 @@ function UserProfilePage() {
                   name="currentPassword"
                   value={passwordFormData.currentPassword}
                   onChange={handlePasswordFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
-              <div className="mb-4">
+
+              <div>
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-gray-700 text-sm font-semibold mb-2"
                   htmlFor="new-password"
                 >
-                  {t("new_password_label")}:
+                  {t("new_password_label")}
                 </label>
                 <input
                   type="password"
@@ -389,15 +350,16 @@ function UserProfilePage() {
                   name="newPassword"
                   value={passwordFormData.newPassword}
                   onChange={handlePasswordFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
-              <div className="mb-4">
+
+              <div>
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-gray-700 text-sm font-semibold mb-2"
                   htmlFor="confirm-new-password"
                 >
-                  {t("confirm_new_password_label")}:
+                  {t("confirm_new_password_label")}
                 </label>
                 <input
                   type="password"
@@ -405,32 +367,38 @@ function UserProfilePage() {
                   name="confirmNewPassword"
                   value={passwordFormData.confirmNewPassword}
                   onChange={handlePasswordFormChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
-              <div className="flex items-center justify-between">
+
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={changePasswordLoading}
+                  className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
                 >
-                  {t("change_password_button")}
+                  {changePasswordLoading
+                    ? t("changing_password_message")
+                    : t("change_password_button")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsChangingPassword(false)}
-                  className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
+                  className="w-full sm:w-auto bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition duration-200"
                 >
                   {t("cancel_button")}
                 </button>
               </div>
-              {changePasswordLoading && <p>{t("changing_password_message")}</p>}
+
               {changePasswordError && (
-                <p className="text-red-500">{t("new_passwords_match_error")}</p>
+                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm mt-4">
+                  {changePasswordError}
+                </div>
               )}
               {changePasswordSuccess && (
-                <p className="text-green-500">
+                <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm mt-4">
                   {t("password_changed_success_message")}
-                </p>
+                </div>
               )}
             </form>
           </div>

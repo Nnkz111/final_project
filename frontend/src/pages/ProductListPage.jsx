@@ -80,7 +80,7 @@ const ProductListPage = () => {
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow flex flex-col">
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">
+      <h1 className="text-3xl mt-4 font-bold text-gray-800 border-b pb-4">
         {t("all_products")}
       </h1>
 
@@ -105,7 +105,7 @@ const ProductListPage = () => {
       </div>
 
       {/* Using Grid for responsive columns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 pt-6">
         {/* Use items-stretch to make cards same height */}
         {currentProducts.map((product) => (
           <Link

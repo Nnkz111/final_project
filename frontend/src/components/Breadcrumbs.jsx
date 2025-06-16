@@ -171,9 +171,8 @@ const Breadcrumbs = () => {
       isLoading: false,
     });
   } else if (pathSegments[0] === "category") {
-    // Handle paths starting with 'category'
     breadcrumbItems.push({
-      name: t("Category"), // Translate the base "Category" link
+      name: t("Category"),
       routeTo: "/categories",
       isLast: pathSegments.length === 1,
       isLoading: false,
@@ -412,7 +411,7 @@ const Breadcrumbs = () => {
             {item.isLast ? (
               <span className="text-gray-700">{item.name}</span>
             ) : (
-              <Link to={item.routeTo} className="text-blue-600 hover:underline">
+              <Link to={item.routeTo} className="text-gray-700 hover:underline">
                 {item.isLoading ? "Loading..." : item.name}
               </Link>
             )}

@@ -51,16 +51,14 @@ function OrderConfirmation() {
         <div className="w-full flex justify-between items-center mb-4">
           <h2 className="text-3xl font-extrabold text-green-700 text-center flex-grow">
             {t("order_confirmation_title")}{" "}
-          </h2>
+          </h2>{" "}
           {orderId && (
-            <a
-              href={`/invoice/${orderId}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={`/invoice/${orderId}`}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow text-center text-sm"
             >
               {t("view_invoice_button")}
-            </a>
+            </Link>
           )}
         </div>
         {orderId ? (
