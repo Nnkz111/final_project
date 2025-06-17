@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function SearchResultsPage() {
   const [searchResults, setSearchResults] = useState([]);
@@ -43,9 +44,8 @@ function SearchResultsPage() {
 
     fetchSearchResults();
   }, [searchTerm, sortByPrice]);
-
   if (loading) {
-    return <div>{t("search_results_loading")}</div>;
+    return <LoadingSpinner />;
   }
 
   if (error) {

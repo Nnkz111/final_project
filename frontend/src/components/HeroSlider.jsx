@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 // Import Slider component and styles
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
+import LoadingSpinner from "./LoadingSpinner";
 import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom"; // Import Link
 import { useTranslation } from "react-i18next"; // Import useTranslation
@@ -57,8 +58,10 @@ function HeroSlider() {
 
   if (loading) {
     return (
-      <div className="w-full bg-gray-200 h-64 flex items-center justify-center">
-        <p className="text-gray-600 text-xl">{t("loading")}</p>
+      <div className="fixed inset-0 bg-white bg-opacity-100 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className=" p-8 rounded-xl ">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }

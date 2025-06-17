@@ -2,15 +2,15 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "../context/CategoryContext";
 import { useTranslation } from "react-i18next";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const CategoryListPage = () => {
   const { categories, loading, error } = useCategories();
   const { t } = useTranslation();
-
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        {t("category_list_loading")}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }

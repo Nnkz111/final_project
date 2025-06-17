@@ -32,7 +32,7 @@ const MobileHeader = () => {
   return (
     <>
       {/* Main Header */}
-      <header className="bg-gray-800 text-white py-2 px-4 fixed top-0 left-0 right-0 z-50">
+      <header className="bg-gray-800 text-white py-2 px-4 fixed top-0 left-0 right-0 z-50 md:hidden">
         <div className="flex items-center justify-between h-12">
           {/* Menu Button */}
           <button

@@ -92,7 +92,7 @@ function Header() {
   };
 
   return (
-    <div className="w-full">
+    <div className="hidden md:block w-full bg-gray-800">
       <div className="container mx-auto">
         <header className="flex items-center justify-between p-4 text-white">
           <div className="w-1/8 flex-shrink-0">
@@ -106,7 +106,7 @@ function Header() {
             </Link>
           </div>
 
-          <div className="w-1/2 flex items-center bg-white rounded-md overflow-hidden">
+          <div className="w-2/4 flex items-center bg-white rounded-md overflow-hidden">
             <input
               type="text"
               placeholder={t("search_placeholder")}
@@ -137,10 +137,10 @@ function Header() {
           </div>
 
           {/* User/Cart Icons Area - fixed width */}
-          <div className="w-1/3 flex items-center justify-end space-x-6">
+          <div className="w-1/4 flex items-center justify-end space-x-6">
             {/* Language Switcher Dropdown */}
             <div
-              className="relative"
+              className="relative flex flex-col items-center gap-1"
               onMouseEnter={() => setLangDropdownOpen(true)}
               onMouseLeave={() => setLangDropdownOpen(false)}
             >
@@ -174,7 +174,7 @@ function Header() {
                 </svg>
               </button>
               {langDropdownOpen && (
-                <div className="absolute right-0 w-30 bg-white text-gray-800 rounded-md shadow-lg z-[60]">
+                <div className="absolute right-0 top-5 w-30 bg-white text-gray-800 rounded-md shadow-lg z-[60]">
                   <button
                     onClick={() => {
                       i18n.changeLanguage("en");
@@ -203,43 +203,43 @@ function Header() {
             {/* Notification Icon and Dropdown */}
             {user && !user.is_admin && (
               <div
-                className="relative group flex items-center"
+                className="relative group flex items-center cursor-pointer"
                 onMouseEnter={() => setNotificationOpen(true)}
                 onMouseLeave={() => setNotificationOpen(false)}
               >
-                <button className="flex items-center gap-2 focus:outline-none">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.465 6.015 6 8.309 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0v2a3 3 0 01-3 3H9a3 3 0 01-3-3v-2m6 0H9"
-                    />
-                  </svg>
-
-                  {/* Notification count badge */}
-                  {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-                <span className="cursor-pointer">{t("notifications")}</span>
+                <div className="flex flex-col items-center gap-1">
+                  <button className="flex items-center justify-center focus:outline-none relative">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.465 6.015 6 8.309 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0v2a3 3 0 01-3 3H9a3 3 0 01-3-3v-2m6 0H9"
+                      />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <span className="text-sm">{t("notifications")}</span>
+                </div>
                 {/* Notification Dropdown Menu */}
                 <div
-                  className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
+                  className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right  ${
                     notificationOpen
                       ? "opacity-100 scale-100 pointer-events-auto"
                       : "opacity-0 scale-95 pointer-events-none"
                   }`}
                 >
-                  <div className="px-4 py-3 font-bold border-b border-gray-200">
+                  <div className="px-4 py-3 font-bold border-b border-gray-200 ">
                     {t("notifications")}
                   </div>
                   <div className="py-2 max-h-60 overflow-y-auto">
@@ -307,38 +307,42 @@ function Header() {
                 onMouseEnter={() => setProfileOpen(true)}
                 onMouseLeave={() => setProfileOpen(false)}
               >
-                <button className="flex items-center gap-2 focus:outline-none">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                  <span>
+                <div className="flex flex-col items-center gap-1 cursor-pointer">
+                  <button className="flex items-center justify-center focus:outline-none ">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
+                    </svg>
+                  </button>{" "}
+                  <span className="text-sm">
                     {user?.customer?.name || user?.username || t("my_profile")}
                   </span>
-                  <svg
-                    className="h-4 w-4 ml-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
+                </div>
+                <svg
+                  className={`h-4 w-4 ml-1 transition-transform duration-200 ${
+                    profileOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
                 {/* Dropdown menu - Increased z-index to appear above category dropdowns */}
                 <div
                   className={`absolute right-0 top-full w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
@@ -377,7 +381,7 @@ function Header() {
               <>
                 <Link
                   to="/login"
-                  className="flex items-center flex-col text-sm"
+                  className="flex flex-col items-center gap-1 text-sm"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -397,7 +401,7 @@ function Header() {
                 </Link>
                 <Link
                   to="/register"
-                  className="flex items-center flex-col text-sm"
+                  className="flex flex-col items-center gap-1 text-sm"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -421,28 +425,30 @@ function Header() {
             {/* Cart Icon */}
             <Link
               to="/cart"
-              className="flex items-center flex-col text-sm relative"
+              className="flex flex-col items-center gap-1 text-sm relative"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 transform bg-red-600 rounded-full">
+                    {cartItemCount}
+                  </span>
+                )}
+              </div>
               <span>{t("cart_link_text")}</span>
-              {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                  {cartItemCount}
-                </span>
-              )}
             </Link>
           </div>
         </header>

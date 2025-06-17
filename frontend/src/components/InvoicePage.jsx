@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import LoadingSpinner from "./LoadingSpinner";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 function InvoicePage() {
   const { orderId } = useParams();
@@ -32,7 +33,7 @@ function InvoicePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">{t("loading_invoice_details")}</div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -132,11 +133,21 @@ function InvoicePage() {
             <p className="text-gray-700">
               <strong>{t("invoice_number_label")}:</strong> #{order.id}
             </p>
-            <p className="text-gray-700">
-              <strong>{t("invoice_date_label")}:</strong>{" "}
-              {order.created_at &&
-                new Date(order.created_at).toLocaleDateString()}
-            </p>
+            {order.created_at && (
+              <>
+                <p className="text-gray-700">
+                  <strong>{t("invoice_date_label")}:</strong>{" "}
+                  {new Date(order.created_at).toLocaleDateString()}
+                </p>
+                <p className="text-gray-700">
+                  <strong>{t("time")}:</strong>{" "}
+                  {new Date(order.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Bill To / Ship To */}

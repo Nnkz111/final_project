@@ -12,6 +12,7 @@ import MobileHeader from "./components/MobileHeader";
 import ProductList from "./components/ProductList";
 import MobileNavbar from "./components/MobileNavbar";
 import CategoryMegaDropdown from "./components/CategoryMegaDropdown";
+import LoadingSpinner from "./components/LoadingSpinner";
 
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -239,7 +240,16 @@ function App() {
       <AdminAuthProvider>
         <CartProvider>
           <CategoryProvider>
-            <Suspense fallback={<div>Loading...</div>}>
+            {" "}
+            <Suspense
+              fallback={
+                <div className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+                  <div className="bg-white p-8 rounded-xl ">
+                    <LoadingSpinner />
+                  </div>
+                </div>
+              }
+            >
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />

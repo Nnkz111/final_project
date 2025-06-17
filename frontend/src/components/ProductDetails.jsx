@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext"; // Import AuthContext
-import { useCart } from "../context/CartContext"; // Import useCart hook
+import AuthContext from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import { useCategories } from "../context/CategoryContext";
 import { useTranslation } from "react-i18next";
+import LoadingSpinner from "./LoadingSpinner";
 
 function ProductDetails() {
   const { id } = useParams(); // Get the product ID from the URL
@@ -115,13 +116,8 @@ function ProductDetails() {
       alert(error.message || t("error_adding_to_cart"));
     }
   };
-
   if (loading) {
-    return (
-      <div className="text-center text-gray-600 text-lg mt-8">
-        {t("product_details_loading")}
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

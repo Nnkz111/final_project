@@ -155,7 +155,6 @@ const Breadcrumbs = () => {
   const pathSegments = location.pathname
     .split("/")
     .filter((segment) => segment !== "");
-
   // Explicitly handle /checkout path
   if (location.pathname === "/checkout") {
     breadcrumbItems.push({
@@ -170,7 +169,10 @@ const Breadcrumbs = () => {
       isLast: true,
       isLoading: false,
     });
-  } else if (pathSegments[0] === "category") {
+  } else if (
+    pathSegments[0] === "categories" ||
+    pathSegments[0] === "category"
+  ) {
     breadcrumbItems.push({
       name: t("Category"),
       routeTo: "/categories",
