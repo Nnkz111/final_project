@@ -67,6 +67,7 @@ const AdminUserManagement = lazy(() =>
   import("./components/AdminUserManagement")
 );
 const InvoicePage = lazy(() => import("./components/InvoicePage"));
+const ResetPassword = lazy(() => import("./components/ResetPassword"));
 
 // Create layout components
 const CustomerLayout = () => {
@@ -256,6 +257,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/invoice/:orderId" element={<InvoicePage />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Customer Area Routes */}
                 <Route path="/" element={<CustomerLayout />}>

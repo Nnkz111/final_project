@@ -35,6 +35,18 @@
   "Orders": "ຄຳສັ່ງຊື້",
   "change_language": "ປ່ຽນພາສາ",
   "time": "ເວລາ",
+  "login_forgot_password_link": "ລືມລະຫັດຜ່ານ?",
+  "forgot_password_title": "ລືມລະຫັດຜ່ານ",
+  "forgot_password_email_label": "ອີເມວ",
+  "forgot_password_email_placeholder": "ໃສ່ອີເມວຂອງທ່ານ",
+  "forgot_password_send_button": "ຢືນຢັນ",
+  "forgot_password_success_message": "ລິ້ງການ Reset ລະຫັດຜ່ານໄດ້ຖືກສົ່ງໄປທີ່ອີເມວຂອງທ່ານ.",
+  "reset_password_title": "ປ່ຽນລະຫັດຜ່ານ",
+  "reset_password_new_label": "ລະຫັດຜ່ານໃໝ່",
+  "reset_password_new_password_placeholder": "ໃສ່ລະຫັດຜ່ານໃໝ່",
+  "reset_password_confirm_label": "ຢືນຢັນລະຫັດຜ່ານ",
+  "reset_password_submit_button": "ຢືນຢັນ",
+  "reset_password_success_message": "ລະຫັດຜ່ານຂອງທ່ານໄດ້ຖືກ Reset ແລ້ວ. ທ່ານສາມາດເຂົ້າລະບົບດ້ວຍລະຫັດໃໝ່ຂອງທ່ານໄດ້ແລ້ວ.",
 
   "footer": {
     "contact_us": "ຕິດຕໍ່ພວກເຮົາ",

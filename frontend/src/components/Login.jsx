@@ -48,6 +48,38 @@ function Login() {
     navigate("/register");
   };
 
+  // Forgot password modal state
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStatus, setForgotStatus] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Forgot password handler
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotStatus("");
+    try {
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForgotStatus("success");
+      } else {
+        setForgotStatus(data.error || "error");
+      }
+    } catch (err) {
+      setForgotStatus("error");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Desktop Header */}
@@ -97,6 +129,15 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <div className="flex justify-end mt-1">
+                <button
+                  type="button"
+                  className="text-blue-600 hover:underline text-sm focus:outline-none"
+                  onClick={() => setIsForgotModalOpen(true)}
+                >
+                  {t("login_forgot_password_link")}
+                </button>
+              </div>
             </div>
             <div className="flex items-baseline justify-center">
               <button
@@ -120,6 +161,55 @@ function Login() {
           </div>
         </div>
       </div>
+      {/* Forgot Password Modal */}
+      {isForgotModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+              onClick={() => {
+                setIsForgotModalOpen(false);
+                setForgotEmail("");
+                setForgotStatus("");
+              }}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-center">
+              {t("forgot_password_title")}
+            </h2>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <input
+                type="email"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={t("forgot_password_email_placeholder")}
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                disabled={forgotLoading}
+              >
+                {forgotLoading
+                  ? t("forgot_password_sending")
+                  : t("forgot_password_send_button")}
+              </button>
+            </form>
+            {forgotStatus === "success" && (
+              <div className="mt-4 text-green-600 text-center">
+                {t("forgot_password_success_message")}
+              </div>
+            )}
+            {forgotStatus && forgotStatus !== "success" && (
+              <div className="mt-4 text-red-600 text-center">
+                {t("forgot_password_error_message")}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {isAlertModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
           <div className="relative p-8 bg-white rounded-lg shadow-xl max-w-sm mx-auto">

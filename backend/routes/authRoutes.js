@@ -1,4 +1,6 @@
 const express = require("express");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 const bcrypt = require("bcrypt");
@@ -382,5 +384,95 @@ router.put("/profile", authenticateToken, async (req, res) => {
   }
 });
 */
+
+// Forgot Password - Customer
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+  try {
+    // Check if user exists and is not admin
+    const userResult = await pool.query(
+      "SELECT id, email, is_admin FROM users WHERE email = $1",
+      [email]
+    );
+    const user = userResult.rows[0];
+    if (!user || user.is_admin) {
+      // Do not reveal if user exists for security
+      return res
+        .status(200)
+        .json({ message: "If this email exists, a reset link has been sent." });
+    }
+    // Generate token and expiry (1 hour)
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    // Store hash and expiry in users table (add columns if needed)
+    await pool.query(
+      "UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3",
+      [resetTokenHash, resetTokenExpiry, user.id]
+    );
+    // Send email using Resend
+    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    const subject = "Password Reset Request";
+    const html = `<p>Hello,</p><p>You requested a password reset. Click the link below to set a new password. This link will expire in 1 hour.</p><p><a href='${resetUrl}'>Reset Password</a></p><p>If you did not request this, you can ignore this email.</p>`;
+    await sendEmail(email, subject, html);
+    return res
+      .status(200)
+      .json({ message: "If this email exists, a reset link has been sent." });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Reset Password - Customer
+router.post("/reset-password", async (req, res) => {
+  const { email, token, newPassword } = req.body;
+  if (!email || !token || !newPassword) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  try {
+    // Find user by email
+    const userResult = await pool.query(
+      "SELECT id, reset_password_token, reset_password_expires FROM users WHERE email = $1",
+      [email]
+    );
+    const user = userResult.rows[0];
+    if (!user || !user.reset_password_token || !user.reset_password_expires) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    // Hash the provided token and compare
+    const tokenHash = require("crypto")
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    if (
+      user.reset_password_token !== tokenHash ||
+      new Date(user.reset_password_expires) < new Date()
+    ) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    // Hash new password
+    const bcrypt = require("bcrypt");
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+    // Update password and clear reset token/expiry
+    await pool.query(
+      "UPDATE users SET password_hash = $1, reset_password_token = NULL, reset_password_expires = NULL WHERE id = $2",
+      [passwordHash, user.id]
+    );
+    return res
+      .status(200)
+      .json({ message: "Password has been reset successfully." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 module.exports = router;
