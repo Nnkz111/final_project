@@ -4,6 +4,7 @@ const pool = require("../config/db"); // Import the database pool
 const cloudinary = require("../config/cloudinary"); // Import Cloudinary configuration
 const authenticateToken = require("../middleware/authMiddleware"); // Import authentication middleware
 const { body, param, validationResult } = require("express-validator"); // Import body, param, and validationResult
+const { createLowStockNotification } = require("../routes/notificationRoutes");
 // const authenticateToken = require('../middleware/authMiddleware'); // Will be created later
 
 // Helper function to inject Cloudinary transformations
@@ -95,7 +96,7 @@ router.get("/", async (req, res) => {
   const {
     category_id,
     sort_by_price,
-    query: searchTerm,
+    search: searchTerm,
     low_stock,
   } = req.query; // Get category_id, sort_by_price, and searchTerm from query
 
@@ -119,12 +120,21 @@ router.get("/", async (req, res) => {
 
   // Add search term clause
   if (searchTerm) {
-    whereClauses.push(
-      `(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex + 1})`
-    );
-    whereParams.push(`%${searchTerm}%`);
-    whereParams.push(`%${searchTerm}%`);
-    paramIndex += 2; // Increment paramIndex by 2 for the two placeholders
+    // Check if searchTerm is a number (potential product ID)
+    if (!isNaN(searchTerm) && Number.isInteger(parseFloat(searchTerm))) {
+      // Search by ID or name
+      whereClauses.push(
+        `(p.id = $${paramIndex} OR p.name ILIKE $${paramIndex + 1})`
+      );
+      whereParams.push(parseInt(searchTerm, 10));
+      whereParams.push(`%${searchTerm}%`);
+      paramIndex += 2; // Increment by 2 for the two placeholders
+    } else {
+      // Search by name only if not a number
+      whereClauses.push(`(p.name ILIKE $${paramIndex})`);
+      whereParams.push(`%${searchTerm}%`);
+      paramIndex += 1; // Increment paramIndex by 1 for the single placeholder
+    }
   }
 
   // Add low stock filter clause
@@ -168,9 +178,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-// New endpoint to search for products
-router.get("/search", async (req, res) => {
-  const searchTerm = req.query.query; // Get the search term from query parameters
+// New endpoint for customer product search (search by name only)
+router.get("/customer-search", async (req, res) => {
+  const searchTerm = req.query.search; // Use 'search' parameter for consistency with frontend
   const { sort_by_price } = req.query; // Get sort_by_price from query
 
   if (!searchTerm) {
@@ -187,13 +197,12 @@ router.get("/search", async (req, res) => {
   }
 
   try {
-    // Use a case-insensitive search for product name or description
-    // Include stock_quantity in the select statement
+    // Use a case-insensitive search for product name only
     const result = await pool.query(
       `
       SELECT id, name, description, price, image_url, stock_quantity
       FROM products
-      WHERE name ILIKE $1 OR description ILIKE $1
+      WHERE name ILIKE $1
       ${orderByClause}
       `,
       [`%${searchTerm}%`]
@@ -204,7 +213,7 @@ router.get("/search", async (req, res) => {
     }));
     res.json(transformedProducts);
   } catch (err) {
-    console.error("Error searching products:", err);
+    console.error("Error searching products for customer:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -419,6 +428,21 @@ router.put(
       const result = await pool.query(query, queryParams);
 
       if (result.rows.length > 0) {
+        // Check if stock quantity dropped below threshold
+        if (
+          stock_quantity !== undefined &&
+          stock_quantity < 3 &&
+          result.rows[0].stock_quantity >= 3 // Only create notification if it was not low stock before
+        ) {
+          // Fetch product details to pass to notification function
+          const productDetailsResult = await pool.query(
+            "SELECT id, name, stock_quantity FROM products WHERE id = $1",
+            [id]
+          );
+          if (productDetailsResult.rows.length > 0) {
+            await createLowStockNotification(productDetailsResult.rows[0]);
+          }
+        }
         res.json(result.rows[0]); // Return the updated product
       } else {
         res.status(404).json({ error: "Product not found" });

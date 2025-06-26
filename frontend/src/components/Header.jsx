@@ -10,6 +10,12 @@ import {
   getUserNotifications,
   markNotificationAsRead,
 } from "../api/notificationApi"; // Import API functions
+import {
+  FaShoppingCart,
+  FaBoxOpen,
+  FaTimesCircle,
+  FaInfoCircle,
+} from "react-icons/fa";
 
 function Header() {
   const { cartItemCount } = useCart(); // Get count from context
@@ -31,7 +37,8 @@ function Header() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      navigate(`/search?search=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm(""); // Clear the search input after search
     }
   };
 
@@ -90,6 +97,73 @@ function Header() {
       }
     }
   };
+
+  const handleNotificationClick = async (notification) => {
+    // Always mark as read when clicked
+    if (!notification.is_read) {
+      await handleMarkAsRead(notification.id);
+    }
+
+    // Navigate based on notification type
+    if (notification.type === "new_order" && notification.order_id) {
+      navigate(`/admin/orders`); // New orders link to admin orders page
+    } else if (notification.type === "low_stock" && notification.product_id) {
+      navigate(`/admin/products`); // Low stock link to admin products page
+    } else if (
+      notification.type === "order_cancelled" &&
+      notification.order_id
+    ) {
+      navigate(`/admin/orders?status=cancelled`); // Admin sees cancelled orders with filter
+    } else if (
+      notification.type === "order_cancelled_customer" &&
+      notification.order_id
+    ) {
+      navigate(`/my-orders`); // Customer sees their cancelled order in My Orders
+    } else if (
+      notification.type === "customer_order_placed" &&
+      notification.order_id
+    ) {
+      navigate(`/order-confirmation/${notification.order_id}`); // Customer's new order message directs to order confirmation
+    } else if (
+      notification.type === "order_status_update" &&
+      notification.order_id
+    ) {
+      navigate(`/order-confirmation/${notification.order_id}`); // Order status update directs to order confirmation
+    } else if (notification.order_id) {
+      navigate(`/my-orders`); // Default for other types with an order_id
+    } else {
+      navigate(`/`); // Default for types without an order_id
+    }
+    setNotificationOpen(false); // Close dropdown after click
+  };
+
+  // Filter out read notifications for display in dropdown
+  const unreadNotifications = notifications.filter((notif) => !notif.is_read);
+
+  // Sort unread notifications: new orders first, then low stock, then others, all by date
+  unreadNotifications.sort((a, b) => {
+    const dateA = new Date(a.created_at);
+    const dateB = new Date(b.created_at);
+
+    if (a.type === "new_order" && b.type !== "new_order") return -1;
+    if (b.type === "new_order" && a.type !== "new_order") return 1;
+    if (a.type === "low_stock" && b.type !== "low_stock") return -1;
+    if (b.type === "low_stock" && a.type !== "low_stock") return 1;
+    if (a.type === "order_cancelled" && b.type !== "order_cancelled") return -1;
+    if (b.type === "order_cancelled" && a.type !== "order_cancelled") return 1;
+    if (
+      a.type === "order_cancelled_customer" &&
+      b.type !== "order_cancelled_customer"
+    )
+      return -1;
+    if (
+      b.type === "order_cancelled_customer" &&
+      a.type !== "order_cancelled_customer"
+    )
+      return 1;
+
+    return dateB - dateA; // Sort by date for same types
+  });
 
   return (
     <div className="hidden md:block w-full bg-gray-800">
@@ -232,76 +306,107 @@ function Header() {
                   <span className="text-sm">{t("notifications")}</span>
                 </div>
                 {/* Notification Dropdown Menu */}
-                <div
-                  className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right  ${
-                    notificationOpen
-                      ? "opacity-100 scale-100 pointer-events-auto"
-                      : "opacity-0 scale-95 pointer-events-none"
-                  }`}
-                >
-                  <div className="px-4 py-3 font-bold border-b border-gray-200 ">
-                    {t("notifications")}
-                  </div>
-                  <div className="py-2 max-h-60 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.slice(0, 4).map((notif) => {
-                        // Translate the order status first
-                        const translatedStatus = t(
-                          `order_status_${notif.order_status}`
-                        );
-
-                        return (
-                          <Link
-                            to={`/order-confirmation/${notif.order_id}`}
-                            key={notif.id}
-                            className={`block w-full px-4 py-2 hover:bg-blue-50 hover:text-blue-600 cursor-pointer text-sm flex items-center ${
-                              notif.is_read ? "text-gray-500" : "font-semibold"
-                            }`}
-                            onClick={() => handleMarkAsRead(notif.id)}
-                          >
-                            {/* Add an icon here */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 mr-2 text-green-500 flex-shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+                {notificationOpen && (
+                  <div
+                    className={`absolute right-0 top-full w-64 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right  ${
+                      notificationOpen
+                        ? "opacity-100 scale-100 pointer-events-auto"
+                        : "opacity-0 scale-95 pointer-events-none"
+                    }`}
+                  >
+                    <div className="px-4 py-3 font-bold border-b border-gray-200 ">
+                      {t("notifications")}
+                    </div>
+                    <div className="py-2 max-h-60 overflow-y-auto">
+                      {unreadNotifications.length === 0 ? (
+                        <p className="px-4 py-2 text-sm text-gray-500">
+                          {t("no_new_notifications")}
+                        </p>
+                      ) : (
+                        <ul>
+                          {unreadNotifications.map((notification) => (
+                            <li
+                              key={notification.id}
+                              className="px-4 py-3 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 cursor-pointer"
+                              onClick={() =>
+                                handleNotificationClick(notification)
+                              }
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {/* Use the translatedStatus in the main notification message */}
-                            {t(notif.message, {
-                              orderId: notif.order_id,
-                              status: translatedStatus,
-                            })}
-                          </Link>
-                        );
-                      })
-                    ) : (
-                      <div className="px-4 py-2 text-sm text-gray-500">
-                        {t("No_notifications")}
-                      </div>
-                    )}
+                              <div className="flex items-center">
+                                {notification.type === "new_order" ? (
+                                  <FaShoppingCart className="mr-3 text-xl text-green-600" />
+                                ) : notification.type === "low_stock" ? (
+                                  <FaBoxOpen className="mr-3 text-xl text-red-600" />
+                                ) : notification.type ===
+                                  "order_cancelled_customer" ? (
+                                  <FaTimesCircle className="mr-3 text-xl text-yellow-600" />
+                                ) : notification.type ===
+                                  "customer_order_placed" ? (
+                                  <FaShoppingCart className="mr-3 text-xl text-blue-600" />
+                                ) : notification.type ===
+                                  "order_status_update" ? (
+                                  <FaInfoCircle className="mr-3 text-xl text-blue-600" />
+                                ) : notification.type ===
+                                  "shipping_bill_uploaded" ? (
+                                  <FaInfoCircle className="mr-3 text-xl text-green-600" />
+                                ) : (
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 mr-3 text-gray-500"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                )}
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">
+                                    {t(`notification.${notification.type}`, {
+                                      orderId: notification.order_id,
+                                      productName:
+                                        notification.product_name ||
+                                        notification.name,
+                                      stockQuantity:
+                                        notification.stock_quantity,
+                                      message: notification.message,
+                                      status: notification.order_status
+                                        ? t(
+                                            `order_status_${notification.order_status}`
+                                          )
+                                        : "",
+                                    })}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(
+                                      notification.created_at
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 text-center">
+                      <Link
+                        to="/my-orders"
+                        className="block px-4 py-3 text-center text-blue-600 hover:bg-blue-50 border-t border-gray-200"
+                      >
+                        {t("view_all_notifications")}
+                      </Link>
+                    </div>
                   </div>
-                  {notifications.length > 4 && (
-                    <Link
-                      to="/my-orders"
-                      className="block px-4 py-3 text-center text-blue-600 hover:bg-blue-50 border-t border-gray-200"
-                    >
-                      {t("view_all_notifications")}
-                    </Link>
-                  )}
-                </div>
+                )}
               </div>
             )}
 
+            {/* Profile Icon and Dropdown */}
             {user ? (
-              // If customer user is logged in, show Account dropdown
               <div
                 className="relative group flex items-center"
                 onMouseEnter={() => setProfileOpen(true)}
@@ -344,82 +449,61 @@ function Header() {
                   />
                 </svg>
                 {/* Dropdown menu - Increased z-index to appear above category dropdowns */}
-                <div
-                  className={`absolute right-0 top-full w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
-                    profileOpen
-                      ? "opacity-100 scale-100 pointer-events-auto"
-                      : "opacity-0 scale-95 pointer-events-none"
-                  }`}
-                >
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition"
-                    onClick={() => setProfileOpen(false)}
+                {profileOpen && (
+                  <div
+                    className={`absolute right-0 top-full w-48 bg-white text-gray-800 rounded-lg shadow-lg border border-gray-200 z-[51] transition-all duration-200 origin-top-right ${
+                      profileOpen
+                        ? "opacity-100 scale-100 pointer-events-auto"
+                        : "opacity-0 scale-95 pointer-events-none"
+                    }`}
                   >
-                    {t("profile_link_text")}
-                  </Link>
-                  <Link
-                    to="/my-orders"
-                    className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition"
-                    onClick={() => setProfileOpen(false)}
-                  >
-                    {t("my_orders_link_text")}
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setProfileOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-3 hover:bg-blue-50  rounded-b-lg transition text-red-600"
-                  >
-                    {t("logout_button_text")}
-                  </button>
-                </div>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      {t("profile_link_text")}
+                    </Link>
+                    <Link
+                      to="/my-orders"
+                      className="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      {t("my_orders_link_text")}
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setProfileOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 hover:bg-blue-50  rounded-b-lg transition text-red-600"
+                    >
+                      {t("logout_button_text")}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              // If no customer user is logged in, show Login and Register links
-              <>
-                <Link
-                  to="/login"
-                  className="flex flex-col items-center gap-1 text-sm"
+              <Link
+                to="/login"
+                className="flex flex-col items-center gap-1 text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                  <span>{t("login_link_text")}</span>
-                </Link>
-                <Link
-                  to="/register"
-                  className="flex flex-col items-center gap-1 text-sm"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                  <span>{t("register_link_text")}</span>
-                </Link>
-              </>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.939 13.939 0 0112 16c2.5 0 4.847.655 6.879 1.804M16 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <span>{t("login_link_text")}</span>
+              </Link>
             )}
 
             {/* Cart Icon */}

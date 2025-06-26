@@ -105,7 +105,7 @@ function AdminSidebar() {
           </svg>
           {t("adminSidebar.ordersLink")}
         </Link>
-        {/* Add User Management Link */}
+        {/* Add User Management Link 
         <Link
           to="/admin/users"
           className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"
@@ -124,7 +124,7 @@ function AdminSidebar() {
             ></path>
           </svg>
           {t("adminSidebar.userManagementLink")}
-        </Link>
+        </Link>*/}
         <Link
           to="/admin/customers"
           className="flex items-center px-4 py-2 mt-2 text-gray-700 hover:bg-gray-200 rounded-md"

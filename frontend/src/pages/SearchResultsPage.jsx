@@ -8,7 +8,7 @@ function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
-  const searchTerm = new URLSearchParams(location.search).get("query");
+  const searchTerm = new URLSearchParams(location.search).get("search");
   const [sortByPrice, setSortByPrice] = useState("");
   const { t } = useTranslation();
 
@@ -25,7 +25,7 @@ function SearchResultsPage() {
         const API_URL =
           import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const response = await fetch(
-          `${API_URL}/api/products/search?query=${encodeURIComponent(
+          `${API_URL}/api/products/customer-search?search=${encodeURIComponent(
             searchTerm
           )}${sortByPrice ? `&sort_by_price=${sortByPrice}` : ""}`
         );

@@ -13,16 +13,14 @@ function MyOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { t } = useTranslation();
+
   const markOrderAsRead = async (orderId) => {
     if (!user || !token) return;
     try {
-      // Get all notifications first
       const notifications = await getUserNotifications(user.id, token);
-      // Find the notification related to this order
       const orderNotification = notifications.find(
         (n) => n.order_id === orderId && !n.is_read
       );
-      // If we found an unread notification for this order, mark it as read
       if (orderNotification) {
         await markNotificationAsRead(orderNotification.id, token);
       }
@@ -31,32 +29,67 @@ function MyOrders() {
     }
   };
 
-  useEffect(() => {
+  const fetchOrders = async () => {
     if (!user || !token) return;
-    const fetchOrders = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const API_URL =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-        const res = await fetch(`${API_URL}/api/orders/user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to fetch orders");
-        const data = await res.json();
-        setOrders(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    setError("");
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const res = await fetch(`${API_URL}/api/orders/user/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      const data = await res.json();
+      // No longer filter out cancelled orders from the display; display all orders
+      setOrders(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrders();
   }, [user, token]);
 
-  // Function to handle viewing order details
   const handleViewDetails = (orderId) => {
     markOrderAsRead(orderId);
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!user || !token) {
+      console.error("User not authenticated.");
+      return;
+    }
+
+    if (window.confirm(t("confirm_cancel_order"))) {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await fetch(
+          `${API_URL}/api/orders/${orderId}/cancel`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to cancel order");
+        }
+
+        // If successful, re-fetch orders to update the UI
+        fetchOrders();
+        alert(t("order_cancelled_success"));
+      } catch (err) {
+        console.error("Error cancelling order:", err);
+        alert(t("order_cancelled_error", { error: err.message }));
+      }
+    }
   };
 
   return (
@@ -91,7 +124,7 @@ function MyOrders() {
                       {t("created_at_label")}:{" "}
                       {new Date(order.created_at).toLocaleString()}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-green-600">
                       {t("status_label")}:{" "}
                       <span className="capitalize">
                         {t(`order_status_${order.status}`)}
@@ -108,19 +141,47 @@ function MyOrders() {
                     )}
                   </div>{" "}
                   <div className="flex gap-2 w-full md:w-auto">
-                    <Link
-                      to={`/order-confirmation/${order.id}`}
-                      onClick={() => handleViewDetails(order.id)}
-                      className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 text-center"
-                    >
-                      {t("view_details_button")}
-                    </Link>
-                    <Link
-                      to={`/invoice/${order.id}`}
-                      className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 text-center"
-                    >
-                      {t("view_invoice_button")}
-                    </Link>
+                    {order.status !== "cancelled" ? (
+                      <Link
+                        to={`/order-confirmation/${order.id}`}
+                        onClick={() => handleViewDetails(order.id)}
+                        className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200 text-center"
+                      >
+                        {t("view_details_button")}
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex-1 md:flex-none bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold cursor-not-allowed text-center"
+                      >
+                        {t("view_details_button")}
+                      </button>
+                    )}
+
+                    {order.status !== "cancelled" ? (
+                      <Link
+                        to={`/invoice/${order.id}`}
+                        className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 text-center"
+                      >
+                        {t("view_invoice_button")}
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex-1 md:flex-none bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold cursor-not-allowed text-center"
+                      >
+                        {t("view_invoice_button")}
+                      </button>
+                    )}
+
+                    {order.status === "pending" && (
+                      <button
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="flex-1 md:flex-none bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 text-center"
+                      >
+                        {t("cancel_order_button")}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

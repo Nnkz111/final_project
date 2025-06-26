@@ -59,7 +59,7 @@ function AdminProductManagement() {
       const categoryQuery = selectedCategory
         ? `&category_id=${selectedCategory}`
         : "";
-      const searchQuery = searchTerm ? `&query=${searchTerm}` : "";
+      const searchQuery = searchTerm ? `&search=${searchTerm}` : "";
       const response = await axios.get(
         `${API_URL}/api/products?limit=${pageSize}&offset=${
           (page - 1) * pageSize
@@ -606,7 +606,7 @@ function AdminProductManagement() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)} // Only update searchTerm on change
             onKeyPress={handleSearchKeyPress} // Add back key press handler
-            className="border px-3 py-2 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-3 py-2 rounded-md w-72 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-md"
           />
           {/* Add Search Button */}
           <button

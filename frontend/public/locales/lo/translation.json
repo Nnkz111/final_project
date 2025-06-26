@@ -47,6 +47,23 @@
   "reset_password_confirm_label": "ຢືນຢັນລະຫັດຜ່ານ",
   "reset_password_submit_button": "ຢືນຢັນ",
   "reset_password_success_message": "ລະຫັດຜ່ານຂອງທ່ານໄດ້ຖືກ Reset ແລ້ວ. ທ່ານສາມາດເຂົ້າລະບົບດ້ວຍລະຫັດໃໝ່ຂອງທ່ານໄດ້ແລ້ວ.",
+  "confirm_cancel_order": "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການຍົກເລີກຄຳສັ່ງຊື້ນີ້?",
+  "order_cancelled_success": "ຍົກເລີກຄຳສັ່ງຊື້ສຳເລັດແລ້ວ!",
+  "order_cancelled_error": "ຍົກເລີກຄຳສັ່ງຊື້ບໍ່ສຳເລັດ: {{error}}",
+  "cancel_order_button": "ຍົກເລີກຄຳສັ່ງຊື້",
+  "notification.order_cancelled_customer": "ຄຳສັ່ງຊື້ເລກທີ #{{orderId}} ໄດ້ຖືກຍົກເລີກສຳເລັດແລ້ວ.",
+  "no_new_notifications": "ບໍ່ມີການແຈ້ງເຕືອນ",
+
+  "notification.customer_order_placed": "ຄໍາສັ່ງຊື້ເລກທີ #{{orderId}} ຂອງທ່ານສຳເລັດແລ້ວ.",
+  "notification.order_status_update": "ສະຖານະຄຳສັ່ງຊື້ເລກທີ #{{orderId}} ຂອງທ່ານໄດ້ຖືກອັບເດດເປັນ {{status}}.",
+
+  "order_status": {
+    "pending": "ລໍຖ້າການຢືນຢັນ",
+    "processing": "ກຳລັງດຳເນີນການ",
+    "shipped": "ກຳລັງຈັດສົ່ງ",
+    "delivered": "ຈັດສົ່ງສຳເລັດ",
+    "cancelled": "ຍົກເລີກ"
+  },
 
   "footer": {
     "contact_us": "ຕິດຕໍ່ພວກເຮົາ",
@@ -234,7 +251,7 @@
   "register_already_account_text": "ມີບັນຊີແລ້ວ?",
   "register_login_link": "ເຂົ້າສູ່ລະບົບ",
   "register_success_message": "ລົງທະບຽນສຳເລັດ! ກະລຸນາເຂົ້າສູ່ລະບົບ.",
-  "register_failed_message": "ຊື່ຜູ້ໃຊ້ ຫຼື ອີເມວມີຜູ້ໃຊ້ງານແລ້ວ",
+  "register_failed_message": "ຊື່ຜູໃຊ້ ຫຼື ອີເມວມີຜູ້ໃຊ້ງານແລ້ວ",
   "register_failed_validation_message": "ລະຫັດຜ່ານຕ້ອງມີຄວາມຍາວກວ່າ 6 ໂຕ",
   "register_alert_close_button": "ປິດ",
 
@@ -358,7 +375,9 @@
     "detail_total_label": "ທັງໝົດ",
     "detail_payment_proof_label": "ຫຼັກຖານການຊໍາລະ",
     "payment_proof_alt": "ຫຼັກຖານການຊໍາລະ",
-    "no_image": "(ບໍ່ມີຮູບພາບ)"
+    "no_image": "(ບໍ່ມີຮູບພາບ)",
+    "search_placeholder": "ຄົ້ນຫາຕາມລະຫັດຄຳສັ່ງຊື້ ຫຼື ຊື່ຜູ້ໃຊ້...",
+    "search_button": "ຄົ້ນຫາ"
   },
 
   "order_status_pending": "ລໍຖ້າດຳເນີນການ",
@@ -477,14 +496,12 @@
     "empty": "ບໍ່ມີການແຈ້ງເຕືອນ.",
     "mark_as_read_button": "ອ່ານແລ້ວ",
     "dropdown_empty": "ບໍ່ມີການແຈ້ງເຕືອນ",
-    "dropdown_view_all": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ"
+    "dropdown_view_all": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ",
+    "low_stock_message": "ສິນຄ້າ \"{{productName}}\" (ຍັງເຫຼືອ {{stockQuantity}} ລາຍການ) ມີໃນສະຕັອກໜ້ອຍ."
   },
   "notifications": "ການແຈ້ງເຕືອນ",
   "No_notifications": "ບໍ່ມີການແຈ້ງເຕືອນ",
   "view_all_notifications": "ເບິ່ງການແຈ້ງເຕືອນທັງໝົດ",
-  "notification.order_status_update": "ສະຖານະຄໍາສັ່ງຊື້ #{{orderId}} ຂອງທ່ານຖືກອັບເດດເປັນ {{status}}.",
-
-  "notification.customer_order_placed": "ຄໍາສັ່ງຊື້ #{{orderId}} ຂອງທ່ານສຳເລັດແລ້ວ.",
 
   "sort_by_price_title": "ຈັດລຽງຕາມລາຄາ",
   "sort_none": "ບໍ່ມີ",
@@ -526,5 +543,7 @@
     "start_date": "ວັນທີເລີ່ມຕົ້ນ",
     "end_date": "ວັນທີສິ້ນສຸດ",
     "error_creating_sales_report": "ເກີດຂໍ້ຜິດພາດໃນການສ້າງລາຍງານການຂາຍ: "
-  }
+  },
+
+  "notification.shipping_bill_uploaded": "ໃບບິນຈັດສົ່ງຄຳສັ່ງຊື້ເລກທີ #{{orderId}} ໄດ້ຖືກອັບໂຫຼດແລ້ວ."
 }

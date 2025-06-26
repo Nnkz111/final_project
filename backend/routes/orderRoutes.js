@@ -295,7 +295,7 @@ router.get("/", authenticateToken, async (req, res) => {
 
   const limit = parseInt(req.query.limit, 10) || 20;
   const offset = parseInt(req.query.offset, 10) || 0;
-  const { status, payment_type, start_date, end_date } = req.query;
+  const { status, payment_type, start_date, end_date, search } = req.query;
 
   let whereClauses = [];
   let queryParams = [];
@@ -323,6 +323,14 @@ router.get("/", authenticateToken, async (req, res) => {
     queryParams.push(end_date);
   }
 
+  if (search) {
+    const searchLower = `%${search.toLowerCase()}%`;
+    whereClauses.push(
+      `(CAST(o.id AS TEXT) ILIKE $${paramIndex++} OR LOWER(u.username) ILIKE $${paramIndex++})`
+    );
+    queryParams.push(searchLower, searchLower);
+  }
+
   const where = whereClauses.length
     ? `WHERE ${whereClauses.join(" AND ")}`
     : "";
@@ -345,7 +353,10 @@ router.get("/", authenticateToken, async (req, res) => {
     );
 
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM orders o ${where}`,
+      `SELECT COUNT(*) FROM orders o
+       LEFT JOIN users u ON o.user_id = u.id
+       LEFT JOIN customers c ON o.user_id = c.user_id
+       ${where}`,
       queryParams
     );
 
@@ -413,6 +424,100 @@ router.put(
     } catch (err) {
       console.error(`Error updating order ${id} status:`, err);
       res.status(500).json({ error: "Failed to update order status" });
+    }
+  }
+);
+
+// New endpoint to allow a customer to cancel their own pending order
+router.put(
+  "/:id/cancel",
+  authenticateToken,
+  [param("id").isInt().withMessage("Order ID must be an integer")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params; // Order ID
+    const authenticatedUserId = req.user.userId; // User ID from the authenticated token
+    const isAdmin = req.user.is_admin; // Check if the user is an admin
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Fetch the order to verify ownership and status
+      const orderResult = await client.query(
+        "SELECT user_id, status FROM orders WHERE id = $1 FOR UPDATE", // Use FOR UPDATE to lock the row
+        [id]
+      );
+
+      if (orderResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const order = orderResult.rows[0];
+
+      // Check if the authenticated user owns this order, or if they are an admin
+      if (order.user_id !== authenticatedUserId && !isAdmin) {
+        await client.query("ROLLBACK");
+        return res.sendStatus(403); // Forbidden if not owner and not admin
+      }
+
+      // Check if the order is still pending
+      if (order.status !== "pending") {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: "Order can only be cancelled if its status is 'pending'",
+        });
+      }
+
+      // Update order status to 'cancelled'
+      const updateOrderResult = await client.query(
+        "UPDATE orders SET status = $1 WHERE id = $2 RETURNING *",
+        ["cancelled", id]
+      );
+
+      // Re-increment product stock quantities
+      const orderItemsResult = await client.query(
+        "SELECT product_id, quantity FROM order_items WHERE order_id = $1",
+        [id]
+      );
+
+      for (const item of orderItemsResult.rows) {
+        await client.query(
+          "UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2",
+          [item.quantity, item.product_id]
+        );
+      }
+
+      // Insert notification for admin about the cancelled order
+      await client.query(
+        "INSERT INTO notifications (type, order_id, message, user_id, is_read) VALUES ($1, $2, $3, NULL, FALSE)",
+        ["order_cancelled", id, `ຄຳສັ່ງຊື້ເລກທີ ${id} ຖືກຍົກເລີກໂດຍລູກຄ້າ.`]
+      );
+
+      // Insert notification for customer about their cancelled order
+      await client.query(
+        "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, FALSE)",
+        [
+          authenticatedUserId,
+          "order_cancelled_customer",
+          id,
+          `Your order ${id} has been successfully cancelled.`, // This can be translated later
+        ]
+      );
+
+      await client.query("COMMIT");
+      res.status(200).json(updateOrderResult.rows[0]);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error(`Error cancelling order ${id}:`, err);
+      res.status(500).json({ error: "Failed to cancel order" });
+    } finally {
+      client.release();
     }
   }
 );
@@ -566,6 +671,25 @@ router.put("/:id/shipping-bill-upload", authenticateToken, async (req, res) => {
 
     if (updateResult.rows.length === 0) {
       return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Fetch the user_id for the order
+    const orderUserResult = await pool.query(
+      "SELECT user_id FROM orders WHERE id = $1",
+      [id]
+    );
+    if (orderUserResult.rows.length > 0) {
+      const userId = orderUserResult.rows[0].user_id;
+      // Insert notification for customer about shipping bill upload
+      await pool.query(
+        "INSERT INTO notifications (user_id, type, order_id, message, is_read) VALUES ($1, $2, $3, $4, false)",
+        [
+          userId,
+          "shipping_bill_uploaded",
+          id,
+          "notification.shipping_bill_uploaded",
+        ]
+      );
     }
 
     res.status(200).json({

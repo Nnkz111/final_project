@@ -48,6 +48,12 @@
   "reset_password_confirm_label": "Confirm Password",
   "reset_password_submit_button": "Reset Password",
   "reset_password_success_message": "Your password has been reset successfully. You can now log in with your new password.",
+  "confirm_cancel_order": "Are you sure you want to cancel this order?",
+  "order_cancelled_success": "Order cancelled successfully!",
+  "order_cancelled_error": "Failed to cancel order: {{error}}",
+  "cancel_order_button": "Cancel Order",
+  "notification.order_cancelled_customer": "Your order {{orderId}} has been successfully cancelled.",
+  "no_new_notifications": "No Notifications",
 
   "footer": {
     "contact_us": "Contact Us",
@@ -357,7 +363,9 @@
     "detail_total_label": "Total",
     "detail_payment_proof_label": "Payment Proof",
     "payment_proof_alt": "Payment Proof",
-    "no_image": "(No Image)"
+    "no_image": "(No Image)",
+    "search_placeholder": "Search by Order ID or Username...",
+    "search_button": "Search"
   },
 
   "order_status_pending": "Pending",
@@ -474,7 +482,8 @@
     "empty": "No notifications to display.",
     "mark_as_read_button": "Mark as Read",
     "dropdown_empty": "No notifications",
-    "dropdown_view_all": "View All Notifications"
+    "dropdown_view_all": "View All Notifications",
+    "low_stock_message": "Product \"{{productName}}\" ({{stockQuantity}} items left) is low on stock."
   },
   "notifications": "Notifications",
   "No_notifications": "No notifications",
@@ -510,5 +519,7 @@
   "table_header_qty": "Quantity",
   "table_header_unit_price": "Price",
   "table_header_total": "Total",
-  "thank_you_message": "Thank You for Using Our Service"
+  "thank_you_message": "Thank You for Using Our Service",
+
+  "notification.shipping_bill_uploaded": "Your shipping bill has been uploaded for order #{{orderId}}."
 }

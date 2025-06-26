@@ -151,4 +151,43 @@ router.put(
   }
 );
 
+// New endpoint to get low stock notifications (Admin only)
+router.get("/low-stock", authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.sendStatus(403); // Forbidden if not an admin
+  }
+
+  try {
+    const lowStockThreshold = 3; // Define your low stock threshold
+    const result = await pool.query(
+      `SELECT id, name, stock_quantity FROM products WHERE stock_quantity < $1 ORDER BY stock_quantity ASC, name ASC`,
+      [lowStockThreshold]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching low stock products:", err);
+    res.status(500).json({ error: "Failed to fetch low stock products" });
+  }
+});
+
+// Helper function to create a low stock notification
+async function createLowStockNotification(product) {
+  const notificationType = "low_stock";
+  const message = `Product "${product.name}" (ID: ${product.id}) is low on stock (${product.stock_quantity} items left).`;
+  try {
+    await pool.query(
+      "INSERT INTO notifications (type, product_id, message, is_read, created_at, user_id) VALUES ($1, $2, $3, $4, NOW(), NULL)",
+      [notificationType, product.id, message, false]
+    );
+    console.log(
+      `Low stock notification created for product ${product.id}: ${product.name}`
+    );
+  } catch (err) {
+    console.error(
+      `Error creating low stock notification for product ${product.id}:`,
+      err
+    );
+  }
+}
+
 module.exports = router;
