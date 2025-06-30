@@ -26,22 +26,17 @@ export const AdminAuthProvider = ({ children }) => {
         : { username: emailOrUsername, password };
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-      const response = await axios.post(
-        `${API_URL}/api/auth/login`, // Still using the same login endpoint
-        payload
-      );
+      const response = await axios.post(`${API_URL}/api/auth/login`, payload);
       const { token: receivedToken, user: userInfo } = response.data;
 
-      // Crucially, check if the logged-in user is an admin
-      if (!userInfo.is_admin) {
-        // If not an admin, return failure and do not store credentials
+      // Allow only admin or staff roles
+      if (userInfo.role !== "admin" && userInfo.role !== "staff") {
         return {
           success: false,
-          error: "Access Denied: Not an administrator.",
+          error: "Access Denied: Only admin or staff can access admin page.",
         };
       }
 
-      // If it is an admin, store admin-specific credentials
       setAdminToken(receivedToken);
       setAdminUser(userInfo);
       localStorage.setItem("adminToken", receivedToken);

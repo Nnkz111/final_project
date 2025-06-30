@@ -63,8 +63,8 @@ router.post(
 
         // Insert the new user into the users table
         const userResult = await client.query(
-          "INSERT INTO users (email, password_hash, username, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, email, username, is_admin",
-          [email, passwordHash, username, false]
+          "INSERT INTO users (email, password_hash, username, role) VALUES ($1, $2, $3, $4) RETURNING id, email, username, role",
+          [email, passwordHash, username, "customer"]
         );
         const newUser = userResult.rows[0];
 
@@ -82,7 +82,7 @@ router.post(
           {
             userId: newUser.id,
             email: newUser.email,
-            is_admin: newUser.is_admin,
+            role: newUser.role,
           },
           jwtSecret,
           { expiresIn: "2d" }
@@ -94,7 +94,7 @@ router.post(
             id: newUser.id,
             email: newUser.email,
             username: newUser.username,
-            is_admin: newUser.is_admin,
+            role: newUser.role,
           },
         });
       } catch (err) {
@@ -145,7 +145,7 @@ router.post(
            u.username,
            u.email,
            u.password_hash,
-           u.is_admin,
+           u.role,
            c.name AS customer_name,
            c.phone AS customer_phone,
            c.address AS customer_address
@@ -176,7 +176,7 @@ router.post(
       const tokenPayload = {
         userId: user.id,
         email: user.email,
-        is_admin: user.is_admin,
+        role: user.role,
       };
 
       const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "2d" });
@@ -187,7 +187,7 @@ router.post(
           id: user.id,
           email: user.email,
           username: user.username,
-          is_admin: user.is_admin,
+          role: user.role,
           customer: {
             // Include customer object with name, phone, and address
             name: user.customer_name,
@@ -279,7 +279,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
                  u.id,
                  u.username,
                  u.email,
-                 u.is_admin,
+                 u.role,
                  c.name AS customer_name,
                  c.phone AS customer_phone,
                  c.address AS customer_address
@@ -298,7 +298,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
       id: userProfile.id,
       username: userProfile.username,
       email: userProfile.email,
-      is_admin: userProfile.is_admin,
+      role: userProfile.role,
       customer: {
         name: userProfile.customer_name,
         phone: userProfile.customer_phone,
@@ -394,11 +394,11 @@ router.post("/forgot-password", async (req, res) => {
   try {
     // Check if user exists and is not admin
     const userResult = await pool.query(
-      "SELECT id, email, is_admin FROM users WHERE email = $1",
+      "SELECT id, email, role FROM users WHERE email = $1",
       [email]
     );
     const user = userResult.rows[0];
-    if (!user || user.is_admin) {
+    if (!user || user.role === "admin") {
       // Do not reveal if user exists for security
       return res
         .status(200)

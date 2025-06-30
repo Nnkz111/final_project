@@ -10,22 +10,22 @@ router.get("/", authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
     const userProfileQuery = `
-                    SELECT
-                        u.id AS user_id,
-                        u.username,
-                        u.email,
-                        u.is_admin,
-                        u.created_at AS user_created_at,
-                        c.id AS customer_id,
-                        c.name AS customer_name,
-                        c.phone,
-                        c.address,
-                        c.created_at AS customer_created_at,
-                        c.updated_at AS customer_updated_at
-                    FROM users u
-                    LEFT JOIN customers c ON u.id = c.user_id
-                    WHERE u.id = $1;
-                `;
+      SELECT
+        u.id AS user_id,
+        u.username,
+        u.email,
+        u.role,
+        u.created_at AS user_created_at,
+        c.id AS customer_id,
+        c.name AS customer_name,
+        c.phone,
+        c.address,
+        c.created_at AS customer_created_at,
+        c.updated_at AS customer_updated_at
+      FROM users u
+      LEFT JOIN customers c ON u.id = c.user_id
+      WHERE u.id = $1;
+    `;
     const result = await pool.query(userProfileQuery, [userId]);
 
     if (result.rows.length === 0) {
@@ -38,7 +38,8 @@ router.get("/", authenticateToken, async (req, res) => {
       id: userProfile.user_id,
       username: userProfile.username,
       email: userProfile.email,
-      is_admin: userProfile.is_admin,
+      role: userProfile.role,
+
       created_at: userProfile.user_created_at,
       customer: {
         id: userProfile.customer_id,
@@ -178,24 +179,9 @@ router.put(
       await client.query("COMMIT");
 
       // Re-fetch the updated profile to send back the latest data
+
       const updatedProfileResult = await pool.query(
-        `
-              SELECT
-                  u.id AS user_id,
-                  u.username,
-                  u.email,
-                  u.is_admin,
-                  u.created_at AS user_created_at,
-                  c.id AS customer_id,
-                  c.name AS customer_name,
-                  c.phone,
-                  c.address,
-                  c.created_at AS customer_created_at,
-                  c.updated_at AS customer_updated_at
-              FROM users u
-              LEFT JOIN customers c ON u.id = c.user_id
-              WHERE u.id = $1;
-              `,
+        `SELECT u.id AS user_id, u.username, u.email, u.role, u.created_at AS user_created_at, c.id AS customer_id, c.name AS customer_name, c.phone, c.address, c.created_at AS customer_created_at, c.updated_at AS customer_updated_at FROM users u LEFT JOIN customers c ON u.id = c.user_id WHERE u.id = $1;`,
         [userId]
       );
 
@@ -205,7 +191,7 @@ router.put(
         id: updatedUserProfile.user_id,
         username: updatedUserProfile.username,
         email: updatedUserProfile.email,
-        is_admin: updatedUserProfile.is_admin,
+        role: updatedUserProfile.role,
         created_at: updatedUserProfile.user_created_at,
         customer: {
           id: updatedUserProfile.customer_id,

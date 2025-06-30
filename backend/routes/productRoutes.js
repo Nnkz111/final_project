@@ -356,7 +356,7 @@ router.put(
   ],
   async (req, res) => {
     // Ensure the user is an admin
-    if (!req.user || !req.user.is_admin) {
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -456,8 +456,8 @@ router.put(
 
 // Delete a product by ID (Admin only)
 router.delete("/:id", authenticateToken, async (req, res) => {
-  // Ensure the user is an admin
-  if (!req.user || !req.user.is_admin) {
+  // Only admin can delete products
+  if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin access required" });
   }
 

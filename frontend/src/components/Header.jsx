@@ -42,11 +42,11 @@ function Header() {
     }
   };
 
-  // Fetch notifications when user is logged in
+  // Fetch notifications when user is logged in and is a customer
   useEffect(() => {
     const fetchNotifications = async () => {
-      // Ensure user, user.token, and user.id are available and user is not admin
-      if (user && token && user.id && !user.is_admin) {
+      // Ensure user, user.token, and user.id are available and user is a customer
+      if (user && token && user.id && user.role === "customer") {
         try {
           const userNotifications = await getUserNotifications(user.id, token);
           setNotifications(userNotifications);
@@ -275,7 +275,7 @@ function Header() {
             </div>
 
             {/* Notification Icon and Dropdown */}
-            {user && !user.is_admin && (
+            {user && user.role === "customer" && (
               <div
                 className="relative group flex items-center cursor-pointer"
                 onMouseEnter={() => setNotificationOpen(true)}

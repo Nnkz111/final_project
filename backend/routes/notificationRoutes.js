@@ -7,8 +7,8 @@ const { param, validationResult } = require("express-validator"); // Import para
 // New endpoint to get notifications (Admin only)
 router.get("/", authenticateToken, async (req, res) => {
   // Check if the authenticated user is an admin
-  if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403); // Forbidden if not an admin
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+    return res.sendStatus(403); // Forbidden if not an admin or staff
   }
 
   try {
@@ -30,8 +30,8 @@ router.put(
   [param("id").isInt().withMessage("Notification ID must be an integer")],
   async (req, res) => {
     // Check if the authenticated user is an admin
-    if (!req.user || !req.user.is_admin) {
-      return res.sendStatus(403); // Forbidden if not an admin
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+      return res.sendStatus(403); // Forbidden if not an admin or staff
     }
 
     const errors = validationResult(req);
@@ -153,8 +153,8 @@ router.put(
 
 // New endpoint to get low stock notifications (Admin only)
 router.get("/low-stock", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
-    return res.sendStatus(403); // Forbidden if not an admin
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+    return res.sendStatus(403); // Forbidden if not an admin or staff
   }
 
   try {

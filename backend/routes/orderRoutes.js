@@ -289,7 +289,7 @@ router.get("/user/:userId", authenticateToken, async (req, res) => {
 
 // Get all orders (admin, with pagination, status, payment type, and date filters)
 router.get("/", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
     return res.sendStatus(403); // Forbidden if not an admin
   }
 
@@ -384,7 +384,7 @@ router.put(
       .withMessage("Invalid order status"),
   ],
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
       return res.sendStatus(403);
     }
 
@@ -441,7 +441,6 @@ router.put(
 
     const { id } = req.params; // Order ID
     const authenticatedUserId = req.user.userId; // User ID from the authenticated token
-    const isAdmin = req.user.is_admin; // Check if the user is an admin
 
     const client = await pool.connect();
     try {
@@ -528,7 +527,8 @@ router.delete(
   authenticateToken,
   adminMiddleware,
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
+    // Only admin can delete orders
+    if (!req.user || req.user.role !== "admin") {
       return res.sendStatus(403);
     }
     const { id } = req.params;
@@ -567,7 +567,7 @@ router.delete(
 
 // Update full order details (Admin only, more comprehensive update)
 router.put("/:id", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
     return res.status(403).json({ error: "Admin access required" });
   }
 
@@ -638,7 +638,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
 
 // New: Admin upload shipping bill to order
 router.put("/:id/shipping-bill-upload", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
     return res.status(403).json({ error: "Admin access required" });
   }
 

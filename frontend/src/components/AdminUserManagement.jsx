@@ -71,11 +71,12 @@ function AdminUserManagement() {
     // Client-side filtering happens automatically when 'search' state changes
   };
 
-  // Filter users based on search term
+  // Filter users based on search term (show all except admin)
   const filteredUsers = users.filter(
     (user) =>
-      user.username?.toLowerCase().includes(search.toLowerCase()) ||
-      user.email?.toLowerCase().includes(search.toLowerCase())
+      user.role !== "admin" &&
+      (user.username?.toLowerCase().includes(search.toLowerCase()) ||
+        user.email?.toLowerCase().includes(search.toLowerCase()))
   );
 
   // Open Edit Modal
@@ -86,7 +87,7 @@ function AdminUserManagement() {
       username: user.username,
       email: user.email,
       status: user.status,
-      is_admin: user.is_admin, // Include is_admin status
+      role: user.role, // Include role status
     });
     setIsEditModalOpen(true);
   };
@@ -240,7 +241,7 @@ function AdminUserManagement() {
                     {t("admin_user_management.email")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                    Admin
+                    Role
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
                     {t("admin_user_management.registered")}
@@ -259,7 +260,11 @@ function AdminUserManagement() {
                     <td className="px-4 py-3 font-mono">{user.username}</td>
                     <td className="px-4 py-3">{user.email}</td>
                     <td className="px-4 py-3 font-semibold text-green-700">
-                      {user.is_admin ? "Yes" : "No"}
+                      {user.role === "admin"
+                        ? "Admin"
+                        : user.role === "staff"
+                        ? "Staff"
+                        : "Customer"}
                     </td>
                     <td className="px-4 py-3">
                       {new Date(user.created_at).toLocaleString()}
@@ -389,19 +394,26 @@ function AdminUserManagement() {
                     ))}
                   </select>
                 </div>
-                {/* Add is_admin checkbox */}
-                <div className="mb-4 flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_admin"
-                    name="is_admin"
-                    checked={editFormData.is_admin || false}
-                    onChange={handleEditFormChange}
-                    className="mr-2 leading-tight"
-                  />
-                  <label className="text-sm text-gray-700" htmlFor="is_admin">
-                    ແອັດມິນ
+                {/* Add role selection */}
+                <div className="mb-4">
+                  <label
+                    className="block text-gray-700 text-sm font-bold mb-2"
+                    htmlFor="role"
+                  >
+                    ສິດທິ (Role)
                   </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={editFormData.role || ""}
+                    onChange={handleEditFormChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  >
+                    <option value="">ເລືອກສິດທິ</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="customer">Customer</option>
+                  </select>
                 </div>
                 <div className="flex items-center justify-end gap-4">
                   <button

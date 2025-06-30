@@ -61,9 +61,7 @@ function SalesAnalytic() {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mt-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">
-        {t("salesAnalytic.title")}
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2"></h3>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
         <div className="text-gray-700 font-semibold text-base">
           {t("salesAnalytic.totalSalesLabel")}:{" "}

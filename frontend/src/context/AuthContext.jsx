@@ -13,9 +13,9 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem("customerToken"); // Use customerToken
     const storedUser = localStorage.getItem("customerUser"); // Use customerUser
     if (storedToken && storedUser) {
-      // Ensure the stored user is NOT an admin
+      // Ensure the stored user is a customer (not admin or staff)
       const parsedUser = JSON.parse(storedUser);
-      if (!parsedUser.is_admin) {
+      if (parsedUser.role === "customer") {
         setToken(storedToken);
         // Ensure customer data is nested when loaded from localStorage
         const userToSet = {
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         delete userToSet.customer_address;
         setUser(userToSet);
       } else {
-        // If an admin token/user was somehow stored here, clear it
+        // If a non-customer token/user was somehow stored here, clear it
         localStorage.removeItem("customerToken");
         localStorage.removeItem("customerUser");
       }
@@ -50,11 +50,11 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post(`${API_URL}/api/auth/login`, payload);
       const { token: receivedToken, user: userInfo } = response.data;
 
-      // Ensure the logged-in user is NOT an admin for this context
-      if (userInfo.is_admin) {
+      // Ensure the logged-in user is a customer (not admin or staff)
+      if (userInfo.role !== "customer") {
         return {
           success: false,
-          error: "Access Denied: Admin accounts cannot login here.",
+          error: "Access Denied: Only customers can login here.",
         };
       }
 
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         id: userInfo.id,
         email: userInfo.email,
         username: userInfo.username,
-        is_admin: userInfo.is_admin,
+        role: userInfo.role,
         customer: {
           name: userInfo.customer_name || userInfo.customer?.name || null,
           phone: userInfo.phone || userInfo.customer?.phone || null,
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
           id: userInfo.id,
           email: userInfo.email,
           username: userInfo.username,
-          is_admin: userInfo.is_admin,
+          role: userInfo.role,
           customer: {
             name: userInfo.customer_name || userInfo.customer?.name || null,
             phone: userInfo.phone || userInfo.customer?.phone || null,
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
           },
         })
       ); // Use customerUser
-      return { success: true, isAdmin: userInfo.is_admin };
+      return { success: true };
     } catch (error) {
       console.error(
         "Customer Login error:",

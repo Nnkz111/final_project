@@ -8,8 +8,8 @@ const fileUpload = require("express-fileupload");
 const pool = require("./config/db");
 
 // Request timeout middleware
-const timeout = require('connect-timeout');
-const TIMEOUT_DURATION = '30s';
+const timeout = require("connect-timeout");
+const TIMEOUT_DURATION = "30s";
 
 // Timeout handler
 const haltOnTimedout = (req, res, next) => {
@@ -35,6 +35,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
 
 // Create an Express application
 const app = express();
@@ -129,6 +130,9 @@ app.use("/api/admin", adminRoutes);
 
 // Use profile routes
 app.use("/api/profile", profileRoutes);
+
+// Use employee routes
+app.use("/api/employees", employeeRoutes); // Add employee routes
 
 // Start the server
 app.listen(port, "0.0.0.0", () => {

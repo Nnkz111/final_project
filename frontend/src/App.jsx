@@ -68,6 +68,10 @@ const AdminUserManagement = lazy(() =>
 );
 const InvoicePage = lazy(() => import("./components/InvoicePage"));
 const ResetPassword = lazy(() => import("./components/ResetPassword"));
+const AdminEmployeeManagement = lazy(() =>
+  import("./components/AdminEmployeeManagement")
+);
+const EmployeeReportPage = lazy(() => import("./pages/EmployeeReportPage"));
 
 // Create layout components
 const CustomerLayout = () => {
@@ -320,6 +324,11 @@ function App() {
                     element={<AdminCustomerManagement />}
                   />
                   <Route path="users" element={<AdminUserManagement />} />
+                  {/* Employee Management Route */}
+                  <Route
+                    path="employees"
+                    element={<AdminEmployeeManagement />}
+                  />
                   <Route
                     path="notifications"
                     element={<AdminNotificationsPage />}
@@ -334,6 +343,14 @@ function App() {
                     element={<CustomerReportPage />}
                   />
                   <Route path="reports/sales" element={<SalesReportsPage />} />
+                  <Route
+                    path="reports/employees"
+                    element={
+                      <React.Suspense fallback={<div>Loading...</div>}>
+                        <EmployeeReportPage />
+                      </React.Suspense>
+                    }
+                  />
                   <Route path="*" element={<div>Admin Page Not Found</div>} />
                 </Route>
 

@@ -619,7 +619,7 @@ function AdminProductManagement() {
             {t("admin_product_management.search_button")}{" "}
             {/* Translate button text */}
           </button>
-          {/* Category Filter Dropdown */}
+          {/* Category Filter Dropdown 
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}
@@ -630,6 +630,7 @@ function AdminProductManagement() {
             </option>
             {renderCategoryOptions(hierarchicalCategories)}
           </select>
+          */}
         </div>
         {/* Product List */}
         <div className="bg-white p-4 rounded-2xl shadow border border-green-100">

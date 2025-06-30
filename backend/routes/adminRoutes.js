@@ -151,7 +151,7 @@ router.get("/top-selling-products", async (req, res) => {
 router.get("/stats", async (req, res) => {
   try {
     const totalUsersQuery =
-      "SELECT COUNT(*) FROM users WHERE is_admin = FALSE;";
+      "SELECT COUNT(*) FROM users WHERE role = 'customer';";
     const totalProductsQuery = "SELECT COUNT(*) FROM products;";
     const pendingOrdersQuery =
       "SELECT COUNT(*) FROM orders WHERE status = 'pending';";
@@ -213,7 +213,7 @@ router.get(
       .withMessage("Search term cannot exceed 255 characters"),
   ],
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
+    if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -224,10 +224,10 @@ router.get(
 
     const limit = parseInt(req.query.limit, 10) || 10;
     const offset = parseInt(req.query.offset, 10) || 0;
-    const searchTerm = req.query.search; // Get the search term
+    const searchTerm = req.query.search;
 
     let usersQueryParams = [limit, offset];
-    let usersWhereClauses = [`u.is_admin = FALSE`];
+    let usersWhereClauses = [`(u.role = 'customer' OR u.role = 'staff')`];
     let usersParamIndex = 3; // Start from $3 for dynamic fields in usersQuery
 
     if (searchTerm) {
@@ -251,7 +251,7 @@ router.get(
           u.id,
           u.username,
           u.email,
-          u.is_admin,
+          u.role,
           u.created_at,
           u.status,
           c.name AS customer_name,
@@ -269,7 +269,7 @@ router.get(
       const usersResult = await pool.query(usersQuery, usersQueryParams);
 
       // For the count query, we need to handle parameters separately
-      let countWhereClauses = [`u.is_admin = FALSE`];
+      let countWhereClauses = [`u.role = 'customer' OR u.role = 'staff'`];
       let countQueryParams = [];
       let countParamIndex = 1; // Start from $1 for dynamic fields in countQuery
 
@@ -322,11 +322,10 @@ router.put(
       .normalizeEmail()
       .isLength({ max: 255 })
       .withMessage("Email cannot exceed 255 characters"),
-    body("is_admin")
+    body("role")
       .optional()
-      .isBoolean()
-      .withMessage("Is admin must be a boolean value")
-      .toBoolean(),
+      .isIn(["admin", "staff", "customer"])
+      .withMessage("Role must be one of: admin, staff, customer"),
     body("status")
       .optional()
       .trim()
@@ -334,7 +333,7 @@ router.put(
       .withMessage("Invalid user status"),
   ],
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
+    if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -344,7 +343,7 @@ router.put(
     }
 
     const { id } = req.params;
-    const { username, email, is_admin, status } = req.body;
+    const { username, email, role, status } = req.body;
 
     try {
       let updateFields = [];
@@ -359,9 +358,9 @@ router.put(
         updateFields.push(`email = $${paramIndex++}`);
         queryParams.push(email);
       }
-      if (is_admin !== undefined) {
-        updateFields.push(`is_admin = $${paramIndex++}`);
-        queryParams.push(is_admin);
+      if (role !== undefined) {
+        updateFields.push(`role = $${paramIndex++}`);
+        queryParams.push(role);
       }
       if (status !== undefined) {
         updateFields.push(`status = $${paramIndex++}`);
@@ -374,7 +373,7 @@ router.put(
 
       const query = `UPDATE users SET ${updateFields.join(
         ", "
-      )} WHERE id = $1 RETURNING id, username, email, is_admin, status`;
+      )} WHERE id = $1 RETURNING id, username, email, role, status`;
 
       const result = await pool.query(query, queryParams);
 
@@ -392,7 +391,7 @@ router.put(
 
 // Admin User Management route - Delete User (Admin only)
 router.delete("/users/:id", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
+  if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin access required" });
   }
 
@@ -427,15 +426,15 @@ router.delete("/users/:id", authenticateToken, async (req, res) => {
 
 // Admin Customer Management route
 router.get("/customers", authenticateToken, async (req, res) => {
-  if (!req.user || !req.user.is_admin) {
-    return res.status(403).json({ error: "Admin access required" });
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+    return res.status(403).json({ error: "Admin or staff access required" });
   }
   const limit = parseInt(req.query.limit, 10) || 10;
   const offset = parseInt(req.query.offset, 10) || 0;
 
   try {
     const customersQuery = `
-      SELECT c.id, c.user_id, c.name, c.email, c.phone, c.address, c.created_at, u.username, u.is_admin
+      SELECT c.id, c.user_id, c.name, c.email, c.phone, c.address, c.created_at, u.username, u.role
       FROM customers c
       LEFT JOIN users u ON c.user_id = u.id
       ORDER BY c.created_at DESC

@@ -44,8 +44,8 @@ router.post(
       .withMessage("Image URL cannot exceed 255 characters"),
   ],
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
-      return res.status(403).json({ error: "Admin access required" });
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+      return res.status(403).json({ error: "Admin or staff access required" });
     }
 
     const errors = validationResult(req);
@@ -101,8 +101,8 @@ router.put(
       .withMessage("Image URL cannot exceed 255 characters"),
   ],
   async (req, res) => {
-    if (!req.user || !req.user.is_admin) {
-      return res.status(403).json({ error: "Admin access required" });
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
+      return res.status(403).json({ error: "Admin or staff access required" });
     }
 
     const errors = validationResult(req);
@@ -137,8 +137,8 @@ router.put(
 
 // Endpoint to delete a category by ID (Admin only)
 router.delete("/:id", authenticateToken, async (req, res) => {
-  // Check if the authenticated user is an admin
-  if (!req.user || !req.user.is_admin) {
+  // Only admin can delete categories
+  if (!req.user || req.user.role !== "admin") {
     return res.sendStatus(403); // Forbidden if not an admin
   }
 
