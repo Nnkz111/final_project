@@ -456,4 +456,90 @@ router.get("/customers", authenticateToken, async (req, res) => {
   }
 });
 
+// Category-based income report (recursive CTE)
+router.get(
+  "/income-report/category/:id",
+  authenticateToken,
+  async (req, res) => {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    const categoryId = req.params.id;
+    try {
+      // Recursive CTE to get all descendant categories
+      const cteQuery = `
+      WITH RECURSIVE subcategories AS (
+        SELECT id FROM categories WHERE id = $1
+        UNION ALL
+        SELECT c.id FROM categories c
+        INNER JOIN subcategories sc ON c.parent_id = sc.id
+      )
+      SELECT id FROM subcategories
+    `;
+      const { rows: categoryRows } = await pool.query(cteQuery, [categoryId]);
+      const categoryIds = categoryRows.map((r) => r.id);
+      if (categoryIds.length === 0) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      // Get total income and order count for products in these categories, with optional date range
+      const { start, end } = req.query;
+      let incomeQuery = `
+        SELECT
+          COALESCE(SUM(oi.price::numeric * oi.quantity), 0) AS total_income,
+          COUNT(DISTINCT o.id) AS orders_count
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE o.status = 'completed' AND p.category_id = ANY($1)
+      `;
+      const params = [categoryIds];
+      if (start) {
+        incomeQuery += ` AND o.created_at >= $${params.length + 1}::date`;
+        params.push(start);
+      }
+      if (end) {
+        incomeQuery += ` AND o.created_at <= $${params.length + 1}::date`;
+        params.push(end);
+      }
+      const { rows } = await pool.query(incomeQuery, params);
+
+      // Get product sales details for this category and date range
+      let productQuery = `
+        SELECT
+          p.id AS product_id,
+          p.name AS product_name,
+          SUM(oi.quantity) AS total_quantity,
+          SUM(oi.price::numeric * oi.quantity) AS total_sales
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE o.status = 'completed' AND p.category_id = ANY($1)
+      `;
+      const productParams = [categoryIds];
+      if (start) {
+        productQuery += ` AND o.created_at >= $${productParams.length + 1}::date`;
+        productParams.push(start);
+      }
+      if (end) {
+        productQuery += ` AND o.created_at <= $${productParams.length + 1}::date`;
+        productParams.push(end);
+      }
+      productQuery += ` GROUP BY p.id, p.name ORDER BY total_sales DESC`;
+      const { rows: productRows } = await pool.query(
+        productQuery,
+        productParams
+      );
+
+      res.status(200).json({
+        total_income: rows[0].total_income,
+        orders_count: rows[0].orders_count,
+        products: productRows,
+      });
+    } catch (error) {
+      console.error("Error fetching category income report:", error.message);
+      res.status(500).json({ message: "Server error", details: error.message });
+    }
+  }
+);
+
 module.exports = router;

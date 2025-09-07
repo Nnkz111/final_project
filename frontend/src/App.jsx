@@ -72,6 +72,9 @@ const AdminEmployeeManagement = lazy(() =>
   import("./components/AdminEmployeeManagement")
 );
 const EmployeeReportPage = lazy(() => import("./pages/EmployeeReportPage"));
+// const CategoryIncomeReportPage = lazy(() =>
+//   import("./pages/CategoryIncomeReportPage")
+// );
 
 // Create layout components
 const CustomerLayout = () => {
@@ -351,6 +354,7 @@ function App() {
                       </React.Suspense>
                     }
                   />
+
                   <Route path="*" element={<div>Admin Page Not Found</div>} />
                 </Route>
 

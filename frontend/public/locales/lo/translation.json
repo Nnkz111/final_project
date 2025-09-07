@@ -197,7 +197,7 @@
   "payment_information_title": "ຂໍ້ມູນການຊໍາລະ",
   "card_number_placeholder": "ໝາຍເລກບັດ",
   "expiry_date_placeholder": "ວັນໝົດອາຍຸ (ເດືອນ/ປີ)",
-  "cvv_placeholder": "CVV",
+
   "order_summary_title": "ສະຫຼຸບຄໍາສັ່ງຊື້",
   "checkout_subtotal_label": "ຍອດລວມ",
   "checkout_shipping_label": "ຄ່າຂົນສົ່ງ",
@@ -205,7 +205,7 @@
   "place_order_button": "ສັ່ງຊື້",
   "processing_order_message": "ກຳລັງດຳເນີນການສັ່ງຊື້ຂອງທ່ານ...",
   "order_failed_message": "ສັ່ງຊື້ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.",
-  "cash_on_delivery_option": "ຈ່າຍເງິນປາຍທາງ",
+  "cash_on_delivery_option": "ຈ່າຍເງິນປາຍທາງ (ມັດຈຳ)",
   "bank_transfer_option": "ຊຳລະຜ່ານທະນາຄານ",
   "upload_payment_proof_label": "ອັບໂຫຼດຫຼັກຖານການໂອນເງິນ",
 

@@ -461,10 +461,10 @@ function AdminOrderManagement() {
           </div>
         )}
 
-        {/* Order Details Modal */}
+        {/* Modal for order details */}
         {modalOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full relative">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full relative max-h-[80vh] overflow-y-auto">
               <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold"
                 onClick={() => setModalOrder(null)}
@@ -489,54 +489,139 @@ function AdminOrderManagement() {
                 </div>
               ) : modalOrderDetails ? (
                 <>
-                  <div className="mb-2">
-                    <span className="font-semibold">ຊື່:</span>{" "}
-                    {modalOrderDetails.username ||
-                      modalOrderDetails.shipping_name ||
-                      t("admin_order_management.not_specified")}
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-semibold">
-                      {t("admin_order_management.detail_status_label")}:
-                    </span>{" "}
-                    <span className="capitalize">
-                      {t(
-                        `order_status_${modalOrderDetails.status}`,
-                        modalOrderDetails.status.charAt(0).toUpperCase() +
-                          modalOrderDetails.status.slice(1)
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="mb-2">
+                        <span className="font-semibold">ຊື່:</span>{" "}
+                        {modalOrderDetails.username ||
+                          modalOrderDetails.shipping_name ||
+                          t("admin_order_management.not_specified")}
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">
+                          {t("admin_order_management.detail_status_label")}:
+                        </span>{" "}
+                        <span className="capitalize">
+                          {t(
+                            `order_status_${modalOrderDetails.status}`,
+                            modalOrderDetails.status.charAt(0).toUpperCase() +
+                              modalOrderDetails.status.slice(1)
+                          )}
+                        </span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">
+                          {t(
+                            "admin_order_management.detail_payment_type_label"
+                          )}
+                          :
+                        </span>{" "}
+                        <span className="capitalize">
+                          {modalOrderDetails.payment_type
+                            ? t(
+                                `payment_type_${modalOrderDetails.payment_type}`,
+                                modalOrderDetails.payment_type
+                              )
+                            : t("admin_order_management.not_specified")}
+                        </span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">
+                          {t("admin_order_management.detail_created_label")}:
+                        </span>{" "}
+                        {modalOrderDetails.created_at &&
+                          new Date(
+                            modalOrderDetails.created_at
+                          ).toLocaleString()}
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">
+                          {t("admin_order_management.detail_shipping_label")}:
+                        </span>{" "}
+                        {modalOrderDetails.shipping_address},{" "}
+                        {modalOrderDetails.shipping_phone},{" "}
+                        {modalOrderDetails.shipping_email}
+                      </div>
+                    </div>
+                    <div>
+                      {/* Payment Proof Image */}
+                      <div className="mb-2">
+                        <span className="font-semibold">
+                          {t(
+                            "admin_order_management.detail_payment_proof_label"
+                          )}
+                          :
+                        </span>
+                        {modalOrderDetails.payment_proof ? (
+                          <a
+                            href={modalOrderDetails.payment_proof}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={modalOrderDetails.payment_proof}
+                              alt={t(
+                                "admin_order_management.payment_proof_alt"
+                              )}
+                              className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
+                            />
+                          </a>
+                        ) : (
+                          <span className="text-gray-500 ml-2">
+                            {t("admin_order_management.no_image")}
+                          </span>
+                        )}
+                      </div>
+                      {/* COD Down Payment Image */}
+                      {modalOrderDetails.payment_type === "cod" && (
+                        <div className="mb-2">
+                          <span className="font-semibold">ຫຼັກຖານມັດຈຳ :</span>
+                          {modalOrderDetails.cod_down_payment_url ? (
+                            <a
+                              href={modalOrderDetails.cod_down_payment_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <img
+                                src={modalOrderDetails.cod_down_payment_url}
+                                alt="Down Payment"
+                                className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
+                              />
+                            </a>
+                          ) : (
+                            <span className="text-gray-500 ml-2">
+                              ບໍ່ມີຮູບຫຼັກຖານມັດຈຳ
+                            </span>
+                          )}
+                        </div>
                       )}
-                    </span>
+                      {/* COD ID Card Image */}
+                      {modalOrderDetails.payment_type === "cod" && (
+                        <div className="mb-2">
+                          <span className="font-semibold">ບັດປະຈຳຕົວ :</span>
+                          {modalOrderDetails.id_card_img ? (
+                            <a
+                              href={modalOrderDetails.id_card_img}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <img
+                                src={modalOrderDetails.id_card_img}
+                                alt="ID Card"
+                                className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
+                              />
+                            </a>
+                          ) : (
+                            <span className="text-gray-500 ml-2">
+                              ບໍ່ມີຮູບບັດປະຈຳຕົວ
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="mb-2">
-                    <span className="font-semibold">
-                      {t("admin_order_management.detail_payment_type_label")}:
-                    </span>{" "}
-                    <span className="capitalize">
-                      {modalOrderDetails.payment_type
-                        ? t(
-                            `payment_type_${modalOrderDetails.payment_type}`,
-                            modalOrderDetails.payment_type
-                          )
-                        : t("admin_order_management.not_specified")}
-                    </span>
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-semibold">
-                      {t("admin_order_management.detail_created_label")}:
-                    </span>{" "}
-                    {modalOrderDetails.created_at &&
-                      new Date(modalOrderDetails.created_at).toLocaleString()}
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-semibold">
-                      {t("admin_order_management.detail_shipping_label")}:
-                    </span>{" "}
-                    {modalOrderDetails.shipping_address},{" "}
-                    {modalOrderDetails.shipping_phone},{" "}
-                    {modalOrderDetails.shipping_email}
-                  </div>
-
-                  <div className="mb-2">
+                  {/* Items and Total */}
+                  <div className="mb-2 mt-4">
                     <span className="font-semibold">
                       {t("admin_order_management.detail_items_label")}:
                     </span>
@@ -573,29 +658,6 @@ function AdminOrderManagement() {
                         { style: "currency", currency: "LAK" }
                       )}
                     </span>
-                  </div>
-                  {/* Payment Proof Image */}
-                  <div className="mb-2">
-                    <span className="font-semibold">
-                      {t("admin_order_management.detail_payment_proof_label")}:
-                    </span>
-                    {modalOrderDetails.payment_proof ? (
-                      <a
-                        href={modalOrderDetails.payment_proof}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <img
-                          src={modalOrderDetails.payment_proof}
-                          alt={t("admin_order_management.payment_proof_alt")}
-                          className="w-32 h-32 object-contain rounded-lg border border-green-200 shadow mt-2"
-                        />
-                      </a>
-                    ) : (
-                      <span className="text-gray-500 ml-2">
-                        {t("admin_order_management.no_image")}
-                      </span>
-                    )}
                   </div>
 
                   {/* Shipping Bill Upload Section */}

@@ -15,6 +15,8 @@ function Checkout() {
     email: user?.email || "",
     payment_type: "cod",
     payment_proof: null,
+    cod_down_payment: null,
+    cod_id_card: null,
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -29,6 +31,10 @@ function Checkout() {
     const { name, value, files } = e.target;
     if (name === "payment_proof") {
       setForm({ ...form, payment_proof: files[0] });
+    } else if (name === "cod_down_payment") {
+      setForm({ ...form, cod_down_payment: files[0] });
+    } else if (name === "cod_id_card") {
+      setForm({ ...form, cod_id_card: files[0] });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -58,6 +64,14 @@ function Checkout() {
       data.append("payment_type", form.payment_type);
       if (form.payment_type === "bank_transfer" && form.payment_proof) {
         data.append("payment_proof", form.payment_proof);
+      }
+      if (form.payment_type === "cod") {
+        if (form.cod_down_payment) {
+          data.append("cod_down_payment", form.cod_down_payment);
+        }
+        if (form.cod_id_card) {
+          data.append("cod_id_card", form.cod_id_card);
+        }
       }
       const API_URL =
         import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -302,6 +316,53 @@ function Checkout() {
                 required
               />
             </div>
+          )}
+          {/* COD Down Payment and ID Card Uploads */}
+          {form.payment_type === "cod" && (
+            <>
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold mb-2">
+                  Scan to Pay (Bank Transfer)
+                </h4>
+                {/* Make the image clickable */}
+                <img
+                  src="https://res.cloudinary.com/dgfk0ljyq/image/upload/v1748901020/Qr-bcel_x58vwf.jpg"
+                  alt="Bank Transfer QR Code"
+                  className="mx-auto w-48 h-48 object-contain border rounded-md p-2 cursor-pointer"
+                  onClick={() =>
+                    openModal(
+                      "https://res.cloudinary.com/dgfk0ljyq/image/upload/v1748901020/Qr-bcel_x58vwf.jpg"
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-2">
+                  ອັບໂຫຼດຫຼັກຖານມັດຈຳ (ລາຄາເຄິ່ງໜຶ່ງຂອງສິນຄ້າ)
+                </label>
+                <input
+                  type="file"
+                  name="cod_down_payment"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-2">
+                  ອັບໂຫຼດບັດປະຈຳຕົວ ຫຼື ສຳມະໂນຄົວ
+                </label>
+                <input
+                  type="file"
+                  name="cod_id_card"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  required
+                />
+              </div>
+            </>
           )}
           <button
             type="submit"

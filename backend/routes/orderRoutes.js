@@ -94,21 +94,48 @@ router.post(
       const payment_type = req.body.payment_type;
 
       let payment_proof = null;
+      let cod_down_payment_url = null;
+      let id_card_img_url = null;
 
-      // Check if a payment proof file was uploaded with the field name 'payment_proof'
+      // Handle payment proof (bank transfer)
       if (req.files && req.files.payment_proof) {
         const file = req.files.payment_proof;
-
         try {
-          // Upload the file to Cloudinary
           const result = await cloudinary.uploader.upload(file.tempFilePath, {
-            folder: "payment_proofs", // Optional: specify a folder in Cloudinary
+            folder: "payment_proofs",
           });
-          payment_proof = result.url; // Get the Cloudinary image URL
+          payment_proof = result.url;
         } catch (error) {
           console.error("Error uploading payment proof to Cloudinary:", error);
-          // Decide how to handle upload failure
-          // For now, we'll proceed without the payment proof image but log the error.
+        }
+      }
+
+      // Handle COD down payment image
+      if (req.files && req.files.cod_down_payment) {
+        const file = req.files.cod_down_payment;
+        try {
+          const result = await cloudinary.uploader.upload(file.tempFilePath, {
+            folder: "cod_down_payments",
+          });
+          cod_down_payment_url = result.url;
+        } catch (error) {
+          console.error(
+            "Error uploading COD down payment to Cloudinary:",
+            error
+          );
+        }
+      }
+
+      // Handle COD ID card image
+      if (req.files && req.files.cod_id_card) {
+        const file = req.files.cod_id_card;
+        try {
+          const result = await cloudinary.uploader.upload(file.tempFilePath, {
+            folder: "cod_id_cards",
+          });
+          id_card_img_url = result.url;
+        } catch (error) {
+          console.error("Error uploading COD ID card to Cloudinary:", error);
         }
       }
 
@@ -127,8 +154,8 @@ router.post(
         await client.query("BEGIN");
         // Insert order
         const orderResult = await client.query(
-          `INSERT INTO orders (user_id, shipping_name, shipping_address, shipping_phone, shipping_email, status, payment_type, payment_proof, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING id`,
+          `INSERT INTO orders (user_id, shipping_name, shipping_address, shipping_phone, shipping_email, status, payment_type, payment_proof, id_card_img, cod_down_payment_url, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id`,
           [
             userId,
             shipping.name,
@@ -138,6 +165,8 @@ router.post(
             "pending", // default status
             payment_type,
             payment_proof,
+            id_card_img_url,
+            cod_down_payment_url,
           ]
         );
         const orderId = orderResult.rows[0].id;
@@ -528,7 +557,7 @@ router.delete(
   adminMiddleware,
   async (req, res) => {
     // Only admin can delete orders
-    if (!req.user || req.user.role !== "admin") {
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "staff")) {
       return res.sendStatus(403);
     }
     const { id } = req.params;
